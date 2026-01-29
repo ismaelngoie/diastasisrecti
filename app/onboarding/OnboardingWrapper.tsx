@@ -9,6 +9,14 @@ import ButterflyBackground from "@/components/ButterflyBackground";
 import { Toast, ToastTone } from "@/components/Toast";
 import { USER_STORAGE_KEY, useUserStore, VisualShape } from "@/lib/store/useUserStore";
 
+const MIA_M1 =
+  "Hi! I'm Coach Mia, your Core Specialist. I've helped 10,000+ women close their gap.";
+const MIA_M2 = "To start your medical file, what should I call you?";
+
+function miaAgeQuestion(safeName: string) {
+  return `Lovely to meet you, ${safeName}. Age helps me determine your collagen elasticity levels. How young are you?`;
+}
+
 function Logo() {
   return (
     <div className="flex items-center justify-center">
@@ -33,7 +41,7 @@ function Logo() {
 function ProgressDots({ step }: { step: number }) {
   return (
     <div className="flex items-center justify-center gap-2">
-      {[1, 2, 3, 4].map((n) => (
+      {[1, 2, 3, 4, 5].map((n) => (
         <div
           key={n}
           className={[
@@ -214,18 +222,17 @@ function ChatBubble({
   return (
     <div className={`w-full flex ${isUser ? "justify-end" : "justify-start"} mb-4`}>
       {!isUser && (
-        <div className="w-10 h-10 rounded-full overflow-hidden border border-white/15 bg-white/10 shrink-0 mr-3 mt-auto flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full overflow-hidden border border-white/15 bg-white/10 shrink-0 mr-3 mt-auto relative flex items-center justify-center">
+          <span className="text-white/80 font-extrabold text-sm select-none">M</span>
           <img
             src="/coachMiaAvatar.png"
             alt="Mia"
-            className="w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover"
             onError={(e) => {
+              // hide image, leave the "M" fallback visible
               (e.currentTarget as HTMLImageElement).style.display = "none";
             }}
           />
-          {/* fallback */}
-          <div className="absolute opacity-0 pointer-events-none" />
-          <span className="text-white/80 font-extrabold text-sm select-none">M</span>
         </div>
       )}
 
@@ -244,15 +251,80 @@ function ChatBubble({
   );
 }
 
+function WheelPicker({
+  min,
+  max,
+  value,
+  onChange
+}: {
+  min: number;
+  max: number;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  const range = useMemo(() => Array.from({ length: max - min + 1 }, (_, i) => min + i), [min, max]);
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const ITEM_HEIGHT = 54;
+
+  useEffect(() => {
+    if (!scrollerRef.current) return;
+    const idx = range.indexOf(value);
+    if (idx >= 0) scrollerRef.current.scrollTo({ top: idx * ITEM_HEIGHT, behavior: "auto" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleScroll = () => {
+    if (!scrollerRef.current) return;
+    const scrollY = scrollerRef.current.scrollTop;
+    const centerIndex = Math.round(scrollY / ITEM_HEIGHT);
+    const newValue = range[centerIndex];
+    if (newValue !== undefined && newValue !== value) onChange(newValue);
+  };
+
+  return (
+    <div className="relative h-[220px] w-full max-w-[340px] mx-auto overflow-hidden mt-1">
+      <div className="absolute top-1/2 left-0 w-full h-[54px] -translate-y-1/2 border-t-2 border-b-2 border-[color:var(--pink)]/10 bg-[color:var(--pink)]/5 pointer-events-none z-10" />
+
+      <div className="absolute top-0 left-0 w-full h-[80px] bg-gradient-to-b from-white via-white/90 to-transparent z-20 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-full h-[80px] bg-gradient-to-t from-white via-white/90 to-transparent z-20 pointer-events-none" />
+
+      <div
+        ref={scrollerRef}
+        onScroll={handleScroll}
+        className="h-full w-full overflow-y-scroll snap-y snap-mandatory no-scrollbar py-[83px]"
+      >
+        {range.map((num) => (
+          <div
+            key={num}
+            className={[
+              "h-[54px] flex items-center justify-center snap-center transition-all duration-200",
+              num === value
+                ? "scale-110 font-extrabold text-[color:var(--pink)] text-3xl"
+                : "scale-90 text-slate-400 text-2xl"
+            ].join(" ")}
+          >
+            {num}
+            <span className="text-sm ml-2 mt-1 font-semibold text-slate-400/80">years</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function OnboardingWrapper() {
   const router = useRouter();
 
   const { isPremium, onboardingStep, setOnboardingStep } = useUserStore();
+
   const visualShape = useUserStore((s) => s.visualShape);
   const setVisualShape = useUserStore((s) => s.setVisualShape);
 
   const name = useUserStore((s) => s.name);
   const setName = useUserStore((s) => s.setName);
+
+  const storedAge = useUserStore((s) => s.age);
+  const setAge = useUserStore((s) => s.setAge);
 
   const [checkedPremium, setCheckedPremium] = useState(false);
 
@@ -262,12 +334,19 @@ export default function OnboardingWrapper() {
     tone: ToastTone;
   }>({ show: false, msg: "", tone: "info" });
 
-  // Screen 3 local chat state
+  // Chat (shared between Screen 3 and 4)
   const [chat, setChat] = useState<Array<{ from: "mia" | "user"; text: string }>>([]);
   const [miaTyping, setMiaTyping] = useState(false);
-  const [inputName, setInputName] = useState(name || "");
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
-  const didInitChatRef = useRef(false);
+
+  // Screen 3 local
+  const [inputName, setInputName] = useState(name || "");
+
+  // Screen 4 local (wheel)
+  const [ageValue, setAgeValue] = useState<number>(storedAge || 30);
+
+  // prevent duplicating the age-question on re-renders
+  const askedAgeRef = useRef(false);
 
   // 🚀 Instant premium redirect (fast path: localStorage)
   useEffect(() => {
@@ -299,38 +378,92 @@ export default function OnboardingWrapper() {
     setTimeout(() => chatBottomRef.current?.scrollIntoView({ behavior: "smooth" }), 80);
   };
 
-  // Screen 3: add the two Mia messages (with 800ms delay)
+  // ✅ Screen 3 init: if chat is empty, seed with Mia messages (and show typing for M2)
   useEffect(() => {
     if (screen !== 3) return;
-    if (didInitChatRef.current) return;
+    if (chat.length > 0) return;
 
-    didInitChatRef.current = true;
-    setChat([]);
     setMiaTyping(false);
-
-    // Message 1 immediately
-    setChat([
-      {
-        from: "mia",
-        text: "Hi! I'm Coach Mia, your Core Specialist. I've helped 10,000+ women close their gap."
-      }
-    ]);
+    setChat([{ from: "mia", text: MIA_M1 }]);
     scrollToBottom();
 
-    // Message 2 after 800ms (with typing)
     setMiaTyping(true);
     const t = setTimeout(() => {
       setMiaTyping(false);
-      setChat((prev) => [
-        ...prev,
-        { from: "mia", text: "To start your medical file, what should I call you?" }
-      ]);
+      setChat((prev) => [...prev, { from: "mia", text: MIA_M2 }]);
       scrollToBottom();
     }, 800);
 
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen]);
+
+  // ✅ Screen 4: ensure chat is hydrated (important if user refreshes on step 4)
+  useEffect(() => {
+    if (screen !== 4) return;
+
+    setAgeValue(storedAge || 30);
+
+    // If chat is empty (refresh), rebuild a coherent history
+    if (chat.length === 0) {
+      const seeded: Array<{ from: "mia" | "user"; text: string }> = [
+        { from: "mia", text: MIA_M1 },
+        { from: "mia", text: MIA_M2 }
+      ];
+      if ((name || "").trim().length >= 2) seeded.push({ from: "user", text: name.trim() });
+      setChat(seeded);
+      scrollToBottom();
+    }
+
+    // Add Mia age question (once)
+    if (askedAgeRef.current) return;
+
+    const q = miaAgeQuestion((name || "there").trim() || "there");
+    const alreadyAsked = chat.some((m) => m.from === "mia" && m.text.includes("How young are you?"));
+    if (alreadyAsked) {
+      askedAgeRef.current = true;
+      return;
+    }
+
+    askedAgeRef.current = true;
+    setMiaTyping(true);
+    const t = setTimeout(() => {
+      setMiaTyping(false);
+      setChat((prev) => [...prev, { from: "mia", text: q }]);
+      scrollToBottom();
+    }, 650);
+
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen, name, storedAge]);
+
+  // ✅ Age toast logic (Screen 4 only)
+  useEffect(() => {
+    if (screen !== 4) return;
+
+    // persist immediately while scrolling (medical-grade: no “Next” needed)
+    setAge(ageValue);
+
+    if (ageValue > 40) {
+      setToast({
+        show: true,
+        tone: "info", // blue feel
+        msg: "We will focus on gentle tissue stimulation for you."
+      });
+      return;
+    }
+
+    if (ageValue < 30) {
+      setToast({
+        show: true,
+        tone: "success", // green feel
+        msg: "Your recovery potential is high!"
+      });
+      return;
+    }
+
+    setToast({ show: false, tone: "info", msg: "" });
+  }, [ageValue, screen, setAge]);
 
   // --- Screen 1 actions
   const goToScreen2 = () => setOnboardingStep(2);
@@ -352,7 +485,7 @@ export default function OnboardingWrapper() {
 
   const goToScreen3 = () => {
     setToast({ show: false, tone: "info", msg: "" });
-    didInitChatRef.current = false; // important so chat initializes fresh
+    askedAgeRef.current = false;
     setOnboardingStep(3);
   };
 
@@ -361,15 +494,31 @@ export default function OnboardingWrapper() {
     const cleaned = inputName.trim();
     if (cleaned.length < 2) return;
 
-    setName(cleaned); // ✅ persists instantly
-
-    // show user reply in chat
+    setName(cleaned);
     setChat((prev) => [...prev, { from: "user", text: cleaned }]);
     scrollToBottom();
 
-    // premium feel: tiny pause then move on
     setTimeout(() => {
       setOnboardingStep(4);
+    }, 450);
+  };
+
+  // --- Screen 4 actions
+  const submitAge = () => {
+    // already persisted continuously, but save again just in case
+    setAge(ageValue);
+
+    // add user reply to chat if it isn’t already there
+    const already = chat.some((m) => m.from === "user" && m.text === String(ageValue));
+    if (!already) {
+      setChat((prev) => [...prev, { from: "user", text: String(ageValue) }]);
+      scrollToBottom();
+    }
+
+    setToast({ show: false, tone: "info", msg: "" });
+
+    setTimeout(() => {
+      setOnboardingStep(5);
     }, 450);
   };
 
@@ -388,7 +537,7 @@ export default function OnboardingWrapper() {
 
       <div className="relative z-10 min-h-screen flex flex-col">
         <div className="pt-6 px-6">
-          <ProgressDots step={Math.min(4, screen)} />
+          <ProgressDots step={Math.min(5, screen)} />
         </div>
 
         <AnimatePresence mode="wait">
@@ -554,9 +703,7 @@ export default function OnboardingWrapper() {
               exit={{ opacity: 0, x: -22 }}
               transition={{ duration: 0.38, ease: "easeOut" }}
               className="flex-1 flex flex-col px-5 pt-6 pb-6"
-              style={{
-                paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)"
-              }}
+              style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
             >
               <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1">
                 <button
@@ -567,7 +714,6 @@ export default function OnboardingWrapper() {
                   <span className="text-sm font-semibold">Back</span>
                 </button>
 
-                {/* Chat history */}
                 <div className="flex-1 min-h-0 mt-5 overflow-y-auto no-scrollbar pr-1">
                   {chat.map((m, idx) => (
                     <ChatBubble key={idx} from={m.from}>
@@ -578,7 +724,6 @@ export default function OnboardingWrapper() {
                   <div ref={chatBottomRef} className="h-2" />
                 </div>
 
-                {/* Input panel */}
                 <div className="mt-4 rounded-[28px] border border-white/12 bg-white/8 backdrop-blur-xl shadow-soft p-4">
                   <div className="text-white/60 text-xs font-semibold mb-2">
                     Your name (for your medical file)
@@ -605,7 +750,7 @@ export default function OnboardingWrapper() {
                     onClick={submitName}
                     disabled={inputName.trim().length < 2}
                     className={[
-                      "mt-3 w-full h-13 h-13 rounded-full font-extrabold text-[16px] transition-all",
+                      "mt-3 w-full rounded-full font-extrabold text-[16px] transition-all",
                       inputName.trim().length >= 2
                         ? "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)] active:scale-[0.985]"
                         : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed"
@@ -619,10 +764,72 @@ export default function OnboardingWrapper() {
             </motion.section>
           )}
 
-          {/* ---------------- Screen 4: Placeholder (Age is next) ---------------- */}
+          {/* ---------------- Screen 4: Chat (Age Wheel) ---------------- */}
           {screen === 4 && (
             <motion.section
-              key="step4"
+              key="chat-age"
+              initial={{ opacity: 0, x: 22 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -22 }}
+              transition={{ duration: 0.38, ease: "easeOut" }}
+              className="flex-1 flex flex-col px-5 pt-6"
+              style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+            >
+              <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1">
+                <button
+                  onClick={() => setOnboardingStep(3)}
+                  className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors w-fit"
+                >
+                  <ChevronLeft size={18} />
+                  <span className="text-sm font-semibold">Back</span>
+                </button>
+
+                {/* chat history */}
+                <div className="flex-1 min-h-0 mt-5 overflow-y-auto no-scrollbar pr-1">
+                  {chat.map((m, idx) => (
+                    <ChatBubble key={idx} from={m.from}>
+                      {m.text}
+                    </ChatBubble>
+                  ))}
+                  {miaTyping && <ChatBubble from="mia" typing />}
+                  <div ref={chatBottomRef} className="h-2" />
+                </div>
+
+                {/* bottom clinical sheet */}
+                <div className="mt-4 bg-white rounded-t-[34px] shadow-[0_-16px_60px_rgba(0,0,0,0.35)] p-5 pb-6">
+                  <div className="text-center">
+                    <div className="text-slate-900 font-extrabold text-[18px]">Select your age</div>
+                    <div className="text-slate-500 text-[13px] font-semibold mt-1">
+                      This helps Mia tailor tissue recovery pacing.
+                    </div>
+                  </div>
+
+                  <WheelPicker
+                    min={18}
+                    max={70}
+                    value={ageValue}
+                    onChange={(v) => setAgeValue(v)}
+                  />
+
+                  <button
+                    onClick={submitAge}
+                    className="mt-4 w-full h-14 rounded-full bg-[color:var(--pink)] text-white font-extrabold text-[17px] shadow-[0_18px_50px_rgba(230,84,115,0.30)] active:scale-[0.985] transition-transform"
+                  >
+                    Next
+                  </button>
+
+                  <div className="mt-3 text-center text-slate-400 text-[11px] font-semibold">
+                    Saved instantly • You can leave and resume anytime
+                  </div>
+                </div>
+              </div>
+            </motion.section>
+          )}
+
+          {/* ---------------- Screen 5: Placeholder (Finger Test next) ---------------- */}
+          {screen === 5 && (
+            <motion.section
+              key="step5"
               initial={{ opacity: 0, x: 22 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -22 }}
@@ -631,25 +838,18 @@ export default function OnboardingWrapper() {
             >
               <div className="max-w-md w-full bg-white/10 backdrop-blur-xl border border-white/15 rounded-3xl p-6 shadow-soft text-center">
                 <h2 className="text-2xl font-extrabold" style={{ fontFamily: "var(--font-lora)" }}>
-                  Screen 4 is next: Age (wheel picker).
+                  Screen 5 is next: The Finger Test.
                 </h2>
                 <p className="text-white/70 mt-2">
-                  Saved name: <span className="text-white font-semibold">{name || "—"}</span>
+                  Saved age: <span className="text-white font-semibold">{storedAge}</span>
                 </p>
 
                 <div className="mt-6 flex flex-col gap-3">
                   <button
-                    onClick={() => setOnboardingStep(3)}
+                    onClick={() => setOnboardingStep(4)}
                     className="w-full h-12 rounded-full bg-white/10 border border-white/15 text-white font-bold active:scale-[0.985] transition-transform"
                   >
-                    Back to Chat
-                  </button>
-
-                  <button
-                    onClick={() => setOnboardingStep(2)}
-                    className="w-full h-12 rounded-full bg-white/5 border border-white/10 text-white/80 font-bold active:scale-[0.985] transition-transform"
-                  >
-                    Back to Visual Screen
+                    Back to Age
                   </button>
                 </div>
               </div>
