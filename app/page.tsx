@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import OnboardingWrapper from "./onboarding/OnboardingWrapper";
 
 export default function Home() {
-  redirect("/onboarding");
+  return <OnboardingWrapper />;
 }
