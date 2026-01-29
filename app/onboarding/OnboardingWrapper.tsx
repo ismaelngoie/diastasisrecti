@@ -6,8 +6,21 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Ban, Sparkles, Stethoscope, ChevronLeft, CheckCircle2 } from "lucide-react";
 
 import ButterflyBackground from "@/components/ButterflyBackground";
-import { Toast, ToastTone } from "@/components/Toast";
+import { Toast } from "@/components/Toast";
 import { USER_STORAGE_KEY, useUserStore, VisualShape } from "@/lib/store/useUserStore";
+
+import Step05FingerTest, { ToastAPI, ToastTone } from "@/components/onboarding/steps/Step05FingerTest";
+import Step06TissueDepth from "@/components/onboarding/steps/Step06TissueDepth";
+import Step07SabotageCheck from "@/components/onboarding/steps/Step07SabotageCheck";
+import Step08Symptoms from "@/components/onboarding/steps/Step08Symptoms";
+import Step09Timeline from "@/components/onboarding/steps/Step09Timeline";
+import Step10Navel from "@/components/onboarding/steps/Step10Navel";
+import Step11Commitment from "@/components/onboarding/steps/Step11Commitment";
+import Step12Analysis from "@/components/onboarding/steps/Step12Analysis";
+import Step13PlanReveal from "@/components/onboarding/steps/Step13PlanReveal";
+import Step14Paywall from "@/components/onboarding/steps/Step14Paywall";
+
+const TOTAL_STEPS = 14;
 
 const MIA_M1 =
   "Hi! I'm Coach Mia, your Core Specialist. I've helped 10,000+ women close their gap.";
@@ -38,18 +51,17 @@ function Logo() {
   );
 }
 
-function ProgressDots({ step }: { step: number }) {
+function ProgressBar({ step }: { step: number }) {
+  const pct = Math.max(0, Math.min(100, (step / TOTAL_STEPS) * 100));
   return (
-    <div className="flex items-center justify-center gap-2">
-      {[1, 2, 3, 4, 5].map((n) => (
-        <div
-          key={n}
-          className={[
-            "h-2 rounded-full transition-all",
-            n === step ? "w-8 bg-white" : "w-2 bg-white/25"
-          ].join(" ")}
-        />
-      ))}
+    <div className="px-6 pt-6">
+      <div className="flex items-center justify-between text-white/55 text-xs font-extrabold">
+        <span>Step {step} of {TOTAL_STEPS}</span>
+        <span>{Math.round(pct)}%</span>
+      </div>
+      <div className="mt-2 h-2 bg-white/10 rounded-full overflow-hidden">
+        <div className="h-full bg-white/70" style={{ width: `${pct}%` }} />
+      </div>
     </div>
   );
 }
@@ -116,7 +128,6 @@ function ShapeArt({ id }: { id: Exclude<VisualShape, null> }) {
     );
   }
 
-  // cone
   return (
     <svg viewBox="0 0 320 140" className="w-full h-full">
       <defs>
@@ -182,12 +193,7 @@ function VisualCard({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <div
-              className={[
-                "text-[16px] font-extrabold leading-snug",
-                selected ? "text-white" : "text-white/90"
-              ].join(" ")}
-            >
+            <div className={["text-[16px] font-extrabold leading-snug", selected ? "text-white" : "text-white/90"].join(" ")}>
               {title}
             </div>
             {selected && <CheckCircle2 size={18} className="text-[color:var(--pink)]" />}
@@ -229,7 +235,6 @@ function ChatBubble({
             alt="Mia"
             className="absolute inset-0 w-full h-full object-cover"
             onError={(e) => {
-              // hide image, leave the "M" fallback visible
               (e.currentTarget as HTMLImageElement).style.display = "none";
             }}
           />
@@ -328,27 +333,47 @@ export default function OnboardingWrapper() {
 
   const [checkedPremium, setCheckedPremium] = useState(false);
 
-  const [toast, setToast] = useState<{
-    show: boolean;
-    msg: string;
-    tone: ToastTone;
-  }>({ show: false, msg: "", tone: "info" });
+  const [toastState, setToastState] = useState<{ show: boolean; msg: string; tone: ToastTone }>({
+    show: false,
+    msg: "",
+    tone: "info"
+  });
 
-  // Chat (shared between Screen 3 and 4)
+  const toastTimeoutRef = useRef<number | null>(null);
+
+  const toastApi: ToastAPI = useMemo(
+    () => ({
+      show: (tone, message, ms = 3200) => {
+        if (toastTimeoutRef.current) window.clearTimeout(toastTimeoutRef.current);
+        setToastState({ show: true, tone, msg: message });
+        toastTimeoutRef.current = window.setTimeout(() => {
+          setToastState((p) => ({ ...p, show: false }));
+        }, ms);
+      },
+      hide: () => {
+        if (toastTimeoutRef.current) window.clearTimeout(toastTimeoutRef.current);
+        setToastState((p) => ({ ...p, show: false }));
+      }
+    }),
+    []
+  );
+
+  // Chat state (Screens 3–4)
   const [chat, setChat] = useState<Array<{ from: "mia" | "user"; text: string }>>([]);
   const [miaTyping, setMiaTyping] = useState(false);
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
 
-  // Screen 3 local
   const [inputName, setInputName] = useState(name || "");
-
-  // Screen 4 local (wheel)
   const [ageValue, setAgeValue] = useState<number>(storedAge || 30);
-
-  // prevent duplicating the age-question on re-renders
   const askedAgeRef = useRef(false);
 
-  // 🚀 Instant premium redirect (fast path: localStorage)
+  const screen = onboardingStep;
+
+  const scrollToBottom = () => {
+    setTimeout(() => chatBottomRef.current?.scrollIntoView({ behavior: "smooth" }), 80);
+  };
+
+  // Premium redirect (fast storage path)
   useEffect(() => {
     try {
       const raw = localStorage.getItem(USER_STORAGE_KEY);
@@ -359,26 +384,17 @@ export default function OnboardingWrapper() {
           return;
         }
       }
-    } catch {
-      // ignore
-    } finally {
-      setCheckedPremium(true);
-    }
+    } catch {}
+    setCheckedPremium(true);
   }, [router]);
 
-  // Fallback premium redirect (zustand state)
+  // Premium redirect (store)
   useEffect(() => {
     if (!checkedPremium) return;
     if (isPremium) router.replace("/dashboard");
   }, [checkedPremium, isPremium, router]);
 
-  const screen = useMemo(() => onboardingStep, [onboardingStep]);
-
-  const scrollToBottom = () => {
-    setTimeout(() => chatBottomRef.current?.scrollIntoView({ behavior: "smooth" }), 80);
-  };
-
-  // ✅ Screen 3 init: if chat is empty, seed with Mia messages (and show typing for M2)
+  // Screen 3 init
   useEffect(() => {
     if (screen !== 3) return;
     if (chat.length > 0) return;
@@ -398,13 +414,11 @@ export default function OnboardingWrapper() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen]);
 
-  // ✅ Screen 4: ensure chat is hydrated (important if user refreshes on step 4)
+  // Screen 4 hydration + ask age
   useEffect(() => {
     if (screen !== 4) return;
-
     setAgeValue(storedAge || 30);
 
-    // If chat is empty (refresh), rebuild a coherent history
     if (chat.length === 0) {
       const seeded: Array<{ from: "mia" | "user"; text: string }> = [
         { from: "mia", text: MIA_M1 },
@@ -415,7 +429,6 @@ export default function OnboardingWrapper() {
       scrollToBottom();
     }
 
-    // Add Mia age question (once)
     if (askedAgeRef.current) return;
 
     const q = miaAgeQuestion((name || "there").trim() || "there");
@@ -437,59 +450,29 @@ export default function OnboardingWrapper() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, name, storedAge]);
 
-  // ✅ Age toast logic (Screen 4 only)
+  // Age toast logic (screen 4)
   useEffect(() => {
     if (screen !== 4) return;
-
-    // persist immediately while scrolling (medical-grade: no “Next” needed)
     setAge(ageValue);
 
     if (ageValue > 40) {
-      setToast({
-        show: true,
-        tone: "info", // blue feel
-        msg: "We will focus on gentle tissue stimulation for you."
-      });
+      toastApi.show("info", "We will focus on gentle tissue stimulation for you.", 3200);
       return;
     }
-
     if (ageValue < 30) {
-      setToast({
-        show: true,
-        tone: "success", // green feel
-        msg: "Your recovery potential is high!"
-      });
+      toastApi.show("success", "Your recovery potential is high!", 3200);
       return;
     }
 
-    setToast({ show: false, tone: "info", msg: "" });
-  }, [ageValue, screen, setAge]);
+    toastApi.hide();
+  }, [ageValue, screen, setAge, toastApi]);
 
-  // --- Screen 1 actions
-  const goToScreen2 = () => setOnboardingStep(2);
-
-  // --- Screen 2 actions
-  const onPickShape = (shape: Exclude<VisualShape, null>) => {
-    setVisualShape(shape);
-
-    if (shape === "cone") {
-      setToast({
-        show: true,
-        tone: "warning",
-        msg: "Note: Coning indicates weak tissue tension. We will fix this."
-      });
-    } else {
-      setToast({ show: false, tone: "info", msg: "" });
-    }
+  // Screen actions
+  const goTo = (n: number) => {
+    toastApi.hide();
+    setOnboardingStep(Math.max(1, Math.min(TOTAL_STEPS, n)));
   };
 
-  const goToScreen3 = () => {
-    setToast({ show: false, tone: "info", msg: "" });
-    askedAgeRef.current = false;
-    setOnboardingStep(3);
-  };
-
-  // --- Screen 3 actions
   const submitName = () => {
     const cleaned = inputName.trim();
     if (cleaned.length < 2) return;
@@ -498,50 +481,38 @@ export default function OnboardingWrapper() {
     setChat((prev) => [...prev, { from: "user", text: cleaned }]);
     scrollToBottom();
 
-    setTimeout(() => {
-      setOnboardingStep(4);
-    }, 450);
+    setTimeout(() => goTo(4), 450);
   };
 
-  // --- Screen 4 actions
   const submitAge = () => {
-    // already persisted continuously, but save again just in case
     setAge(ageValue);
-
-    // add user reply to chat if it isn’t already there
     const already = chat.some((m) => m.from === "user" && m.text === String(ageValue));
     if (!already) {
       setChat((prev) => [...prev, { from: "user", text: String(ageValue) }]);
       scrollToBottom();
     }
-
-    setToast({ show: false, tone: "info", msg: "" });
-
-    setTimeout(() => {
-      setOnboardingStep(5);
-    }, 450);
+    toastApi.hide();
+    setTimeout(() => goTo(5), 450);
   };
 
   if (!checkedPremium) return null;
 
   return (
-    <main className="min-h-screen clinical-noise relative overflow-hidden">
+    <main className="min-h-screen clinical-noise relative overflow-hidden bg-[color:var(--navy)]">
       <ButterflyBackground />
 
       <Toast
-        show={toast.show}
-        message={toast.msg}
-        tone={toast.tone}
-        onClose={() => setToast({ show: false, msg: "", tone: "info" })}
+        show={toastState.show}
+        message={toastState.msg}
+        tone={toastState.tone}
+        onClose={() => toastApi.hide()}
       />
 
       <div className="relative z-10 min-h-screen flex flex-col">
-        <div className="pt-6 px-6">
-          <ProgressDots step={Math.min(5, screen)} />
-        </div>
+        <ProgressBar step={Math.min(TOTAL_STEPS, screen)} />
 
         <AnimatePresence mode="wait">
-          {/* ---------------- Screen 1: Welcome ---------------- */}
+          {/* Screen 1 */}
           {screen === 1 && (
             <motion.section
               key="welcome"
@@ -597,7 +568,7 @@ export default function OnboardingWrapper() {
 
               <div className="w-full max-w-md">
                 <button
-                  onClick={goToScreen2}
+                  onClick={() => goTo(2)}
                   className={[
                     "w-full h-14 rounded-full font-extrabold text-[17px]",
                     "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)]",
@@ -607,15 +578,11 @@ export default function OnboardingWrapper() {
                 >
                   Start My Assessment
                 </button>
-
-                <div className="mt-4 text-center text-white/45 text-xs">
-                  We save your answers instantly. If you leave, you can resume.
-                </div>
               </div>
             </motion.section>
           )}
 
-          {/* ---------------- Screen 2: Visual Identification ---------------- */}
+          {/* Screen 2 */}
           {screen === 2 && (
             <motion.section
               key="visual"
@@ -627,7 +594,7 @@ export default function OnboardingWrapper() {
             >
               <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1">
                 <button
-                  onClick={() => setOnboardingStep(1)}
+                  onClick={() => goTo(1)}
                   className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors w-fit"
                 >
                   <ChevronLeft size={18} />
@@ -635,10 +602,7 @@ export default function OnboardingWrapper() {
                 </button>
 
                 <div className="mt-6">
-                  <h1
-                    className="text-[28px] leading-[1.12] font-extrabold text-white"
-                    style={{ fontFamily: "var(--font-lora)" }}
-                  >
+                  <h1 className="text-[28px] leading-[1.12] font-extrabold text-white" style={{ fontFamily: "var(--font-lora)" }}>
                     Let’s analyze your core.
                     <br />
                     Which shape resembles yours the most?
@@ -654,27 +618,36 @@ export default function OnboardingWrapper() {
                     title="Lower Belly “Pooch”"
                     subtitle="Bulge sits lower, especially by end of day."
                     selected={visualShape === "pooch"}
-                    onSelect={() => onPickShape("pooch")}
+                    onSelect={() => {
+                      setVisualShape("pooch");
+                      toastApi.hide();
+                    }}
                   />
                   <VisualCard
                     id="gap"
                     title="Visible Gap / Trench"
                     subtitle="A line or trench down the midline."
                     selected={visualShape === "gap"}
-                    onSelect={() => onPickShape("gap")}
+                    onSelect={() => {
+                      setVisualShape("gap");
+                      toastApi.hide();
+                    }}
                   />
                   <VisualCard
                     id="cone"
                     title="Coning / Doming"
                     subtitle="Belly peaks like a tent when sitting up."
                     selected={visualShape === "cone"}
-                    onSelect={() => onPickShape("cone")}
+                    onSelect={() => {
+                      setVisualShape("cone");
+                      toastApi.show("warning", "Note: Coning indicates weak tissue tension. We will fix this.", 5200);
+                    }}
                   />
                 </div>
 
                 <div className="mt-auto pt-8">
                   <button
-                    onClick={goToScreen3}
+                    onClick={() => goTo(3)}
                     disabled={!visualShape}
                     className={[
                       "w-full h-14 rounded-full font-extrabold text-[17px] transition-all",
@@ -685,16 +658,12 @@ export default function OnboardingWrapper() {
                   >
                     Continue
                   </button>
-
-                  <div className="mt-4 text-center text-white/40 text-xs">
-                    Touch targets are big on purpose (easy on mobile).
-                  </div>
                 </div>
               </div>
             </motion.section>
           )}
 
-          {/* ---------------- Screen 3: Chat (Name) ---------------- */}
+          {/* Screen 3 */}
           {screen === 3 && (
             <motion.section
               key="chat-name"
@@ -706,35 +675,26 @@ export default function OnboardingWrapper() {
               style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
             >
               <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1">
-                <button
-                  onClick={() => setOnboardingStep(2)}
-                  className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors w-fit"
-                >
+                <button onClick={() => goTo(2)} className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors w-fit">
                   <ChevronLeft size={18} />
                   <span className="text-sm font-semibold">Back</span>
                 </button>
 
                 <div className="flex-1 min-h-0 mt-5 overflow-y-auto no-scrollbar pr-1">
                   {chat.map((m, idx) => (
-                    <ChatBubble key={idx} from={m.from}>
-                      {m.text}
-                    </ChatBubble>
+                    <ChatBubble key={idx} from={m.from}>{m.text}</ChatBubble>
                   ))}
                   {miaTyping && <ChatBubble from="mia" typing />}
                   <div ref={chatBottomRef} className="h-2" />
                 </div>
 
                 <div className="mt-4 rounded-[28px] border border-white/12 bg-white/8 backdrop-blur-xl shadow-soft p-4">
-                  <div className="text-white/60 text-xs font-semibold mb-2">
-                    Your name (for your medical file)
-                  </div>
+                  <div className="text-white/60 text-xs font-semibold mb-2">Your name (for your medical file)</div>
 
                   <input
                     value={inputName}
                     onChange={(e) => setInputName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") submitName();
-                    }}
+                    onKeyDown={(e) => e.key === "Enter" && submitName()}
                     placeholder="Type your name..."
                     className={[
                       "w-full h-14 rounded-2xl px-4",
@@ -764,7 +724,7 @@ export default function OnboardingWrapper() {
             </motion.section>
           )}
 
-          {/* ---------------- Screen 4: Chat (Age Wheel) ---------------- */}
+          {/* Screen 4 */}
           {screen === 4 && (
             <motion.section
               key="chat-age"
@@ -776,26 +736,19 @@ export default function OnboardingWrapper() {
               style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
             >
               <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1">
-                <button
-                  onClick={() => setOnboardingStep(3)}
-                  className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors w-fit"
-                >
+                <button onClick={() => goTo(3)} className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors w-fit">
                   <ChevronLeft size={18} />
                   <span className="text-sm font-semibold">Back</span>
                 </button>
 
-                {/* chat history */}
                 <div className="flex-1 min-h-0 mt-5 overflow-y-auto no-scrollbar pr-1">
                   {chat.map((m, idx) => (
-                    <ChatBubble key={idx} from={m.from}>
-                      {m.text}
-                    </ChatBubble>
+                    <ChatBubble key={idx} from={m.from}>{m.text}</ChatBubble>
                   ))}
                   {miaTyping && <ChatBubble from="mia" typing />}
                   <div ref={chatBottomRef} className="h-2" />
                 </div>
 
-                {/* bottom clinical sheet */}
                 <div className="mt-4 bg-white rounded-t-[34px] shadow-[0_-16px_60px_rgba(0,0,0,0.35)] p-5 pb-6">
                   <div className="text-center">
                     <div className="text-slate-900 font-extrabold text-[18px]">Select your age</div>
@@ -804,12 +757,7 @@ export default function OnboardingWrapper() {
                     </div>
                   </div>
 
-                  <WheelPicker
-                    min={18}
-                    max={70}
-                    value={ageValue}
-                    onChange={(v) => setAgeValue(v)}
-                  />
+                  <WheelPicker min={18} max={70} value={ageValue} onChange={setAgeValue} />
 
                   <button
                     onClick={submitAge}
@@ -826,33 +774,80 @@ export default function OnboardingWrapper() {
             </motion.section>
           )}
 
-          {/* ---------------- Screen 5: Placeholder (Finger Test next) ---------------- */}
+          {/* Screen 5 */}
           {screen === 5 && (
+            <motion.section key="s5" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
+              <Step05FingerTest onBack={() => goTo(4)} onNext={() => goTo(6)} toast={toastApi} />
+            </motion.section>
+          )}
+
+          {/* Screen 6 */}
+          {screen === 6 && (
+            <motion.section key="s6" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
+              <Step06TissueDepth onBack={() => goTo(5)} onNext={() => goTo(7)} toast={toastApi} />
+            </motion.section>
+          )}
+
+          {/* Screen 7 */}
+          {screen === 7 && (
+            <motion.section key="s7" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
+              <Step07SabotageCheck onBack={() => goTo(6)} onNext={() => goTo(8)} toast={toastApi} />
+            </motion.section>
+          )}
+
+          {/* Screen 8 */}
+          {screen === 8 && (
+            <motion.section key="s8" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
+              <Step08Symptoms onBack={() => goTo(7)} onNext={() => goTo(9)} toast={toastApi} />
+            </motion.section>
+          )}
+
+          {/* Screen 9 */}
+          {screen === 9 && (
+            <motion.section key="s9" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
+              <Step09Timeline onBack={() => goTo(8)} onNext={() => goTo(10)} toast={toastApi} />
+            </motion.section>
+          )}
+
+          {/* Screen 10 */}
+          {screen === 10 && (
+            <motion.section key="s10" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
+              <Step10Navel onBack={() => goTo(9)} onNext={() => goTo(11)} toast={toastApi} />
+            </motion.section>
+          )}
+
+          {/* Screen 11 */}
+          {screen === 11 && (
+            <motion.section key="s11" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
+              <Step11Commitment onBack={() => goTo(10)} onNext={() => goTo(12)} toast={toastApi} />
+            </motion.section>
+          )}
+
+          {/* Screen 12 */}
+          {screen === 12 && (
             <motion.section
-              key="step5"
+              key="s12"
               initial={{ opacity: 0, x: 22 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -22 }}
               transition={{ duration: 0.38, ease: "easeOut" }}
-              className="flex-1 flex items-center justify-center px-6"
+              className="flex-1"
             >
-              <div className="max-w-md w-full bg-white/10 backdrop-blur-xl border border-white/15 rounded-3xl p-6 shadow-soft text-center">
-                <h2 className="text-2xl font-extrabold" style={{ fontFamily: "var(--font-lora)" }}>
-                  Screen 5 is next: The Finger Test.
-                </h2>
-                <p className="text-white/70 mt-2">
-                  Saved age: <span className="text-white font-semibold">{storedAge}</span>
-                </p>
+              <Step12Analysis onDone={() => goTo(13)} />
+            </motion.section>
+          )}
 
-                <div className="mt-6 flex flex-col gap-3">
-                  <button
-                    onClick={() => setOnboardingStep(4)}
-                    className="w-full h-12 rounded-full bg-white/10 border border-white/15 text-white font-bold active:scale-[0.985] transition-transform"
-                  >
-                    Back to Age
-                  </button>
-                </div>
-              </div>
+          {/* Screen 13 */}
+          {screen === 13 && (
+            <motion.section key="s13" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
+              <Step13PlanReveal onBack={() => goTo(12)} onNext={() => goTo(14)} />
+            </motion.section>
+          )}
+
+          {/* Screen 14 */}
+          {screen === 14 && (
+            <motion.section key="s14" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
+              <Step14Paywall />
             </motion.section>
           )}
         </AnimatePresence>
