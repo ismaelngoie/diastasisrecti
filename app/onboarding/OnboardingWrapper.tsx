@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Ban, Sparkles, Stethoscope, ChevronLeft, CheckCircle2 } from "lucide-react";
@@ -33,7 +33,7 @@ function Logo() {
 function ProgressDots({ step }: { step: number }) {
   return (
     <div className="flex items-center justify-center gap-2">
-      {[1, 2, 3].map((n) => (
+      {[1, 2, 3, 4].map((n) => (
         <div
           key={n}
           className={[
@@ -47,7 +47,6 @@ function ProgressDots({ step }: { step: number }) {
 }
 
 function ShapeArt({ id }: { id: Exclude<VisualShape, null> }) {
-  // Clean, clinical “illustrations” made with simple shapes (no images needed).
   if (id === "pooch") {
     return (
       <svg viewBox="0 0 320 140" className="w-full h-full">
@@ -127,11 +126,6 @@ function ShapeArt({ id }: { id: Exclude<VisualShape, null> }) {
         strokeLinecap="round"
       />
       <path
-        d="M160 28l0 0"
-        stroke="rgba(245,158,11,0.0)"
-        strokeWidth="1"
-      />
-      <path
         d="M140 70c10-16 18-24 20-24s10 8 20 24"
         fill="none"
         stroke="rgba(245,158,11,0.65)"
@@ -197,12 +191,68 @@ function VisualCard({
   );
 }
 
+function TypingIndicator() {
+  return (
+    <div className="flex items-center gap-1.5 px-1 py-1">
+      <div className="w-2 h-2 bg-white/40 rounded-full animate-bounce [animation-delay:-0.3s]" />
+      <div className="w-2 h-2 bg-white/40 rounded-full animate-bounce [animation-delay:-0.15s]" />
+      <div className="w-2 h-2 bg-white/40 rounded-full animate-bounce" />
+    </div>
+  );
+}
+
+function ChatBubble({
+  from,
+  children,
+  typing
+}: {
+  from: "mia" | "user";
+  children?: React.ReactNode;
+  typing?: boolean;
+}) {
+  const isUser = from === "user";
+  return (
+    <div className={`w-full flex ${isUser ? "justify-end" : "justify-start"} mb-4`}>
+      {!isUser && (
+        <div className="w-10 h-10 rounded-full overflow-hidden border border-white/15 bg-white/10 shrink-0 mr-3 mt-auto flex items-center justify-center">
+          <img
+            src="/coachMiaAvatar.png"
+            alt="Mia"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = "none";
+            }}
+          />
+          {/* fallback */}
+          <div className="absolute opacity-0 pointer-events-none" />
+          <span className="text-white/80 font-extrabold text-sm select-none">M</span>
+        </div>
+      )}
+
+      <div
+        className={[
+          "max-w-[86%] px-5 py-3.5 text-[15px] leading-relaxed font-semibold",
+          "shadow-soft",
+          isUser
+            ? "bg-[color:var(--pink)] text-white rounded-2xl rounded-br-none"
+            : "bg-white/10 border border-white/12 text-white rounded-2xl rounded-bl-none"
+        ].join(" ")}
+      >
+        {typing ? <TypingIndicator /> : children}
+      </div>
+    </div>
+  );
+}
+
 export default function OnboardingWrapper() {
   const router = useRouter();
 
   const { isPremium, onboardingStep, setOnboardingStep } = useUserStore();
   const visualShape = useUserStore((s) => s.visualShape);
   const setVisualShape = useUserStore((s) => s.setVisualShape);
+
+  const name = useUserStore((s) => s.name);
+  const setName = useUserStore((s) => s.setName);
 
   const [checkedPremium, setCheckedPremium] = useState(false);
 
@@ -211,6 +261,13 @@ export default function OnboardingWrapper() {
     msg: string;
     tone: ToastTone;
   }>({ show: false, msg: "", tone: "info" });
+
+  // Screen 3 local chat state
+  const [chat, setChat] = useState<Array<{ from: "mia" | "user"; text: string }>>([]);
+  const [miaTyping, setMiaTyping] = useState(false);
+  const [inputName, setInputName] = useState(name || "");
+  const chatBottomRef = useRef<HTMLDivElement | null>(null);
+  const didInitChatRef = useRef(false);
 
   // 🚀 Instant premium redirect (fast path: localStorage)
   useEffect(() => {
@@ -238,6 +295,43 @@ export default function OnboardingWrapper() {
 
   const screen = useMemo(() => onboardingStep, [onboardingStep]);
 
+  const scrollToBottom = () => {
+    setTimeout(() => chatBottomRef.current?.scrollIntoView({ behavior: "smooth" }), 80);
+  };
+
+  // Screen 3: add the two Mia messages (with 800ms delay)
+  useEffect(() => {
+    if (screen !== 3) return;
+    if (didInitChatRef.current) return;
+
+    didInitChatRef.current = true;
+    setChat([]);
+    setMiaTyping(false);
+
+    // Message 1 immediately
+    setChat([
+      {
+        from: "mia",
+        text: "Hi! I'm Coach Mia, your Core Specialist. I've helped 10,000+ women close their gap."
+      }
+    ]);
+    scrollToBottom();
+
+    // Message 2 after 800ms (with typing)
+    setMiaTyping(true);
+    const t = setTimeout(() => {
+      setMiaTyping(false);
+      setChat((prev) => [
+        ...prev,
+        { from: "mia", text: "To start your medical file, what should I call you?" }
+      ]);
+      scrollToBottom();
+    }, 800);
+
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen]);
+
   // --- Screen 1 actions
   const goToScreen2 = () => setOnboardingStep(2);
 
@@ -252,14 +346,31 @@ export default function OnboardingWrapper() {
         msg: "Note: Coning indicates weak tissue tension. We will fix this."
       });
     } else {
-      // Hide warning if they switch away
       setToast({ show: false, tone: "info", msg: "" });
     }
   };
 
   const goToScreen3 = () => {
     setToast({ show: false, tone: "info", msg: "" });
+    didInitChatRef.current = false; // important so chat initializes fresh
     setOnboardingStep(3);
+  };
+
+  // --- Screen 3 actions
+  const submitName = () => {
+    const cleaned = inputName.trim();
+    if (cleaned.length < 2) return;
+
+    setName(cleaned); // ✅ persists instantly
+
+    // show user reply in chat
+    setChat((prev) => [...prev, { from: "user", text: cleaned }]);
+    scrollToBottom();
+
+    // premium feel: tiny pause then move on
+    setTimeout(() => {
+      setOnboardingStep(4);
+    }, 450);
   };
 
   if (!checkedPremium) return null;
@@ -276,9 +387,8 @@ export default function OnboardingWrapper() {
       />
 
       <div className="relative z-10 min-h-screen flex flex-col">
-        {/* top progress */}
         <div className="pt-6 px-6">
-          <ProgressDots step={Math.min(3, screen)} />
+          <ProgressDots step={Math.min(4, screen)} />
         </div>
 
         <AnimatePresence mode="wait">
@@ -367,7 +477,6 @@ export default function OnboardingWrapper() {
               className="flex-1 flex flex-col px-6 pt-8 pb-10"
             >
               <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1">
-                {/* Back */}
                 <button
                   onClick={() => setOnboardingStep(1)}
                   className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors w-fit"
@@ -376,7 +485,6 @@ export default function OnboardingWrapper() {
                   <span className="text-sm font-semibold">Back</span>
                 </button>
 
-                {/* Header */}
                 <div className="mt-6">
                   <h1
                     className="text-[28px] leading-[1.12] font-extrabold text-white"
@@ -391,7 +499,6 @@ export default function OnboardingWrapper() {
                   </p>
                 </div>
 
-                {/* Options */}
                 <div className="mt-7 flex flex-col gap-4">
                   <VisualCard
                     id="pooch"
@@ -416,7 +523,6 @@ export default function OnboardingWrapper() {
                   />
                 </div>
 
-                {/* CTA */}
                 <div className="mt-auto pt-8">
                   <button
                     onClick={goToScreen3}
@@ -439,10 +545,84 @@ export default function OnboardingWrapper() {
             </motion.section>
           )}
 
-          {/* ---------------- Screen 3 placeholder ---------------- */}
+          {/* ---------------- Screen 3: Chat (Name) ---------------- */}
           {screen === 3 && (
             <motion.section
-              key="step3"
+              key="chat-name"
+              initial={{ opacity: 0, x: 22 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -22 }}
+              transition={{ duration: 0.38, ease: "easeOut" }}
+              className="flex-1 flex flex-col px-5 pt-6 pb-6"
+              style={{
+                paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)"
+              }}
+            >
+              <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1">
+                <button
+                  onClick={() => setOnboardingStep(2)}
+                  className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors w-fit"
+                >
+                  <ChevronLeft size={18} />
+                  <span className="text-sm font-semibold">Back</span>
+                </button>
+
+                {/* Chat history */}
+                <div className="flex-1 min-h-0 mt-5 overflow-y-auto no-scrollbar pr-1">
+                  {chat.map((m, idx) => (
+                    <ChatBubble key={idx} from={m.from}>
+                      {m.text}
+                    </ChatBubble>
+                  ))}
+                  {miaTyping && <ChatBubble from="mia" typing />}
+                  <div ref={chatBottomRef} className="h-2" />
+                </div>
+
+                {/* Input panel */}
+                <div className="mt-4 rounded-[28px] border border-white/12 bg-white/8 backdrop-blur-xl shadow-soft p-4">
+                  <div className="text-white/60 text-xs font-semibold mb-2">
+                    Your name (for your medical file)
+                  </div>
+
+                  <input
+                    value={inputName}
+                    onChange={(e) => setInputName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") submitName();
+                    }}
+                    placeholder="Type your name..."
+                    className={[
+                      "w-full h-14 rounded-2xl px-4",
+                      "bg-black/20 border border-white/10",
+                      "text-white text-[18px] font-extrabold",
+                      "placeholder:text-white/30",
+                      "focus:outline-none focus:border-[color:var(--pink)]"
+                    ].join(" ")}
+                    autoFocus
+                  />
+
+                  <button
+                    onClick={submitName}
+                    disabled={inputName.trim().length < 2}
+                    className={[
+                      "mt-3 w-full h-13 h-13 rounded-full font-extrabold text-[16px] transition-all",
+                      inputName.trim().length >= 2
+                        ? "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)] active:scale-[0.985]"
+                        : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed"
+                    ].join(" ")}
+                    style={{ height: 52 }}
+                  >
+                    Continue
+                  </button>
+                </div>
+              </div>
+            </motion.section>
+          )}
+
+          {/* ---------------- Screen 4: Placeholder (Age is next) ---------------- */}
+          {screen === 4 && (
+            <motion.section
+              key="step4"
               initial={{ opacity: 0, x: 22 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -22 }}
@@ -451,26 +631,25 @@ export default function OnboardingWrapper() {
             >
               <div className="max-w-md w-full bg-white/10 backdrop-blur-xl border border-white/15 rounded-3xl p-6 shadow-soft text-center">
                 <h2 className="text-2xl font-extrabold" style={{ fontFamily: "var(--font-lora)" }}>
-                  Screen 3 is next: Coach Mia chat.
+                  Screen 4 is next: Age (wheel picker).
                 </h2>
                 <p className="text-white/70 mt-2">
-                  Your visual selection is saved instantly:{" "}
-                  <span className="text-white font-semibold">{visualShape ?? "none"}</span>
+                  Saved name: <span className="text-white font-semibold">{name || "—"}</span>
                 </p>
 
                 <div className="mt-6 flex flex-col gap-3">
                   <button
-                    onClick={() => setOnboardingStep(2)}
+                    onClick={() => setOnboardingStep(3)}
                     className="w-full h-12 rounded-full bg-white/10 border border-white/15 text-white font-bold active:scale-[0.985] transition-transform"
                   >
-                    Back to Visual Screen
+                    Back to Chat
                   </button>
 
                   <button
-                    onClick={() => setOnboardingStep(1)}
+                    onClick={() => setOnboardingStep(2)}
                     className="w-full h-12 rounded-full bg-white/5 border border-white/10 text-white/80 font-bold active:scale-[0.985] transition-transform"
                   >
-                    Back to Welcome
+                    Back to Visual Screen
                   </button>
                 </div>
               </div>
