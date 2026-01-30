@@ -77,7 +77,7 @@ export type UserState = {
   painLogs: PainLogEntry[];
   workoutCompletions: WorkoutCompletion[];
 
-  // setters (existing)
+  // setters
   setPremium: (val: boolean) => void;
   setJoinDate: (iso: string | null) => void;
   setOnboardingStep: (step: number) => void;
@@ -149,7 +149,7 @@ export const useUserStore = create<UserState>()(
       painLogs: [],
       workoutCompletions: [],
 
-      // existing setters
+      // setters
       setPremium: (val) => {
         // when unlocking premium, also reset bridge so they see the Protocol Generator
         set({ isPremium: val, hasSeenBridge: val ? false : get().hasSeenBridge });
@@ -222,3 +222,9 @@ export const useUserStore = create<UserState>()(
     }
   )
 );
+
+/**
+ * Compatibility export: Step14Paywall imports `useUserData`.
+ * We alias it to the main Zustand hook.
+ */
+export const useUserData = useUserStore;
