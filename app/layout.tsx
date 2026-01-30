@@ -1,5 +1,5 @@
 import "./globals.css";
-import type { Metadata, Viewport } from "next"; // Added Viewport type
+import type { Metadata, Viewport } from "next";
 import { Inter, Lora } from "next/font/google";
 
 const inter = Inter({
@@ -14,14 +14,14 @@ const lora = Lora({
   display: "swap",
 });
 
-// 1. Force the mobile browser to respect the notch area
+// 1. VIEWPORT CONFIG (Critical for Mobile)
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  userScalable: false,
-  viewportFit: "cover", // <--- Puts color behind the Dynamic Island
-  themeColor: "#1A1A26", // <--- Matches your Navy bg
+  userScalable: false, // Prevents accidental zooming on inputs
+  viewportFit: "cover", // Tells the phone to use the space behind the Notch/Island
+  themeColor: "#1A1A26", // Matches your navy background
 };
 
 export const metadata: Metadata = {
@@ -32,19 +32,29 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${lora.variable}`}>
-      <body className="bg-[color:var(--navy)] text-white min-h-screen flex flex-col">
+      {/* BODY: Fixed inset-0 ensures it never moves. 
+        The background color lives here.
+      */}
+      <body className="bg-[color:var(--navy)] text-white fixed inset-0 overflow-hidden">
         
-        {/* MAIN APP CONTAINER (Matches Pelvi Logic) */}
-        {/* - w-full: Full width on mobile
-            - h-[100dvh]: Dynamic Height (fixes Safari address bar jumping)
-            - md:max-w-md: On desktop, we limit width to look like a phone (since this is a vertical app)
-            - md:mx-auto: Centers it on desktop
-            - md:shadow-2xl: Adds depth on desktop
+        {/* APP SHELL: 
+          - h-[100dvh]: Fills exactly the visible screen (minus address bar).
+          - w-full: Full width.
+          - flex-col: Stacks your app vertically.
+          - relative: Positions children correctly.
         */}
-        <div className="w-full h-[100dvh] flex flex-col mx-auto relative md:max-w-md md:h-screen md:max-h-[900px] md:my-auto md:rounded-[40px] md:overflow-hidden md:border-[8px] md:border-white/10 md:shadow-2xl">
-          {children}
+        <div className="w-full h-[100dvh] flex flex-col relative">
+          
+          {/* INNER CONTENT:
+            This is where your OnboardingWrapper lives. 
+            We do NOT add overflow-y-auto here because your OnboardingWrapper 
+            already handles its own scrolling internally.
+          */}
+          <main className="flex-1 w-full h-full relative">
+            {children}
+          </main>
+
         </div>
-        
       </body>
     </html>
   );
