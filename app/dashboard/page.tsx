@@ -18,7 +18,15 @@ export default function DashboardTodayPage() {
   const startDrySeal = useUserStore((s) => s.startDrySeal);
   const setDrySealDayDone = useUserStore((s) => s.setDrySealDayDone);
 
+  // ✅ NEW: completions + isComplete flag
+  const completions = useUserStore((s) => s.workoutCompletions);
+
   const p = useMemo(() => getTodaysPrescription(user), [user]);
+
+  // ✅ NEW: check if today already completed
+  const isComplete = useMemo(() => {
+    return (completions || []).some((c) => c.dateISO === p.dateISO);
+  }, [completions, p.dateISO]);
 
   const noCrunch = (user.fingerGap || 0) > 2;
 
@@ -32,7 +40,10 @@ export default function DashboardTodayPage() {
           <div className="text-white/55 text-[11px] font-extrabold tracking-[0.22em] uppercase">
             Today’s Prescription
           </div>
-          <h1 className="mt-2 text-white text-[26px] leading-[1.08] font-extrabold" style={{ fontFamily: "var(--font-lora)" }}>
+          <h1
+            className="mt-2 text-white text-[26px] leading-[1.08] font-extrabold"
+            style={{ fontFamily: "var(--font-lora)" }}
+          >
             Day {p.dayNumber}: {p.phaseName}
           </h1>
         </div>
@@ -52,7 +63,11 @@ export default function DashboardTodayPage() {
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="text-white font-extrabold text-[16px] truncate">
-              {p.track === "drySeal" ? "Dry Seal Session" : p.track === "release" ? "Pelvic Release Session" : "Core Repair Session"}
+              {p.track === "drySeal"
+                ? "Dry Seal Session"
+                : p.track === "release"
+                  ? "Pelvic Release Session"
+                  : "Core Repair Session"}
             </div>
 
             <div className="text-white/60 text-[12px] font-semibold mt-1">
@@ -79,13 +94,12 @@ export default function DashboardTodayPage() {
           className="mt-4 w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 flex items-center justify-between"
         >
           <div className="text-white/80 text-[13px] font-extrabold">Why this matters</div>
-          <ChevronDown className={["text-white/60 transition-transform", showWhy ? "rotate-180" : ""].join(" ")} size={18} />
+          <ChevronDown
+            className={["text-white/60 transition-transform", showWhy ? "rotate-180" : ""].join(" ")}
+            size={18}
+          />
         </button>
-        {showWhy && (
-          <div className="mt-3 text-white/70 text-[13px] font-semibold leading-relaxed">
-            {p.why}
-          </div>
-        )}
+        {showWhy && <div className="mt-3 text-white/70 text-[13px] font-semibold leading-relaxed">{p.why}</div>}
       </div>
 
       {/* Daily Habits */}
@@ -121,7 +135,10 @@ export default function DashboardTodayPage() {
 
       {/* Completion */}
       <button
+        disabled={isComplete}
         onClick={() => {
+          if (isComplete) return;
+
           addWorkoutCompletion({
             dateISO: p.dateISO,
             track: p.track,
@@ -134,18 +151,19 @@ export default function DashboardTodayPage() {
             setDrySealDayDone(p.dayNumber, true);
           }
         }}
-        className="w-full h-14 rounded-full bg-[color:var(--pink)] text-white font-extrabold shadow-[0_18px_60px_rgba(230,84,115,0.25)] active:scale-[0.985] transition-transform inline-flex items-center justify-center gap-2"
+        className={[
+          "w-full h-14 rounded-full text-white font-extrabold shadow-[0_18px_60px_rgba(230,84,115,0.25)] active:scale-[0.985] transition-transform inline-flex items-center justify-center gap-2",
+          isComplete
+            ? "bg-green-500 text-white shadow-[0_18px_60px_rgba(34,197,94,0.25)] cursor-not-allowed opacity-95"
+            : "bg-[color:var(--pink)]"
+        ].join(" ")}
       >
         <BadgeCheck size={18} />
-        Mark Today Complete
+        {isComplete ? `Day ${p.dayNumber} Complete ✅` : "Mark Today Complete"}
       </button>
 
       {playerUrl && (
-        <SafetyPlayer
-          initialUrl={playerUrl}
-          title={playerTitle}
-          onClose={() => setPlayerUrl(null)}
-        />
+        <SafetyPlayer initialUrl={playerUrl} title={playerTitle} onClose={() => setPlayerUrl(null)} />
       )}
     </main>
   );
