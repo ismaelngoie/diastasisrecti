@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Activity, ShieldAlert, Waves } from "lucide-react";
 import { TissueDepth, useUserStore } from "@/lib/store/useUserStore";
 import type { ToastAPI } from "./Step05FingerTest";
@@ -69,6 +69,10 @@ export default function Step06TissueDepth({
 
   const [selected, setSelected] = useState<TissueDepth>(tissueDepth);
 
+  useEffect(() => {
+    setSelected(tissueDepth);
+  }, [tissueDepth]);
+
   const canContinue = useMemo(() => selected !== null, [selected]);
 
   const pick = (id: Exclude<TissueDepth, null>) => {
@@ -86,9 +90,7 @@ export default function Step06TissueDepth({
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1 px-6 pt-8 pb-10">
-      <button onClick={onBack} className="text-white/70 hover:text-white font-semibold w-fit">
-        ← Back
-      </button>
+      {/* Back button removed (prop kept for compatibility) */}
 
       <div className="mt-6">
         <h1 className="text-white font-extrabold text-[30px] leading-[1.08]" style={{ fontFamily: "var(--font-lora)" }}>
