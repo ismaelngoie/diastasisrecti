@@ -10,7 +10,7 @@ function clamp(n: number, a: number, b: number) {
 
 export default function GapVisualizer({
   fingerGap,
-  tissueDepth
+  tissueDepth,
 }: {
   fingerGap: FingerGap;
   tissueDepth: TissueDepth;
@@ -19,13 +19,11 @@ export default function GapVisualizer({
   const depth = tissueDepth ?? "soft";
 
   const gapPx = useMemo(() => {
-    // 1 finger => 8px, 4+ => 40px
     const map = { 1: 8, 2: 18, 3: 28, 4: 40 } as const;
     return map[gap as 1 | 2 | 3 | 4] ?? 28;
   }, [gap]);
 
   const tone = useMemo(() => {
-    // red -> green as gap closes
     const t = clamp((4 - gap) / 3, 0, 1);
     const r = Math.round(230 - 140 * t);
     const g = Math.round(84 + 130 * t);
@@ -34,19 +32,23 @@ export default function GapVisualizer({
   }, [gap]);
 
   const depthLabel =
-    depth === "firm" ? "Good tension" : depth === "pulse" ? "High-risk tissue" : "Low tension";
+    depth === "firm"
+      ? "Good tension"
+      : depth === "pulse"
+      ? "Unstable / sensitive"
+      : "Needs support";
 
   return (
     <div className="rounded-3xl border border-white/12 bg-white/6 backdrop-blur-xl shadow-soft p-5">
       <div className="flex items-end justify-between">
         <div>
-          <div className="text-white font-extrabold text-[16px]">Gap Visualizer</div>
+          <div className="text-white font-extrabold text-[16px]">Midline Visualizer</div>
           <div className="text-white/60 text-[12px] font-semibold mt-1">
             {fingerGap ? (fingerGap === 4 ? "4+ fingers" : `${fingerGap} fingers`) : "Not measured"} • {depthLabel}
           </div>
         </div>
         <div className="text-[11px] font-extrabold tracking-widest uppercase" style={{ color: tone }}>
-          Tissue State
+          Tissue Quality
         </div>
       </div>
 
@@ -61,7 +63,6 @@ export default function GapVisualizer({
           <rect x="10" y="10" width="300" height="150" rx="26" fill="url(#skin)" />
         </svg>
 
-        {/* Left + Right rectus halves */}
         <motion.div
           className="absolute left-1/2 top-1/2 -translate-y-1/2 w-[120px] h-[110px] rounded-2xl border border-white/12 bg-white/10"
           animate={{ x: -(gapPx / 2) - 128 }}
@@ -73,7 +74,6 @@ export default function GapVisualizer({
           transition={{ type: "spring", stiffness: 120, damping: 18 }}
         />
 
-        {/* Midline (linea alba) */}
         <motion.div
           className="absolute left-1/2 top-[30px] bottom-[30px] rounded-full"
           style={{ background: tone }}
@@ -83,7 +83,7 @@ export default function GapVisualizer({
       </div>
 
       <div className="mt-4 text-white/65 text-[12px] font-semibold leading-relaxed">
-        As your gap measurement improves, the midline narrows and the tissue hue shifts from red → green.
+        As your measurement improves, the midline narrows and the color shifts from red → green.
       </div>
     </div>
   );
