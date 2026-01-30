@@ -9,28 +9,17 @@ import {
   Ban,
   CheckCircle2,
   Sparkles,
-  Shield,
-  Flame,
 } from "lucide-react";
 
-import ButterflyBackground from "@/components/ButterflyBackground";
 import { useUserStore } from "@/lib/store/useUserStore";
 import { getTodaysPrescription } from "@/lib/protocolEngine";
 import SafetyPlayer from "@/components/inside/SafetyPlayer";
 
-type TrackLabel = {
-  title: string;
-  subtitle: string;
-};
+type TrackLabel = { title: string; subtitle: string };
 
 function formatLocalDate(isoYYYYMMDD: string) {
-  // iso is usually "YYYY-MM-DD" — parse safely in local time
   const d = new Date(`${isoYYYYMMDD}T00:00:00`);
-  return d.toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "short",
-    day: "numeric",
-  });
+  return d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
 }
 
 function trackLabel(track: string): TrackLabel {
@@ -52,6 +41,14 @@ function pressureBadge(pressureLabel?: string) {
   return { ring: "ring-white/10", bg: "bg-white/6", text: "text-white/80" };
 }
 
+function shortPressure(label?: string) {
+  const l = (label || "").toLowerCase();
+  if (l.includes("low")) return "Low";
+  if (l.includes("medium")) return "Medium";
+  if (l.includes("high")) return "High";
+  return label || "—";
+}
+
 function Card({
   children,
   className = "",
@@ -62,8 +59,7 @@ function Card({
   return (
     <div
       className={[
-        "rounded-3xl border border-white/12 bg-white/[0.075] backdrop-blur-xl",
-        "shadow-[0_20px_70px_rgba(0,0,0,0.35)]",
+        "rounded-3xl border border-white/12 bg-white/6 backdrop-blur-xl shadow-soft",
         className,
       ].join(" ")}
     >
@@ -91,46 +87,74 @@ function Pill({
       className={[
         "inline-flex items-center gap-2 px-3 py-2 rounded-full border",
         "text-[11px] font-extrabold tracking-[0.18em] uppercase",
-        "max-w-full overflow-hidden",
         map,
       ].join(" ")}
     >
-      <div className="min-w-0 truncate">{children}</div>
+      {children}
     </div>
   );
 }
 
-function Metric({
+function StatTile({
   label,
   value,
-  icon,
+  sub,
 }: {
   label: string;
   value: string;
-  icon?: React.ReactNode;
+  sub?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/25 px-4 py-3 min-w-0 overflow-hidden">
-      <div className="flex items-center gap-2 text-white/45 text-[10px] font-extrabold tracking-[0.22em] uppercase">
-        {icon ? <span className="shrink-0 opacity-80">{icon}</span> : null}
-        <span className="min-w-0 truncate">{label}</span>
+    <div className="min-w-0 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+      <div className="text-white/45 text-[10px] font-extrabold tracking-[0.22em] uppercase truncate">
+        {label}
       </div>
 
-      {/* ✅ Fix: never overflow out of the box */}
-      <div className="mt-1 text-white text-[15px] font-extrabold leading-tight min-w-0 truncate">
-        {value}
+      {/* ✅ overflow-proof value */}
+      <div className="mt-1 min-w-0 flex items-baseline gap-2">
+        <div className="min-w-0 text-white font-extrabold tabular-nums leading-none text-[18px] sm:text-[20px] truncate">
+          {value}
+        </div>
+        {sub ? (
+          <div className="shrink-0 text-white/40 text-[11px] font-semibold leading-none">
+            {sub}
+          </div>
+        ) : null}
       </div>
     </div>
   );
 }
 
-function DividerLabel({ text }: { text: string }) {
+function PrimaryButton({
+  children,
+  onClick,
+  disabled,
+  tone = "pink",
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  tone?: "pink" | "success";
+}) {
+  const cls =
+    tone === "success"
+      ? "bg-emerald-500/90 shadow-[0_18px_60px_rgba(34,197,94,0.20)]"
+      : "bg-[color:var(--pink)] shadow-[0_18px_60px_rgba(230,84,115,0.22)]";
+
   return (
-    <div className="flex items-center gap-3">
-      <div className="h-px flex-1 bg-white/10" />
-      <div className="text-white/45 text-[10px] font-extrabold tracking-[0.22em] uppercase">{text}</div>
-      <div className="h-px flex-1 bg-white/10" />
-    </div>
+    <button
+      disabled={disabled}
+      onClick={onClick}
+      className={[
+        "w-full h-14 rounded-full text-white font-extrabold",
+        "active:scale-[0.985] transition-transform",
+        "inline-flex items-center justify-center gap-2",
+        cls,
+        disabled ? "cursor-not-allowed opacity-90" : "",
+      ].join(" ")}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -183,16 +207,6 @@ export default function DashboardTodayPage() {
     return Math.round((habitsDoneCount / total) * 100);
   }, [habitsDoneCount, habitItems.length]);
 
-  const weeklyCompleted = useMemo(() => {
-    const today = new Date(`${p.dateISO}T00:00:00`);
-    const start = new Date(today);
-    start.setDate(today.getDate() - 6);
-    return (completions || []).filter((c) => {
-      const d = new Date(`${c.dateISO}T00:00:00`);
-      return d >= start && d <= today;
-    }).length;
-  }, [completions, p.dateISO]);
-
   const startSession = (videoIndex = 0) => {
     if (p.track === "drySeal") startDrySeal();
     const v = p.videos[videoIndex];
@@ -202,128 +216,107 @@ export default function DashboardTodayPage() {
     }
   };
 
+  const exerciseCountText = useMemo(() => {
+    const n = p.videos.length;
+    // ✅ short + fits in tile always
+    if (n === 1) return "1";
+    return String(n);
+  }, [p.videos.length]);
+
   return (
-    <main className="relative min-h-[100dvh] w-full bg-[color:var(--navy)] overflow-hidden">
-      {/* ✅ Butterfly background + readability overlay */}
-      <div className="absolute inset-0 z-0">
-        <div className="clinical-noise absolute inset-0 opacity-100 mix-blend-overlay" />
-        <div className="absolute inset-0 pointer-events-none opacity-[0.22] blur-[0.6px]">
-          <ButterflyBackground />
-        </div>
-        {/* readability layers */}
-        <div className="absolute inset-0 bg-black/35" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/35 to-black/60" />
-      </div>
+    <main className="w-full max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* ✅ background (no butterflies) */}
+      <div className="absolute inset-0 -z-10 bg-[color:var(--navy)]" />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-white/0 via-white/0 to-black/25" />
 
-      <div className="relative z-10 w-full max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-10 flex flex-col gap-5">
+      {/* Page grid (content + sticky actions) */}
+      <div className="flex flex-col gap-5 pb-[calc(env(safe-area-inset-bottom)+96px)]">
         {/* Header */}
-        <Card className="p-5">
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <div className="text-white/45 text-[10px] font-extrabold tracking-[0.22em] uppercase">
-                Today • {headerDate}
-              </div>
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="text-white/45 text-[10px] font-extrabold tracking-[0.22em] uppercase">
+              Today • {headerDate}
+            </div>
 
-              <h1
-                className="mt-2 text-white text-[28px] sm:text-[30px] leading-[1.05] font-extrabold"
-                style={{ fontFamily: "var(--font-lora)" }}
+            <h1
+              className="mt-2 text-white text-[28px] sm:text-[32px] leading-[1.05] font-extrabold"
+              style={{ fontFamily: "var(--font-lora)" }}
+            >
+              Day {p.dayNumber}:{" "}
+              <span className="text-white/90">{p.phaseName}</span>
+            </h1>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Pill tone="pink">
+                <Sparkles size={14} className="text-[color:var(--pink)]" />
+                {safeName}&apos;s Protocol
+              </Pill>
+
+              <div
+                className={[
+                  "inline-flex items-center gap-2 px-3 py-2 rounded-full ring-1",
+                  pressureTone.bg,
+                  pressureTone.ring,
+                ].join(" ")}
               >
-                Day {p.dayNumber}: {p.phaseName}
-              </h1>
-
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Pill tone="pink">
-                  <Sparkles size={14} className="text-[color:var(--pink)] shrink-0" />
-                  <span className="truncate">{safeName}&apos;s Recovery Lab</span>
-                </Pill>
-
-                <div
+                <span
                   className={[
-                    "inline-flex items-center gap-2 px-3 py-2 rounded-full ring-1",
-                    "max-w-full overflow-hidden",
-                    pressureTone.bg,
-                    pressureTone.ring,
+                    "text-[11px] font-extrabold tracking-[0.14em] uppercase",
+                    pressureTone.text,
                   ].join(" ")}
                 >
-                  <span className={["text-[11px] font-extrabold tracking-[0.14em] uppercase", pressureTone.text, "truncate"].join(" ")}>
-                    {p.pressureLabel}
-                  </span>
-                </div>
-
-                {noCrunch && (
-                  <Pill tone="danger">
-                    <Ban size={14} className="text-red-200 shrink-0" />
-                    <span className="truncate">No-Crunch Active</span>
-                  </Pill>
-                )}
-
-                {isComplete && (
-                  <Pill tone="success">
-                    <CheckCircle2 size={14} className="text-emerald-200 shrink-0" />
-                    <span className="truncate">Completed</span>
-                  </Pill>
-                )}
+                  {p.pressureLabel}
+                </span>
               </div>
-            </div>
 
-            <button
-              onClick={() => startSession(0)}
-              className={[
-                "shrink-0 h-12 px-4 rounded-2xl",
-                "border border-white/10 bg-white/8 backdrop-blur-xl",
-                "text-white font-extrabold text-[13px]",
-                "active:scale-[0.985] transition-transform",
-                "inline-flex items-center gap-2",
-              ].join(" ")}
-            >
-              <div className="w-8 h-8 rounded-xl bg-[color:var(--pink)]/18 border border-[color:var(--pink)]/28 flex items-center justify-center">
-                <Play className="text-[color:var(--pink)]" fill="currentColor" size={16} />
-              </div>
-              Start
-            </button>
-          </div>
+              {noCrunch && (
+                <Pill tone="danger">
+                  <Ban size={14} className="text-red-200" />
+                  No-Crunch
+                </Pill>
+              )}
 
-          <div className="mt-5 grid grid-cols-3 gap-2 min-w-0">
-            <Metric label="Minutes" value={`${p.minutes}`} icon={<Flame size={12} />} />
-            <Metric label="Exercises" value={`${p.videos.length}`} icon={<BadgeCheck size={12} />} />
-            <Metric label="This Week" value={`${weeklyCompleted}/7`} icon={<Shield size={12} />} />
-          </div>
-
-          <div className="mt-4">
-            <DividerLabel text="SAFETY" />
-            <div className="mt-3 rounded-2xl border border-white/10 bg-black/25 px-4 py-3">
-              <div className="text-white/80 text-[13px] font-extrabold">2 rules for faster healing</div>
-              <ul className="mt-2 space-y-1.5 text-white/65 text-[12px] font-semibold leading-relaxed">
-                <li className="flex gap-2">
-                  <span className="text-[color:var(--pink)] font-extrabold">•</span>
-                  Exhale on effort — never hold your breath.
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-[color:var(--pink)] font-extrabold">•</span>
-                  Stop if you see coning/dom-ing — reduce intensity.
-                </li>
-              </ul>
+              {isComplete && (
+                <Pill tone="success">
+                  <CheckCircle2 size={14} className="text-emerald-200" />
+                  Completed
+                </Pill>
+              )}
             </div>
           </div>
-        </Card>
 
-        {/* Primary Session Card */}
+          {/* Compact play */}
+          <button
+            onClick={() => startSession(0)}
+            className={[
+              "shrink-0 h-12 px-4 rounded-2xl",
+              "border border-white/10 bg-white/8 backdrop-blur-xl",
+              "text-white font-extrabold text-[13px]",
+              "active:scale-[0.985] transition-transform",
+              "inline-flex items-center gap-2",
+            ].join(" ")}
+          >
+            <div className="w-8 h-8 rounded-xl bg-[color:var(--pink)]/18 border border-[color:var(--pink)]/28 flex items-center justify-center">
+              <Play className="text-[color:var(--pink)]" fill="currentColor" size={16} />
+            </div>
+            Play
+          </button>
+        </div>
+
+        {/* Primary Session */}
         <Card className="p-5">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="text-white font-extrabold text-[16px] truncate">{label.title}</div>
-              <div className="text-white/55 text-[12px] font-semibold mt-1">{label.subtitle}</div>
+              <div className="text-white/55 text-[12px] font-semibold mt-1">
+                {label.subtitle}
+              </div>
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Pill tone="neutral">
-                  <span className="truncate">{p.phaseName}</span>
-                </Pill>
-                <Pill tone="pink">
-                  <span className="truncate">Goal: {p.minutes} min</span>
-                </Pill>
-                <Pill tone={noCrunch ? "danger" : "success"}>
-                  <span className="truncate">{noCrunch ? "No Crunch" : "Core Safe"}</span>
-                </Pill>
+              {/* ✅ responsive stat grid + overflow-proof tiles */}
+              <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <StatTile label="Minutes" value={String(p.minutes)} sub="min" />
+                <StatTile label="Exercises" value={exerciseCountText} sub="moves" />
+                <StatTile label="Pressure" value={shortPressure(p.pressureLabel)} />
               </div>
             </div>
 
@@ -342,10 +335,15 @@ export default function DashboardTodayPage() {
             </button>
           </div>
 
-          {/* Exercise List */}
-          <div className="mt-5">
-            <div className="text-white/60 text-[11px] font-extrabold tracking-[0.22em] uppercase">
-              Today&apos;s Exercises
+          {/* Exercises */}
+          <div className="mt-6">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-white/60 text-[11px] font-extrabold tracking-[0.22em] uppercase">
+                Today&apos;s Exercises
+              </div>
+              <div className="text-white/35 text-[11px] font-semibold">
+                Tap any move to play
+              </div>
             </div>
 
             <div className="mt-3 flex flex-col gap-2">
@@ -354,19 +352,25 @@ export default function DashboardTodayPage() {
                   key={`${v.title}-${idx}`}
                   onClick={() => startSession(idx)}
                   className={[
-                    "w-full text-left rounded-2xl border border-white/10 bg-black/25",
+                    "w-full text-left rounded-2xl border border-white/10 bg-black/20",
                     "px-4 py-3",
-                    "flex items-center justify-between gap-3",
+                    "flex items-center gap-3",
                     "active:scale-[0.99] transition-transform",
-                    "overflow-hidden",
                   ].join(" ")}
                 >
-                  <div className="min-w-0">
-                    <div className="text-white/90 text-[13px] font-extrabold min-w-0 truncate">
-                      {idx + 1}. {v.title}
+                  {/* number chip */}
+                  <div className="shrink-0 w-9 h-9 rounded-xl border border-white/10 bg-white/6 flex items-center justify-center">
+                    <div className="text-white/85 font-extrabold text-[13px] tabular-nums">
+                      {idx + 1}
                     </div>
-                    <div className="text-white/45 text-[11px] font-semibold mt-0.5 min-w-0 truncate">
-                      Tap to play safely • follow the cues on screen
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="text-white/90 text-[13px] font-extrabold truncate">
+                      {v.title}
+                    </div>
+                    <div className="text-white/45 text-[11px] font-semibold mt-0.5 truncate">
+                      Follow on-screen cues • keep ribs down • exhale first
                     </div>
                   </div>
 
@@ -378,14 +382,17 @@ export default function DashboardTodayPage() {
             </div>
           </div>
 
-          {/* Why this matters */}
+          {/* Why */}
           <button
             onClick={() => setShowWhy((v) => !v)}
             className="mt-5 w-full rounded-2xl border border-white/10 bg-white/6 px-4 py-3 flex items-center justify-between"
           >
             <div className="text-white/85 text-[13px] font-extrabold">Why this matters</div>
             <ChevronDown
-              className={["text-white/60 transition-transform", showWhy ? "rotate-180" : ""].join(" ")}
+              className={[
+                "text-white/60 transition-transform",
+                showWhy ? "rotate-180" : "",
+              ].join(" ")}
               size={18}
             />
           </button>
@@ -399,7 +406,7 @@ export default function DashboardTodayPage() {
                 transition={{ duration: 0.25, ease: "easeOut" }}
                 className="overflow-hidden"
               >
-                <div className="mt-3 text-white/75 text-[13px] font-semibold leading-relaxed">
+                <div className="mt-3 text-white/70 text-[13px] font-semibold leading-relaxed">
                   {p.why}
                 </div>
               </motion.div>
@@ -407,7 +414,7 @@ export default function DashboardTodayPage() {
           </AnimatePresence>
         </Card>
 
-        {/* Daily Habits */}
+        {/* Habits */}
         <Card className="p-5">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
@@ -421,7 +428,9 @@ export default function DashboardTodayPage() {
               <div className="text-white/45 text-[10px] font-extrabold tracking-[0.22em] uppercase">
                 Progress
               </div>
-              <div className="mt-1 text-white font-extrabold text-[14px]">{habitsPct}%</div>
+              <div className="mt-1 text-white font-extrabold text-[14px] tabular-nums">
+                {habitsPct}%
+              </div>
             </div>
           </div>
 
@@ -439,8 +448,9 @@ export default function DashboardTodayPage() {
                 <label
                   key={h.id}
                   className={[
-                    "group flex items-start gap-3 rounded-2xl border border-white/10 bg-black/25",
-                    "px-4 py-3 cursor-pointer overflow-hidden",
+                    "group flex items-start gap-3 rounded-2xl border border-white/10 bg-black/20",
+                    "px-4 py-3",
+                    "cursor-pointer",
                   ].join(" ")}
                 >
                   <input
@@ -465,8 +475,13 @@ export default function DashboardTodayPage() {
                     )}
                   </div>
 
-                  <div className="flex-1 min-w-0">
-                    <div className={["text-[13px] font-semibold leading-relaxed", done ? "text-white/85" : "text-white/75"].join(" ")}>
+                  <div className="min-w-0 flex-1">
+                    <div
+                      className={[
+                        "text-[13px] font-semibold leading-relaxed break-words",
+                        done ? "text-white/85" : "text-white/75",
+                      ].join(" ")}
+                    >
                       {h.text}
                     </div>
                     <div className="mt-1 text-white/35 text-[11px] font-semibold">
@@ -479,61 +494,70 @@ export default function DashboardTodayPage() {
           </div>
         </Card>
 
-        {/* Completion CTA */}
-        <div className="pt-1">
-          <button
-            disabled={isComplete}
-            onClick={() => {
-              if (isComplete) return;
-
-              addWorkoutCompletion({
-                dateISO: p.dateISO,
-                track: p.track,
-                dayNumber: p.dayNumber,
-                completedAtISO: new Date().toISOString(),
-              });
-
-              if (p.track === "drySeal") {
-                setDrySealDayDone(p.dayNumber, true);
-              }
-            }}
-            className={[
-              "w-full h-14 rounded-full text-white font-extrabold",
-              "shadow-[0_18px_60px_rgba(230,84,115,0.22)]",
-              "active:scale-[0.985] transition-transform",
-              "inline-flex items-center justify-center gap-2",
-              "overflow-hidden",
-              isComplete
-                ? "bg-emerald-500/90 text-white shadow-[0_18px_60px_rgba(34,197,94,0.20)] cursor-not-allowed opacity-95"
-                : "bg-[color:var(--pink)]",
-            ].join(" ")}
-          >
-            <BadgeCheck size={18} />
-            <span className="truncate">
-              {isComplete ? `Day ${p.dayNumber} Complete ✅` : "Mark Today Complete"}
-            </span>
-          </button>
-
-          {todaysCompletion?.completedAtISO && (
-            <div className="mt-3 text-center text-white/40 text-[11px] font-semibold">
-              Completed at{" "}
-              {new Date(todaysCompletion.completedAtISO).toLocaleTimeString("en-US", {
-                hour: "numeric",
-                minute: "2-digit",
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Player Modal */}
-        {playerUrl && (
-          <SafetyPlayer
-            initialUrl={playerUrl}
-            title={playerTitle}
-            onClose={() => setPlayerUrl(null)}
-          />
+        {/* Completed time */}
+        {todaysCompletion?.completedAtISO && (
+          <div className="text-center text-white/40 text-[11px] font-semibold">
+            Completed at{" "}
+            {new Date(todaysCompletion.completedAtISO).toLocaleTimeString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+            })}
+          </div>
         )}
       </div>
+
+      {/* ✅ Sticky bottom actions (feels like an app) */}
+      <div className="fixed inset-x-0 bottom-0 z-40">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[color:var(--navy)]/95 via-[color:var(--navy)]/70 to-transparent" />
+        <div className="relative w-full max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3">
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => startSession(0)}
+              className={[
+                "h-14 rounded-full",
+                "border border-white/10 bg-white/8 backdrop-blur-xl",
+                "text-white font-extrabold",
+                "active:scale-[0.985] transition-transform",
+                "inline-flex items-center justify-center gap-2",
+              ].join(" ")}
+            >
+              <Play size={18} />
+              Play
+            </button>
+
+            <PrimaryButton
+              tone={isComplete ? "success" : "pink"}
+              disabled={isComplete}
+              onClick={() => {
+                if (isComplete) return;
+
+                addWorkoutCompletion({
+                  dateISO: p.dateISO,
+                  track: p.track,
+                  dayNumber: p.dayNumber,
+                  completedAtISO: new Date().toISOString(),
+                });
+
+                if (p.track === "drySeal") {
+                  setDrySealDayDone(p.dayNumber, true);
+                }
+              }}
+            >
+              <BadgeCheck size={18} />
+              {isComplete ? `Day ${p.dayNumber} Complete ✅` : "Mark Complete"}
+            </PrimaryButton>
+          </div>
+        </div>
+      </div>
+
+      {/* Player Modal */}
+      {playerUrl && (
+        <SafetyPlayer
+          initialUrl={playerUrl}
+          title={playerTitle}
+          onClose={() => setPlayerUrl(null)}
+        />
+      )}
     </main>
   );
 }
