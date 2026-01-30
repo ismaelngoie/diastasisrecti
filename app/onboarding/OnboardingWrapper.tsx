@@ -1974,7 +1974,7 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
         if (symptoms.includes("incontinence")) {
           useUserData.getState().startDrySeal();
         }
-        router.push(DASHBOARD_PATH);
+        router.push("/dashboard");
         return;
       }
       setMessage("We found your email, but no active subscription was detected.");
@@ -2427,7 +2427,7 @@ useEffect(() => {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed?.state?.isPremium === true) {
-          router.replace("/dashboard?plan=monthly");
+          router.replace("/dashboard");
           return;
         }
       }
@@ -2437,7 +2437,7 @@ useEffect(() => {
 
   useEffect(() => {
     if (!checkedPremium) return;
-    if (isPremium) router.replace("/dashboard?plan=monthly");
+    if (isPremium) router.replace("/dashboard");
   }, [checkedPremium, isPremium, router]);
 
   useEffect(() => {
