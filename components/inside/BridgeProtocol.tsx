@@ -107,7 +107,6 @@ export default function BridgeProtocol({ onDone }: { onDone: () => void }) {
                 className="mt-6 w-full h-14 rounded-full bg-gradient-to-r from-[color:var(--pink)] to-[#C23A5B] text-white font-extrabold text-[17px] shadow-[0_15px_40px_rgba(230,84,115,0.4)] active:scale-[0.98] transition-all inline-flex items-center justify-center gap-3"
                 onClick={onDone}
               >
-                <LockOpen size={20} />
                 Start My Diastasis Recti Repair
               </motion.button>
             )}
