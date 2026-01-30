@@ -2599,7 +2599,7 @@ export default function OnboardingWrapper() {
                       className="text-center text-[34px] leading-[1.08] font-extrabold text-white drop-shadow-sm"
                       style={{ fontFamily: "var(--font-lora)" }}
                     >
-                      Heal Your Core Separation.
+                      Heal Your Abdominal Separation.
                       <br />
                       Without Surgery.
                     </h1>
