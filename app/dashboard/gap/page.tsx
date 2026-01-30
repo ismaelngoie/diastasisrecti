@@ -30,7 +30,6 @@ export default function GapLabPage() {
     setTissueDepth(depth);
     addMeasurement({ dateISO, fingerGap: gap, tissueDepth: depth });
 
-    // mark milestone check-in done (7 or 14 depending on where they are)
     setCheckinDone(p.cycleKey, p.checkinMilestoneDay, true);
   };
 
@@ -38,20 +37,23 @@ export default function GapLabPage() {
     <main className="flex flex-col gap-5">
       <div>
         <div className="text-white/55 text-[11px] font-extrabold tracking-[0.22em] uppercase">
-          Gap Lab
+          Midline Check-in
         </div>
-        <h1 className="mt-2 text-white text-[26px] leading-[1.08] font-extrabold" style={{ fontFamily: "var(--font-lora)" }}>
-          Make healing visible
+        <h1
+          className="mt-2 text-white text-[26px] leading-[1.08] font-extrabold"
+          style={{ fontFamily: "var(--font-lora)" }}
+        >
+          Track your midline
         </h1>
         <div className="text-white/60 text-[13px] font-semibold mt-2 leading-relaxed">
-          Enter your finger gap + depth. We’ll unlock progress checkpoints.
+          Enter your finger gap + tissue feel. We unlock progress checkpoints every 7 days.
         </div>
       </div>
 
       <GapVisualizer fingerGap={fingerGap} tissueDepth={tissueDepth} />
 
       <div className="rounded-3xl border border-white/12 bg-white/6 backdrop-blur-xl shadow-soft p-5">
-        <div className="text-white font-extrabold text-[16px]">New Measurement</div>
+        <div className="text-white font-extrabold text-[16px]">New Check-in</div>
 
         <div className="mt-4 grid grid-cols-2 gap-3">
           <select
@@ -91,16 +93,28 @@ export default function GapLabPage() {
       <div className="rounded-3xl border border-white/12 bg-white/6 backdrop-blur-xl shadow-soft p-5">
         <div className="text-white font-extrabold text-[16px]">History</div>
         <div className="mt-3 flex flex-col gap-2">
-          {history.slice().reverse().slice(0, 10).map((h) => (
-            <div key={h.dateISO} className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-              <div className="text-white font-extrabold text-[13px]">
-                {h.dateISO}: {h.fingerGap === 4 ? "4+ fingers" : `${h.fingerGap} fingers`}
+          {history
+            .slice()
+            .reverse()
+            .slice(0, 10)
+            .map((h) => (
+              <div
+                key={h.dateISO}
+                className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3"
+              >
+                <div className="text-white font-extrabold text-[13px]">
+                  {h.dateISO}: {h.fingerGap === 4 ? "4+ fingers" : `${h.fingerGap} fingers`}
+                </div>
+                <div className="text-white/60 text-[12px] font-semibold mt-1">
+                  Tissue feel: {h.tissueDepth}
+                </div>
               </div>
-              <div className="text-white/60 text-[12px] font-semibold mt-1">Depth: {h.tissueDepth}</div>
-            </div>
-          ))}
+            ))}
+
           {history.length === 0 && (
-            <div className="text-white/50 text-[12px] font-semibold">No check-ins yet.</div>
+            <div className="text-white/50 text-[12px] font-semibold">
+              No check-ins yet.
+            </div>
           )}
         </div>
       </div>
