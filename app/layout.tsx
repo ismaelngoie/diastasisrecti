@@ -14,14 +14,13 @@ const lora = Lora({
   display: "swap",
 });
 
-// 1. VIEWPORT CONFIG (Critical for Mobile)
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  userScalable: false, // Prevents accidental zooming on inputs
-  viewportFit: "cover", // Tells the phone to use the space behind the Notch/Island
-  themeColor: "#1A1A26", // Matches your navy background
+  userScalable: false,
+  viewportFit: "cover", 
+  themeColor: "#1A1A26",
 };
 
 export const metadata: Metadata = {
@@ -32,27 +31,20 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${lora.variable}`}>
-      {/* BODY: Fixed inset-0 ensures it never moves. 
-        The background color lives here.
-      */}
+      {/* 1. BODY IS LOCKED (No Scroll) */}
       <body className="bg-[color:var(--navy)] text-white fixed inset-0 overflow-hidden">
         
-        {/* APP SHELL: 
-          - h-[100dvh]: Fills exactly the visible screen (minus address bar).
-          - w-full: Full width.
-          - flex-col: Stacks your app vertically.
-          - relative: Positions children correctly.
-        */}
+        {/* 2. OUTER FRAME (Fills screen exactly) */}
         <div className="w-full h-[100dvh] flex flex-col relative">
           
-          {/* INNER CONTENT:
-            This is where your OnboardingWrapper lives. 
-            We do NOT add overflow-y-auto here because your OnboardingWrapper 
-            already handles its own scrolling internally.
+          {/* 3. INNER SCROLL (The "Moving" Part) 
+              This div handles all scrolling. It sits inside the fixed body.
+              - overflow-y-auto: Enables scrolling
+              - no-scrollbar: Hides the bar visually
           */}
-          <main className="flex-1 w-full h-full relative">
+          <div className="flex-1 w-full h-full overflow-y-auto no-scrollbar">
             {children}
-          </main>
+          </div>
 
         </div>
       </body>
