@@ -8,7 +8,7 @@ const tabs = [
   { href: "/dashboard", label: "Today", icon: Home },
   { href: "/dashboard/plan", label: "Plan", icon: CalendarDays },
   { href: "/dashboard/gap", label: "Check-in", icon: Activity },
-  { href: "/dashboard/library", label: "Exercises", icon: Library },
+  { href: "/dashboard/library", label: "Library", icon: Library },
   { href: "/dashboard/coach", label: "Coach", icon: MessageCircle },
 ];
 
