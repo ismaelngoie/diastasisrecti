@@ -1,59 +1,54 @@
-// functions/api/create-payment-intent.ts
-import { json, stripeRequest } from "../_stripe";
+import Stripe from 'stripe';
 
-type Env = {
-  STRIPE_SECRET_KEY: string;
-  STRIPE_PRICE_ID: string;
-};
-
-export async function onRequestPost(context: { env: Env }) {
+export async function onRequestPost(context: any) {
   try {
-    const { env } = context;
+    // 1. Initialize Stripe with the key from your environment variables
+    if (!context.env.STRIPE_SECRET_KEY) {
+      return new Response(JSON.stringify({ error: "Missing STRIPE_SECRET_KEY" }), { status: 500 });
+    }
+    
+    const stripe = new Stripe(context.env.STRIPE_SECRET_KEY);
+    const priceId = context.env.STRIPE_PRICE_ID;
 
-    if (!env.STRIPE_PRICE_ID) {
-      return json({ error: "Missing STRIPE_PRICE_ID" }, { status: 500 });
+    if (!priceId) {
+      return new Response(JSON.stringify({ error: "Missing STRIPE_PRICE_ID" }), { status: 500 });
     }
 
-    // 1) Create customer
-    const customer = await stripeRequest<{ id: string }>(env, "/customers", {
-      method: "POST",
-      body: new URLSearchParams(),
+    // 2. Create a Customer
+    const customer = await stripe.customers.create();
+
+    // 3. Create the Subscription
+    // We automatically expand the latest_invoice.payment_intent to get the client_secret
+    const subscription = await stripe.subscriptions.create({
+      customer: customer.id,
+      items: [{
+        price: priceId,
+      }],
+      payment_behavior: 'default_incomplete',
+      payment_settings: { save_default_payment_method: 'on_subscription' },
+      expand: ['latest_invoice.payment_intent'],
     });
 
-    // 2) Create subscription
-    const body = new URLSearchParams();
-    body.set("customer", customer.id);
-    body.set("items[0][price]", env.STRIPE_PRICE_ID);
-    body.set("payment_behavior", "default_incomplete");
-    body.set("payment_settings[save_default_payment_method]", "on_subscription");
-    
-    // FIXED: Use explicit index [0] to ensure Stripe expands it
-    body.set("expand[0]", "latest_invoice.payment_intent");
-
-    const sub = await stripeRequest<any>(env, "/subscriptions", {
-      method: "POST",
-      body,
-    });
-
-    // 3) Extract Client Secret
-    const clientSecret =
-      sub?.latest_invoice?.payment_intent?.client_secret ?? null;
+    // 4. Return the Client Secret to the frontend
+    // @ts-ignore
+    const clientSecret = subscription.latest_invoice?.payment_intent?.client_secret;
 
     if (!clientSecret) {
-      // DEBUGGING: Log why it failed
-      console.error("Stripe Subscription Response:", JSON.stringify(sub, null, 2));
-
-      // Check for Trial Period issue
-      if (sub.status === 'trialing') {
-         return json({ error: "Price ID has a trial period. No payment is due immediately." }, { status: 400 });
-      }
-
-      return json({ error: "Stripe did not return a client secret. Check logs." }, { status: 500 });
+      return new Response(JSON.stringify({ error: "Stripe failed to generate a client secret." }), { 
+        status: 500,
+        headers: { "Content-Type": "application/json" }
+      });
     }
 
-    return json({ clientSecret });
+    return new Response(JSON.stringify({ clientSecret }), {
+      headers: { "Content-Type": "application/json" },
+    });
+
   } catch (err: any) {
-    console.error("Create Payment Intent Error:", err);
-    return json({ error: err?.message || "Unknown error" }, { status: 500 });
+    console.error("Stripe Error:", err.message);
+    return new Response(JSON.stringify({ error: err.message || "Unknown error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }
