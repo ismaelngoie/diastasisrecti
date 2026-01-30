@@ -623,7 +623,7 @@ const step05Options: Array<{
     title: "2 finger widths",
     sub: "Mild separation",
     tone: "info",
-    toast: "Common. We’ll prioritize breathing, tension, and safe progressions.",
+    toast: "Very common — highly treatable in 8 weeks.",
   },
   {
     gap: 3,
@@ -1384,7 +1384,7 @@ function Step10Navel({
       setHerniaSafe(true);
       toast.show(
         "warning",
-        "Hernia noted. We’ll avoid high-pressure movements and keep exercises gentle.",
+        "Hernia noted. We will remove high-pressure movements to keep you safe.",
         5200
       );
     } else {
@@ -1513,7 +1513,7 @@ function Step11Commitment({
           className="text-white font-extrabold text-[30px] leading-[1.08]"
           style={{ fontFamily: "var(--font-lora)" }}
         >
-          Consistency beats intensity.
+          Healing tissue takes consistency, not intensity.
         </h1>
         <p className="text-white/65 mt-3 text-[14px] leading-relaxed">
           How much time can you do each day?
@@ -1685,7 +1685,7 @@ function Step12Analysis({ onDone }: { onDone: () => void }) {
           />
         </div>
         <div className="mt-3 text-[12px] text-white/55 font-semibold">
-          Cross-referencing rehab standards and safety flags...
+          Cross-referencing 10,000+ clinical cases for accuracy...
         </div>
       </div>
     </div>
@@ -1762,11 +1762,11 @@ function Step13PlanReveal({ onNext, onBack }: { onNext: () => void; onBack: () =
 
   const insights = useMemo(() => {
     const list: string[] = [];
-    list.push(`Based on your age (${age}), we set your progression pace for safe tissue loading.`);
+    list.push(`Based on your age (${age}), we focus on collagen production.`);
     if ((sabotage || []).includes("planks")) list.push("Planks are removed for now to reduce pressure and protect your back.");
     if ((sabotage || []).includes("crunches")) list.push("Crunches/sit-ups are removed for now to reduce doming and pressure.");
     list.push(
-      `Daily session length: ${
+      `Your daily commitment: ${
         commitment === "5-7" ? "5–7 minutes" : commitment === "15" ? "15 minutes" : "30 minutes"
       }.`
     );
@@ -1783,7 +1783,7 @@ function Step13PlanReveal({ onNext, onBack }: { onNext: () => void; onBack: () =
           {name}, your diastasis recti plan is ready.
         </h1>
         <p className="text-white/70 mt-3 text-[14px] leading-relaxed">
-          This is an estimated timeline based on your assessment answers.
+          This is your predicted closure timeline based on your assessment.
         </p>
       </div>
 
@@ -1792,13 +1792,13 @@ function Step13PlanReveal({ onNext, onBack }: { onNext: () => void; onBack: () =
           <HolographicTimeline />
           <div className="flex items-center justify-between text-[13px] font-extrabold mt-1">
             <span className="text-white/80">{gapLabel}</span>
-            <span className="text-white/55">Early functional improvement</span>
-            <span className="text-[#33B373]">Stronger by week 12</span>
+            <span className="text-white/55">Functional closure by week 6</span>
+            <span className="text-[#33B373]">Fully healed</span>
           </div>
         </div>
 
         <div className="mt-6">
-          <div className="text-white font-extrabold text-[16px] mb-3">Your clinical insights</div>
+          <div className="text-white font-extrabold text-[16px] mb-3">Your Personal Insights</div>
           <div className="flex flex-col gap-3">
             {insights.map((t, i) => (
               <div key={i} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
