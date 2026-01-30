@@ -1,178 +1,513 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Lock, Star, X } from "lucide-react";
-import { useUserStore } from "@/lib/store/useUserStore";
+import React, { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { useUserData } from '@/lib/store/useUserStore';
+import { 
+  Star, ChevronDown, ChevronUp, Activity, 
+  ShieldCheck, Brain, X, Loader2, Lock, Mail, 
+  CheckCircle2, Stethoscope
+} from 'lucide-react';
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements, PaymentElement, LinkAuthenticationElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { AnimatePresence, motion } from "framer-motion";
 
-const REVIEWS = [
-  "Sara closed her 3-finger gap in 9 weeks…",
-  "I stopped coning in 12 days. I cried.",
-  "My back pain finally relaxed by week 2.",
-  "I can lift my baby without bracing fear.",
-  "5 minutes a day actually worked."
+// --- STRIPE SETUP ---
+// Ensure this key is in your .env.local
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+
+// --- ASSETS (Reusing Pelvi Assets for Consistency) ---
+const REVIEW_IMAGES = [
+  "/review9.png", 
+  "/review1.png", 
+  "/review5.png", 
+  "/review4.png", 
+  "/review2.png"
 ];
 
-function ReviewTicker() {
-  const [i, setI] = React.useState(0);
+// --- MEDICAL FEATURES ---
+const MEDICAL_FEATURES = [
+  { 
+    icon: <Brain size={24} className="text-white" />, 
+    title: "AI-Driven Protocol", 
+    desc: "Adapts to your gap width daily." 
+  },
+  { 
+    icon: <ShieldCheck size={24} className="text-white" />, 
+    title: "Diastasis Safe", 
+    desc: "Zero crunches. Zero bulging." 
+  },
+  { 
+    icon: <Stethoscope size={24} className="text-white" />, 
+    title: "Physio Approved", 
+    desc: "Clinical logic, home comfort." 
+  },
+  { 
+    icon: <Activity size={24} className="text-white" />, 
+    title: "Tissue Tracking", 
+    desc: "Visual trackers for gap closure." 
+  }
+];
 
-  React.useEffect(() => {
-    const t = setInterval(() => setI((p) => (p + 1) % REVIEWS.length), 2600);
-    return () => clearInterval(t);
-  }, []);
+// --- DIASTASIS SPECIFIC REVIEWS ---
+const REVIEWS = [
+  { name: "Sarah W.", text: "I closed my 3-finger gap in 9 weeks. No surgery.", image: "/review9.png" },
+  { name: "Michelle T.", text: "The 'coning' stopped after 12 days. Finally safe.", image: "/review1.png" },
+  { name: "Chloe N.", text: "My back pain vanished when my core reconnected.", image: "/review5.png" },
+  { name: "Olivia G.", text: "Better than my $150 physio visits. Truly.", image: "/review4.png" },
+  { name: "Jess P.", text: "I can lift my baby without fear now.", image: "/review2.png" }
+];
 
-  return (
-    <div className="w-full overflow-hidden h-9 relative">
-      {REVIEWS.map((r, idx) => (
-        <div
-          key={idx}
-          className="absolute inset-0 flex items-center justify-center text-center text-white/85 text-[13px] font-semibold transition-all duration-500"
-          style={{ opacity: idx === i ? 1 : 0, transform: `translateY(${(idx - i) * 12}px)` }}
-        >
-          “{r}”
-        </div>
-      ))}
-    </div>
-  );
-}
+// --- COMPONENTS ---
 
-function CheckoutModal({ onClose, onPay }: { onClose: () => void; onPay: (email: string) => void }) {
-  const [email, setEmail] = useState("");
-
-  return (
-    <div className="fixed inset-0 z-[90] bg-black/80 backdrop-blur-sm flex items-center justify-center p-5" onClick={onClose}>
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-sm rounded-3xl border border-white/12 bg-[#0F0F17] p-6 shadow-[0_40px_120px_rgba(0,0,0,0.65)]"
-      >
-        <div className="flex items-center justify-between mb-5">
-          <div className="text-white font-extrabold text-[18px]">Secure Checkout</div>
-          <button onClick={onClose} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center">
-            <X className="text-white" size={18} />
-          </button>
-        </div>
-
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-          <div className="text-white font-extrabold text-[16px]">$24.99 / month</div>
-          <div className="text-white/60 text-[12px] font-semibold mt-1">Cancel anytime • 100% Money-back guarantee</div>
-        </div>
-
-        <div className="mt-4">
-          <label className="text-white/70 text-[12px] font-semibold">Email (for your plan)</label>
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="name@example.com"
-            className="mt-2 w-full h-12 rounded-2xl bg-black/30 border border-white/10 px-4 text-white font-semibold outline-none focus:border-[color:var(--pink)]"
-          />
-        </div>
-
-        <button
-          onClick={() => onPay(email)}
-          className="mt-5 w-full h-12 rounded-full bg-gradient-to-r from-[color:var(--pink)] to-[#D959E8] text-white font-extrabold shadow-[0_18px_60px_rgba(230,84,115,0.25)] active:scale-[0.985] transition-transform"
-        >
-          Pay $24.99
-        </button>
-
-        <div className="mt-3 text-center text-white/40 text-[11px] font-semibold">
-          (Demo checkout UI — connects to Stripe next)
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default function Step14Paywall() {
+const CheckoutForm = ({ onClose }: { onClose: () => void }) => {
+  const stripe = useStripe();
+  const elements = useElements();
   const router = useRouter();
-  const name = useUserStore((s) => s.name) || "Your";
-  const setPremium = useUserStore((s) => s.setPremium);
-  const setJoinDate = useUserStore((s) => s.setJoinDate);
+  const { setPremium, setJoinDate, setName } = useUserStore();
+  
+  const [message, setMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState(''); 
 
-  const [showCheckout, setShowCheckout] = useState(false);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const stars = useMemo(() => Array.from({ length: 5 }), []);
+    if (!stripe || !elements) return;
 
-  const handlePay = (email: string) => {
-    // Demo unlock (replace with Stripe later)
-    setPremium(true);
-    setJoinDate(new Date().toISOString());
-    router.replace("/dashboard");
+    setIsLoading(true);
+
+    // 1. Create Payment Intent via API
+    // (In a real app, you fetch clientSecret here or pass it in props)
+    // For this snippet, we assume clientSecret is passed or handled via elements.
+    
+    const { error, paymentIntent } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: `${window.location.origin}/dashboard`, 
+        receipt_email: email,
+      },
+      redirect: "if_required",
+    });
+
+    if (error) {
+      setMessage(error.message || "Payment failed");
+      setIsLoading(false);
+    } else if (paymentIntent && paymentIntent.status === "succeeded") {
+      // Success Logic
+      setPremium(true);
+      setJoinDate(new Date().toISOString());
+      router.push('/dashboard');
+    } else {
+      setMessage("An unexpected error occurred.");
+      setIsLoading(false);
+    }
+  };
+  
+  const paymentElementOptions = {
+    layout: "tabs" as const,
+    fields: {
+      phone: 'never' as const, 
+    }
   };
 
   return (
-    <div className="relative w-full min-h-screen overflow-hidden">
+    <form 
+      onClick={(e) => e.stopPropagation()}
+      onSubmit={handleSubmit} 
+      className="w-full max-w-md bg-[#1A1A26] p-6 rounded-[32px] border border-white/10 shadow-[0_50px_120px_rgba(0,0,0,0.7)] animate-in slide-in-from-bottom-10 fade-in duration-500 relative my-auto mx-4"
+    >
+      <button 
+        type="button" 
+        onClick={onClose} 
+        className="absolute top-5 right-5 p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors z-10"
+      >
+        <X size={20} className="text-white/70" />
+      </button>
+
+      <div className="mb-6">
+        <h3 className="text-xl font-extrabold text-white mb-1" style={{fontFamily: 'var(--font-lora)'}}>Secure Checkout</h3>
+        <p className="text-sm text-white/50 font-medium">Total due: $24.99 / month</p>
+      </div>
+      
+      <div className="flex flex-col gap-4">
+        <div className="text-white">
+          <LinkAuthenticationElement 
+            id="link-authentication-element"
+            onChange={(e: any) => setEmail(e.value.email)}
+          />
+        </div>
+        <PaymentElement id="payment-element" options={paymentElementOptions} />
+      </div>
+      
+      {message && <div className="text-red-300 text-sm mt-4 bg-red-500/10 p-3 rounded-xl border border-red-500/20 font-semibold">{message}</div>}
+
+      <button 
+        disabled={isLoading || !stripe || !elements} 
+        id="submit"
+        className="mt-6 w-full h-14 rounded-full bg-gradient-to-r from-[color:var(--pink)] to-[#C23A5B] text-white font-extrabold text-[17px] shadow-[0_10px_40px_rgba(230,84,115,0.4)] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+      >
+        {isLoading ? <Loader2 className="animate-spin" /> : "Unlock My Protocol ($24.99)"}
+      </button>
+      
+      <div className="flex items-center justify-center gap-2 mt-4 text-white/30 text-[11px] font-semibold">
+        <Lock size={12} />
+        256-bit SSL Secure Payment
+      </div>
+    </form>
+  );
+};
+
+// --- RESTORE MODAL ---
+const RestoreModal = ({ onClose }: { onClose: () => void }) => {
+  const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const { setPremium, setJoinDate, setName } = useUserStore();
+
+  const handleRestoreSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.includes("@")) {
+      alert("Please enter a valid email address.");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Mock API call - replace with real endpoint
+      const res = await fetch('/api/restore-purchase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email })
+      });
+
+      const data = await res.json();
+
+      if (data.isPremium) {
+        setPremium(true);
+        setJoinDate(new Date().toISOString()); 
+        if (data.customerName) setName(data.customerName);
+        router.push('/dashboard');
+      } else {
+        alert("We found your email, but no active subscription was detected.");
+        setIsLoading(false);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Unable to verify purchase. Please check your internet connection.");
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div 
+      className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300"
+      onClick={onClose}
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-sm bg-[#1A1A26] border border-white/10 rounded-[32px] p-6 shadow-2xl"
+      >
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-xl font-extrabold text-white" style={{fontFamily: 'var(--font-lora)'}}>Restore Purchase</h3>
+          <button onClick={onClose} className="p-2 bg-white/5 rounded-full hover:bg-white/10"><X size={18} className="text-white/70" /></button>
+        </div>
+
+        <p className="text-white/60 text-sm mb-6 font-medium leading-relaxed">
+          Enter the email address used at checkout. We'll find your active medical plan.
+        </p>
+
+        <form onSubmit={handleRestoreSubmit} className="flex flex-col gap-4">
+          <div className="relative">
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={18} />
+            <input 
+              type="email" 
+              placeholder="name@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full h-12 bg-black/20 border border-white/10 rounded-2xl pl-12 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:border-[color:var(--pink)] transition-colors font-semibold"
+              autoFocus
+            />
+          </div>
+
+          <button 
+            disabled={isLoading}
+            className="w-full h-12 bg-white/10 border border-white/10 hover:bg-white/15 text-white font-bold rounded-2xl transition-all flex items-center justify-center gap-2"
+          >
+            {isLoading ? <Loader2 className="animate-spin" /> : "Find My Plan"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// --- MAIN SCREEN ---
+export default function Step14Paywall() {
+  const router = useRouter();
+  const { name, setPremium, setJoinDate } = useUserStore();
+  
+  // State
+  const [activeFeatureIndex, setActiveFeatureIndex] = useState(0);
+  const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
+  const [userCount, setUserCount] = useState(10150);
+  const [showContent, setShowContent] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
+  const [isFaqOpen, setIsFaqOpen] = useState(false); 
+  
+  // Modals
+  const [clientSecret, setClientSecret] = useState("");
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [showRestoreModal, setShowRestoreModal] = useState(false);
+  const [isButtonLoading, setIsButtonLoading] = useState(false);
+
+  const displayReview = REVIEWS[currentReviewIndex];
+
+  // Effects
+  useEffect(() => {
+    setShowContent(true);
+  }, []);
+
+  useEffect(() => {
+    const featureTimer = setInterval(() => setActiveFeatureIndex((p) => (p + 1) % MEDICAL_FEATURES.length), 3000);
+    const reviewTimer = setInterval(() => setCurrentReviewIndex((p) => (p + 1) % REVIEWS.length), 5000);
+    return () => { clearInterval(featureTimer); clearInterval(reviewTimer); };
+  }, []);
+
+  useEffect(() => {
+    if (!showContent) return;
+    let start = 10150;
+    const timer = setInterval(() => {
+      start += 2;
+      if (start >= 10243) { setUserCount(10243); clearInterval(timer); }
+      else setUserCount(start);
+    }, 50);
+    return () => clearInterval(timer);
+  }, [showContent]);
+
+  // Actions
+  const handleStartPlan = async () => {
+    setIsButtonLoading(true);
+
+    if (!clientSecret) {
+      try {
+        const res = await fetch("/api/create-payment-intent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        if (!res.ok) throw new Error("Payment Init Failed");
+
+        const data = await res.json();
+        setClientSecret(data.clientSecret);
+      } catch (err) {
+        console.error(err);
+        // Fallback for demo if API fails
+        setClientSecret("demo_secret"); 
+      }
+    }
+    
+    setIsButtonLoading(false);
+    setShowCheckoutModal(true);
+  };
+
+  const stripeAppearance = {
+    theme: 'night' as const,
+    variables: {
+      colorPrimary: '#E65473',
+      colorBackground: '#1A1A26',
+      colorText: '#ffffff',
+      colorDanger: '#df1b41',
+      fontFamily: 'Inter, system-ui, sans-serif',
+      borderRadius: '16px',
+    },
+  };
+
+  return (
+    <div className="relative w-full h-full flex flex-col bg-[#1A1A26] overflow-hidden">
+      
+      {/* 1. Video Background */}
       <div className="absolute inset-0 z-0">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="w-full h-full object-cover opacity-70"
+        <video 
+          autoPlay 
+          loop 
+          muted 
+          playsInline 
+          preload="auto"
+          onLoadedData={() => setVideoLoaded(true)}
+          className={`w-full h-full object-cover transition-opacity duration-1000 ${videoLoaded ? 'opacity-60' : 'opacity-0'}`}
         >
           <source src="/paywall_video.mp4" type="video/mp4" />
         </video>
-        <div className="absolute inset-0 bg-black/45" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/15" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1A1A26]/30 via-transparent to-[#1A1A26]" />
+        <div className="absolute inset-0 bg-black/40" />
       </div>
 
-      <div className="relative z-10 min-h-screen flex flex-col px-6 pt-12 pb-10">
-        <div className="text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/15 bg-white/10 backdrop-blur-md">
-            <Lock className="text-white/80" size={16} />
-            <span className="text-white/80 text-[12px] font-extrabold tracking-wide uppercase">Plan Locked</span>
-          </div>
-
-          <h1 className="mt-6 text-white font-extrabold text-[34px] leading-[1.04]" style={{ fontFamily: "var(--font-lora)" }}>
-            {name}, your Core Repair plan is ready.
-          </h1>
-
-          <p className="text-white/70 mt-3 text-[14px] font-semibold">
-            Join 10,200+ women who closed their gap.
-          </p>
-
-          <div className="mt-4 flex items-center justify-center gap-2">
-            <div className="flex items-center gap-1 text-yellow-400">
-              {stars.map((_, i) => (
-                <Star key={i} size={16} fill="currentColor" />
-              ))}
-            </div>
-            <div className="text-white/70 text-[12px] font-semibold">4.9 average rating</div>
-          </div>
-
-          <div className="mt-5">
-            <ReviewTicker />
+      {/* 2. Scrollable Content */}
+      <div className={`z-10 flex-1 flex flex-col overflow-y-auto no-scrollbar pt-14 pb-40 px-6 transition-all duration-700 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+        
+        {/* Header Badge */}
+        <div className="flex justify-center mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/10 backdrop-blur-md shadow-lg">
+            <Lock size={14} className="text-white/90" />
+            <span className="text-[11px] font-extrabold text-white tracking-widest uppercase">Clinical Protocol Locked</span>
           </div>
         </div>
 
-        <div className="mt-auto">
-          <div className="rounded-3xl border border-white/14 bg-white/10 backdrop-blur-xl shadow-[0_30px_120px_rgba(0,0,0,0.55)] p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-white font-extrabold text-[18px]">$24.99 / month</div>
-                <div className="text-white/60 text-[12px] font-semibold mt-1">
-                  100% Money-back Guarantee • Cancel anytime
-                </div>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-[color:var(--pink)]/15 border border-[color:var(--pink)]/25 flex items-center justify-center">
-                <Lock className="text-[color:var(--pink)]" size={20} />
-              </div>
-            </div>
+        {/* Headline */}
+        <h1 className="text-[34px] font-extrabold text-white text-center mb-4 leading-[1.1] drop-shadow-xl" style={{fontFamily: 'var(--font-lora)'}}>
+          <span className="text-white/90">{name}, your repair</span><br/>
+          <span className="text-[color:var(--pink)]">protocol is ready.</span>
+        </h1>
 
-            <button
-              onClick={() => setShowCheckout(true)}
-              className="mt-4 w-full h-[56px] rounded-full bg-[color:var(--pink)] text-white font-extrabold text-[17px] shadow-[0_18px_60px_rgba(230,84,115,0.30)] active:scale-[0.985] transition-transform"
-            >
-              Start 7-Day Repair Plan
-            </button>
+        <p className="text-center text-white/70 text-[15px] font-medium leading-relaxed mb-8 max-w-xs mx-auto">
+          Join <span className="text-white font-bold">{userCount.toLocaleString()}+ women</span> who closed their gap without surgery.
+        </p>
 
-            <div className="mt-3 text-center text-white/45 text-[11px] font-semibold">
-              Cancel anytime • Immediate access • Safe progression
-            </div>
+        {/* Medical Features Carousel */}
+        <div className="w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 mb-6 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-white/10">
+             <motion.div 
+               className="h-full bg-[color:var(--pink)]" 
+               initial={{ width: "0%" }}
+               animate={{ width: "100%" }}
+               transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+             />
           </div>
+          
+          <div className="flex flex-col items-center text-center">
+             <div className="mb-4 w-14 h-14 rounded-2xl bg-gradient-to-br from-[color:var(--pink)] to-[#C23A5B] flex items-center justify-center shadow-lg shadow-pink-500/20">
+               <AnimatePresence mode="wait">
+                 <motion.div 
+                   key={activeFeatureIndex}
+                   initial={{ opacity: 0, scale: 0.5 }}
+                   animate={{ opacity: 1, scale: 1 }}
+                   exit={{ opacity: 0, scale: 0.5 }}
+                   transition={{ duration: 0.3 }}
+                 >
+                   {MEDICAL_FEATURES[activeFeatureIndex].icon}
+                 </motion.div>
+               </AnimatePresence>
+             </div>
+             
+             <AnimatePresence mode="wait">
+               <motion.div 
+                 key={activeFeatureIndex}
+                 initial={{ opacity: 0, y: 10 }}
+                 animate={{ opacity: 1, y: 0 }}
+                 exit={{ opacity: 0, y: -10 }}
+                 className="flex flex-col items-center"
+               >
+                 <h3 className="text-lg font-bold text-white mb-1">{MEDICAL_FEATURES[activeFeatureIndex].title}</h3>
+                 <p className="text-white/60 text-sm font-medium">{MEDICAL_FEATURES[activeFeatureIndex].desc}</p>
+               </motion.div>
+             </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Reviews */}
+        <div className="w-full bg-black/20 backdrop-blur-md border border-white/10 rounded-[28px] p-5 flex flex-col items-center gap-4 mb-8">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[20px] font-bold text-white">4.9</span>
+            <div className="flex text-yellow-400 gap-0.5">
+              {[...Array(5)].map((_, i) => <Star key={i} size={16} fill="currentColor" />)}
+            </div>
+            <span className="text-[11px] font-bold text-white/50 uppercase ml-1 tracking-wide">Doctor Approved</span>
+          </div>
+          
+          <div className="relative w-full h-[100px] flex items-center justify-center">
+             <AnimatePresence mode="wait">
+               <motion.div 
+                 key={currentReviewIndex}
+                 initial={{ opacity: 0, x: 20 }}
+                 animate={{ opacity: 1, x: 0 }}
+                 exit={{ opacity: 0, x: -20 }}
+                 transition={{ duration: 0.4 }}
+                 className="absolute w-full flex flex-col items-center"
+               >
+                 <img 
+                   src={displayReview.image} 
+                   alt={displayReview.name}
+                   className="w-12 h-12 rounded-full border-2 border-white/20 object-cover shadow-md mb-3"
+                 />
+                 <p className="text-[15px] italic text-white text-center font-medium leading-snug px-4">
+                   "{displayReview.text}"
+                 </p>
+                 <p className="text-[11px] font-bold text-white/40 mt-2 uppercase tracking-wide">{displayReview.name}</p>
+               </motion.div>
+             </AnimatePresence>
+          </div>
+        </div>
+
+        {/* FAQ Accordion */}
+        <div 
+          onClick={() => setIsFaqOpen(!isFaqOpen)}
+          className="w-full bg-white/5 rounded-2xl p-4 border border-white/5 backdrop-blur-sm cursor-pointer active:scale-[0.99] transition-transform mb-6"
+        >
+          <div className="flex items-center justify-center gap-2 text-white/80">
+             <span className="text-[13px] font-bold">100% Money-Back Guarantee?</span>
+             {isFaqOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </div>
+          <div className={`overflow-hidden transition-all duration-300 ${isFaqOpen ? 'max-h-20 opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
+            <p className="text-[13px] text-white/50 text-center leading-relaxed px-2">
+              Yes. If you don't see results in your gap or symptoms, request a full refund in the app settings. No questions asked.
+            </p>
+          </div>
+        </div>
+        
+        {/* Footer Links */}
+        <div className="flex justify-center items-center gap-4 text-[11px] font-bold text-white/30 tracking-wide uppercase">
+          <button onClick={() => setShowRestoreModal(true)} className="hover:text-white transition-colors">Restore Purchase</button>
+          <span>•</span>
+          <span>Encrypted</span>
+          <span>•</span>
+          <span>Secure</span>
+        </div>
+
+      </div>
+
+      {/* 3. Sticky Footer CTA */}
+      <div className={`absolute bottom-0 left-0 w-full z-30 px-5 pb-8 pt-8 bg-gradient-to-t from-[#1A1A26] via-[#1A1A26]/95 to-transparent transition-all duration-700 delay-200 ${showContent ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`}>
+        <button 
+          onClick={handleStartPlan}
+          disabled={isButtonLoading}
+          className="w-full h-[60px] rounded-full shadow-[0_0_40px_rgba(225,29,72,0.4)] flex items-center justify-center gap-3 animate-breathe active:scale-[0.98] transition-transform relative overflow-hidden group bg-gradient-to-r from-[color:var(--pink)] to-[#C23A5B]"
+        >
+          <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+          {isButtonLoading ? <Loader2 className="animate-spin text-white" /> : (
+            <>
+              <span className="text-[18px] font-extrabold text-white">Unlock My Repair Protocol</span>
+              <ChevronDown className="-rotate-90 text-white/80" size={20} />
+            </>
+          )}
+        </button>
+        
+        <div className="flex flex-col items-center justify-center mt-4 gap-1">
+          <p className="text-white font-bold text-[14px]">$24.99 / month</p>
+          <p className="text-white/50 text-[11px] font-medium">Cancel anytime in settings.</p>
         </div>
       </div>
 
-      {showCheckout && <CheckoutModal onClose={() => setShowCheckout(false)} onPay={handlePay} />}
+      {/* 4. STRIPE OVERLAY MODAL */}
+      {showCheckoutModal && clientSecret && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md overflow-y-auto"
+          onClick={() => setShowCheckoutModal(false)}
+        >
+          <div className="min-h-full flex items-center justify-center p-4">
+            <Elements options={{ clientSecret, appearance: stripeAppearance }} stripe={stripePromise}>
+              <CheckoutForm onClose={() => setShowCheckoutModal(false)} />
+            </Elements>
+          </div>
+        </div>
+      )}
+
+      {/* 5. RESTORE OVERLAY MODAL */}
+      {showRestoreModal && (
+        <RestoreModal onClose={() => setShowRestoreModal(false)} />
+      )}
+
     </div>
   );
 }
