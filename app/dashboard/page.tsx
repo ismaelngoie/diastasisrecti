@@ -20,25 +20,50 @@ type TrackLabel = { title: string; subtitle: string };
 
 function formatLocalDate(isoYYYYMMDD: string) {
   const d = new Date(`${isoYYYYMMDD}T00:00:00`);
-  return d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+  return d.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 function trackLabel(track: string): TrackLabel {
+  // NOTE: We keep the same track keys to avoid breaking protocolEngine logic.
   switch (track) {
     case "drySeal":
-      return { title: "Dry Seal Session", subtitle: "Pelvic floor + leakage support" };
+      return {
+        title: "Core Stability Session",
+        subtitle: "Breathing + deep core control (low pressure)",
+      };
     case "release":
-      return { title: "Pelvic Release Session", subtitle: "Down-train tension + restore control" };
+      return {
+        title: "Core Decompression Session",
+        subtitle: "Reduce tension + improve rib/hip mobility",
+      };
     default:
-      return { title: "Core Repair Session", subtitle: "Midline tension + deep core reconnection" };
+      return {
+        title: "Midline Repair Session",
+        subtitle: "Linea alba support + transverse abdominis re-activation",
+      };
   }
 }
 
 function pressureBadge(pressureLabel?: string) {
   const label = (pressureLabel || "").toLowerCase();
-  if (label.includes("low")) return { ring: "ring-white/10", bg: "bg-white/6", text: "text-white/80" };
-  if (label.includes("medium")) return { ring: "ring-[color:var(--pink)]/25", bg: "bg-[color:var(--pink)]/10", text: "text-white" };
-  if (label.includes("high")) return { ring: "ring-red-500/25", bg: "bg-red-500/10", text: "text-red-100" };
+  if (label.includes("low"))
+    return { ring: "ring-white/10", bg: "bg-white/6", text: "text-white/80" };
+  if (label.includes("medium"))
+    return {
+      ring: "ring-[color:var(--pink)]/25",
+      bg: "bg-[color:var(--pink)]/10",
+      text: "text-white",
+    };
+  if (label.includes("high"))
+    return {
+      ring: "ring-red-500/25",
+      bg: "bg-red-500/10",
+      text: "text-red-100",
+    };
   return { ring: "ring-white/10", bg: "bg-white/6", text: "text-white/80" };
 }
 
@@ -111,7 +136,6 @@ function StatTile({
         {label}
       </div>
 
-      {/* ✅ overflow-proof value */}
       <div className="mt-1 min-w-0 flex items-baseline gap-2">
         <div className="min-w-0 text-white font-extrabold tabular-nums leading-none text-[18px] sm:text-[20px] truncate">
           {value}
@@ -189,12 +213,15 @@ export default function DashboardTodayPage() {
   const headerDate = useMemo(() => formatLocalDate(p.dateISO), [p.dateISO]);
 
   const label = useMemo(() => trackLabel(p.track), [p.track]);
-  const pressureTone = useMemo(() => pressureBadge(p.pressureLabel), [p.pressureLabel]);
+  const pressureTone = useMemo(
+    () => pressureBadge(p.pressureLabel),
+    [p.pressureLabel]
+  );
 
   const habitItems = useMemo(
     () => [
-      { id: "log_roll" as const, text: "Log roll out of bed (don’t sit up straight)." },
-      { id: "exhale_before_lift" as const, text: "Exhale before picking up the baby." },
+      { id: "log_roll" as const, text: "Log roll out of bed (avoid a straight sit-up)." },
+      { id: "exhale_before_lift" as const, text: "Exhale before lifting (baby, laundry, groceries)." },
     ],
     []
   );
@@ -219,23 +246,19 @@ export default function DashboardTodayPage() {
 
   const exerciseCountText = useMemo(() => {
     const n = p.videos.length;
-    // ✅ short + fits in tile always
     if (n === 1) return "1";
     return String(n);
   }, [p.videos.length]);
 
   return (
     <main className="w-full max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      {/* ✅ background (butterflies) */}
       <div className="absolute inset-0 -z-10 bg-[color:var(--navy)]" />
       <div className="absolute inset-0 -z-10 pointer-events-none opacity-[0.22] blur-[0.6px]">
         <ButterflyBackground />
       </div>
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-white/0 via-white/0 to-black/25" />
 
-      {/* Page grid (content + sticky actions) */}
       <div className="flex flex-col gap-5 pb-[calc(env(safe-area-inset-bottom)+96px)]">
-        {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="text-white/45 text-[10px] font-extrabold tracking-[0.22em] uppercase">
@@ -253,7 +276,7 @@ export default function DashboardTodayPage() {
             <div className="mt-3 flex flex-wrap gap-2">
               <Pill tone="pink">
                 <Sparkles size={14} className="text-[color:var(--pink)]" />
-                {safeName}&apos;s Protocol
+                {safeName}&apos;s Core Rehab Plan
               </Pill>
 
               <div
@@ -276,7 +299,7 @@ export default function DashboardTodayPage() {
               {noCrunch && (
                 <Pill tone="danger">
                   <Ban size={14} className="text-red-200" />
-                  No-Crunch
+                  Avoid Crunches
                 </Pill>
               )}
 
@@ -289,7 +312,6 @@ export default function DashboardTodayPage() {
             </div>
           </div>
 
-          {/* Compact play */}
           <button
             onClick={() => startSession(0)}
             className={[
@@ -301,22 +323,26 @@ export default function DashboardTodayPage() {
             ].join(" ")}
           >
             <div className="w-8 h-8 rounded-xl bg-[color:var(--pink)]/18 border border-[color:var(--pink)]/28 flex items-center justify-center">
-              <Play className="text-[color:var(--pink)]" fill="currentColor" size={16} />
+              <Play
+                className="text-[color:var(--pink)]"
+                fill="currentColor"
+                size={16}
+              />
             </div>
             Play
           </button>
         </div>
 
-        {/* Primary Session */}
         <Card className="p-5">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <div className="text-white font-extrabold text-[16px] truncate">{label.title}</div>
+              <div className="text-white font-extrabold text-[16px] truncate">
+                {label.title}
+              </div>
               <div className="text-white/55 text-[12px] font-semibold mt-1">
                 {label.subtitle}
               </div>
 
-              {/* ✅ responsive stat grid + overflow-proof tiles */}
               <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2">
                 <StatTile label="Minutes" value={String(p.minutes)} sub="min" />
                 <StatTile label="Exercises" value={exerciseCountText} sub="moves" />
@@ -339,7 +365,6 @@ export default function DashboardTodayPage() {
             </button>
           </div>
 
-          {/* Exercises */}
           <div className="mt-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-white/60 text-[11px] font-extrabold tracking-[0.22em] uppercase">
@@ -362,7 +387,6 @@ export default function DashboardTodayPage() {
                     "active:scale-[0.99] transition-transform",
                   ].join(" ")}
                 >
-                  {/* number chip */}
                   <div className="shrink-0 w-9 h-9 rounded-xl border border-white/10 bg-white/6 flex items-center justify-center">
                     <div className="text-white/85 font-extrabold text-[13px] tabular-nums">
                       {idx + 1}
@@ -374,7 +398,7 @@ export default function DashboardTodayPage() {
                       {v.title}
                     </div>
                     <div className="text-white/45 text-[11px] font-semibold mt-0.5 truncate">
-                      Follow on-screen cues • keep ribs down • exhale first
+                      Follow on-screen cues • ribs down • exhale on effort
                     </div>
                   </div>
 
@@ -386,12 +410,13 @@ export default function DashboardTodayPage() {
             </div>
           </div>
 
-          {/* Why */}
           <button
             onClick={() => setShowWhy((v) => !v)}
             className="mt-5 w-full rounded-2xl border border-white/10 bg-white/6 px-4 py-3 flex items-center justify-between"
           >
-            <div className="text-white/85 text-[13px] font-extrabold">Why this matters</div>
+            <div className="text-white/85 text-[13px] font-extrabold">
+              Why this matters
+            </div>
             <ChevronDown
               className={[
                 "text-white/60 transition-transform",
@@ -418,13 +443,12 @@ export default function DashboardTodayPage() {
           </AnimatePresence>
         </Card>
 
-        {/* Habits */}
         <Card className="p-5">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="text-white font-extrabold text-[16px]">Daily Habits</div>
               <div className="text-white/55 text-[12px] font-semibold mt-1">
-                Small rules that protect your healing midline.
+                Small rules that protect your midline while it heals.
               </div>
             </div>
 
@@ -498,7 +522,6 @@ export default function DashboardTodayPage() {
           </div>
         </Card>
 
-        {/* Completed time */}
         {todaysCompletion?.completedAtISO && (
           <div className="text-center text-white/40 text-[11px] font-semibold">
             Completed at{" "}
@@ -510,7 +533,6 @@ export default function DashboardTodayPage() {
         )}
       </div>
 
-      {/* ✅ Sticky bottom actions (feels like an app) */}
       <div className="fixed inset-x-0 bottom-0 z-40">
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[color:var(--navy)]/95 via-[color:var(--navy)]/70 to-transparent" />
         <div className="relative w-full max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3">
@@ -548,13 +570,12 @@ export default function DashboardTodayPage() {
               }}
             >
               <BadgeCheck size={18} />
-              {isComplete ? `Day ${p.dayNumber} Complete ✅` : "Mark Complete"}
+              {isComplete ? `Day ${p.dayNumber} Complete ✅` : "Mark Session Complete"}
             </PrimaryButton>
           </div>
         </div>
       </div>
 
-      {/* Player Modal */}
       {playerUrl && (
         <SafetyPlayer
           initialUrl={playerUrl}
