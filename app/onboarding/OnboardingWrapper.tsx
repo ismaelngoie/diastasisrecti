@@ -362,7 +362,7 @@ function ChatBubble({ from, children, typing }: { from: "mia" | "user"; children
       {!isUser && (
         <div className="w-9 h-9 rounded-full overflow-hidden border border-white/15 bg-white/10 shrink-0 mr-3 mt-auto relative flex items-center justify-center">
           <span className="text-white/80 font-extrabold text-sm select-none">M</span>
-          <img src="/coachMiaAvatar.png" alt="Mia" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+          <img src="/CoachMiaAvatar.png" alt="Mia" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
         </div>
       )}
       <div className={["max-w-[86%] px-5 py-3.5 text-[15px] leading-relaxed font-semibold", "shadow-soft", isUser ? "bg-[color:var(--pink)] text-white rounded-2xl rounded-br-none" : "bg-white/10 border border-white/12 text-white rounded-2xl rounded-bl-none"].join(" ")}>
