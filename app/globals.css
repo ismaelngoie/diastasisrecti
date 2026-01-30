@@ -7,14 +7,13 @@
   --navy: #1A1A26;
 }
 
+/* 1. LOCK THE VIEWPORT (The "App" Feel) */
 html, body {
   height: 100%;
   width: 100%;
-  /* CRITICAL: Stops the rubber-band bounce effect on iOS */
-  overscroll-behavior: none; 
+  overflow: hidden; /* Stops address bar from resizing */
+  overscroll-behavior: none; /* Stops the "rubber band" bounce on iOS */
   -webkit-overflow-scrolling: touch;
-  /* CRITICAL: Allows content to go behind the Dynamic Island/Notch */
-  viewport-fit: cover; 
 }
 
 body {
@@ -24,15 +23,21 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* no-scrollbar helper */
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+/* 2. HIDE SCROLLBARS (But allow scrolling) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
 
+/* 3. BUTTON TAP FIX */
 button {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Subtle “clinical” noise */
+/* 4. BACKGROUND TEXTURE */
 .clinical-noise {
   background-image:
     radial-gradient(circle at 20% 10%, rgba(255,255,255,0.08), transparent 40%),
