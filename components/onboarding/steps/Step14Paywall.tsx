@@ -14,7 +14,6 @@ import {
   Loader2,
   Lock,
   Mail,
-  CheckCircle2,
   Stethoscope,
 } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
@@ -29,13 +28,10 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 
 // --- STRIPE SETUP ---
-// Ensure this key is in your .env.local
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
-// --- ASSETS (Reusing Pelvi Assets for Consistency) ---
 const REVIEW_IMAGES = ["/review9.png", "/review1.png", "/review5.png", "/review4.png", "/review2.png"];
 
-// --- MEDICAL FEATURES ---
 const MEDICAL_FEATURES = [
   {
     icon: <Brain size={24} className="text-white" />,
@@ -59,7 +55,6 @@ const MEDICAL_FEATURES = [
   },
 ];
 
-// --- DIASTASIS SPECIFIC REVIEWS ---
 const REVIEWS = [
   { name: "Sarah W.", text: "I closed my 3-finger gap in 9 weeks. No surgery.", image: "/review9.png" },
   { name: "Michelle T.", text: "The 'coning' stopped after 12 days. Finally safe.", image: "/review1.png" },
@@ -68,14 +63,13 @@ const REVIEWS = [
   { name: "Jess P.", text: "I can lift my baby without fear now.", image: "/review2.png" },
 ];
 
-// --- COMPONENTS ---
+const DASHBOARD_PATH = "/dashboard?plan=monthly";
 
 const CheckoutForm = ({ onClose }: { onClose: () => void }) => {
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
 
-  // ✅ this is your zustand hook alias/export
   const { setPremium, setJoinDate, setName } = useUserData();
 
   const [message, setMessage] = useState<string | null>(null);
@@ -89,10 +83,12 @@ const CheckoutForm = ({ onClose }: { onClose: () => void }) => {
 
     setIsLoading(true);
 
+    const returnUrl = `${window.location.origin}${DASHBOARD_PATH}`;
+
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: `${window.location.origin}/dashboard`,
+        return_url: returnUrl,
         receipt_email: email,
       },
       redirect: "if_required",
@@ -101,8 +97,10 @@ const CheckoutForm = ({ onClose }: { onClose: () => void }) => {
     if (error) {
       setMessage(error.message || "Payment failed");
       setIsLoading(false);
-    } else if (paymentIntent && paymentIntent.status === "succeeded") {
-      // Success Logic
+      return;
+    }
+
+    if (paymentIntent && paymentIntent.status === "succeeded") {
       setPremium(true);
       setJoinDate(new Date().toISOString());
 
@@ -112,14 +110,15 @@ const CheckoutForm = ({ onClose }: { onClose: () => void }) => {
         useUserData.getState().startDrySeal();
       }
 
-      router.push("/dashboard");
-    } else {
-      setMessage("An unexpected error occurred.");
-      setIsLoading(false);
+      router.push(DASHBOARD_PATH);
+      return;
     }
+
+    setMessage("An unexpected error occurred.");
+    setIsLoading(false);
   };
 
-  // ✅ FIXED TYPES: PaymentElement expects billingDetails under fields
+  // ✅ Correct PaymentElement typing
   const paymentElementOptions: StripePaymentElementOptions = {
     layout: "tabs",
     fields: {
@@ -183,7 +182,6 @@ const CheckoutForm = ({ onClose }: { onClose: () => void }) => {
   );
 };
 
-// --- RESTORE MODAL ---
 const RestoreModal = ({ onClose }: { onClose: () => void }) => {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -201,11 +199,10 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
     setIsLoading(true);
 
     try {
-      // Mock API call - replace with real endpoint
       const res = await fetch("/api/restore-purchase", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email }),
+        body: JSON.stringify({ email }),
       });
 
       const data = await res.json();
@@ -215,13 +212,13 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
         setJoinDate(new Date().toISOString());
         if (data.customerName) setName(data.customerName);
 
-        // ✅ ALSO APPLY AUTO-START ON RESTORE
+        // ✅ AUTO-START DRY SEAL IF USER HAS LEAKS
         const symptoms = useUserData.getState().symptoms || [];
         if (symptoms.includes("incontinence")) {
           useUserData.getState().startDrySeal();
         }
 
-        router.push("/dashboard");
+        router.push(DASHBOARD_PATH);
       } else {
         alert("We found your email, but no active subscription was detected.");
         setIsLoading(false);
@@ -280,12 +277,9 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
   );
 };
 
-// --- MAIN SCREEN ---
 export default function Step14Paywall() {
-  const router = useRouter();
-  const { name, setPremium, setJoinDate } = useUserData();
+  const { name } = useUserData();
 
-  // State
   const [activeFeatureIndex, setActiveFeatureIndex] = useState(0);
   const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
   const [userCount, setUserCount] = useState(10150);
@@ -293,7 +287,6 @@ export default function Step14Paywall() {
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [isFaqOpen, setIsFaqOpen] = useState(false);
 
-  // Modals
   const [clientSecret, setClientSecret] = useState("");
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [showRestoreModal, setShowRestoreModal] = useState(false);
@@ -301,7 +294,6 @@ export default function Step14Paywall() {
 
   const displayReview = useMemo(() => REVIEWS[currentReviewIndex], [currentReviewIndex]);
 
-  // Effects
   useEffect(() => {
     setShowContent(true);
   }, []);
@@ -331,7 +323,7 @@ export default function Step14Paywall() {
     return () => clearInterval(timer);
   }, [showContent]);
 
-  // Optional preload (keeps your constant actually used)
+  // Preload review images so REVIEW_IMAGES isn't dead weight
   useEffect(() => {
     if (typeof window === "undefined") return;
     REVIEW_IMAGES.forEach((src) => {
@@ -340,7 +332,6 @@ export default function Step14Paywall() {
     });
   }, []);
 
-  // Actions
   const handleStartPlan = async () => {
     setIsButtonLoading(true);
 
@@ -351,14 +342,20 @@ export default function Step14Paywall() {
           headers: { "Content-Type": "application/json" },
         });
 
-        if (!res.ok) throw new Error("Payment Init Failed");
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(`Server error (${res.status}): ${txt}`);
+        }
 
         const data = await res.json();
+        if (!data?.clientSecret) throw new Error("No clientSecret returned from server.");
+
         setClientSecret(data.clientSecret);
-      } catch (err) {
-        console.error(err);
-        // Fallback for demo if API fails
-        setClientSecret("demo_secret");
+      } catch (err: any) {
+        console.error("Stripe init error:", err);
+        alert(`Could not initialize payment: ${err?.message || "Unknown error"}`);
+        setIsButtonLoading(false);
+        return;
       }
     }
 
@@ -380,7 +377,7 @@ export default function Step14Paywall() {
 
   return (
     <div className="relative w-full h-full flex flex-col bg-[#1A1A26] overflow-hidden">
-      {/* 1. Video Background */}
+      {/* Video Background */}
       <div className="absolute inset-0 z-0">
         <video
           autoPlay
@@ -399,13 +396,12 @@ export default function Step14Paywall() {
         <div className="absolute inset-0 bg-black/40" />
       </div>
 
-      {/* 2. Scrollable Content */}
+      {/* Scrollable Content */}
       <div
         className={`z-10 flex-1 flex flex-col overflow-y-auto no-scrollbar pt-14 pb-40 px-6 transition-all duration-700 ${
           showContent ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
         }`}
       >
-        {/* Header Badge */}
         <div className="flex justify-center mb-6">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/10 backdrop-blur-md shadow-lg">
             <Lock size={14} className="text-white/90" />
@@ -415,7 +411,6 @@ export default function Step14Paywall() {
           </div>
         </div>
 
-        {/* Headline */}
         <h1
           className="text-[34px] font-extrabold text-white text-center mb-4 leading-[1.1] drop-shadow-xl"
           style={{ fontFamily: "var(--font-lora)" }}
@@ -430,7 +425,6 @@ export default function Step14Paywall() {
           without surgery.
         </p>
 
-        {/* Medical Features Carousel */}
         <div className="w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 mb-6 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-white/10">
             <motion.div
@@ -471,7 +465,6 @@ export default function Step14Paywall() {
           </div>
         </div>
 
-        {/* Reviews */}
         <div className="w-full bg-black/20 backdrop-blur-md border border-white/10 rounded-[28px] p-5 flex flex-col items-center gap-4 mb-8">
           <div className="flex items-center gap-1.5">
             <span className="text-[20px] font-bold text-white">4.9</span>
@@ -507,7 +500,6 @@ export default function Step14Paywall() {
           </div>
         </div>
 
-        {/* FAQ Accordion */}
         <div
           onClick={() => setIsFaqOpen(!isFaqOpen)}
           className="w-full bg-white/5 rounded-2xl p-4 border border-white/5 backdrop-blur-sm cursor-pointer active:scale-[0.99] transition-transform mb-6"
@@ -516,14 +508,17 @@ export default function Step14Paywall() {
             <span className="text-[13px] font-bold">100% Money-Back Guarantee?</span>
             {isFaqOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </div>
-          <div className={`overflow-hidden transition-all duration-300 ${isFaqOpen ? "max-h-20 opacity-100 mt-2" : "max-h-0 opacity-0"}`}>
+          <div
+            className={`overflow-hidden transition-all duration-300 ${
+              isFaqOpen ? "max-h-20 opacity-100 mt-2" : "max-h-0 opacity-0"
+            }`}
+          >
             <p className="text-[13px] text-white/50 text-center leading-relaxed px-2">
               Yes. If you don't see results in your gap or symptoms, request a full refund in the app settings. No questions asked.
             </p>
           </div>
         </div>
 
-        {/* Footer Links */}
         <div className="flex justify-center items-center gap-4 text-[11px] font-bold text-white/30 tracking-wide uppercase">
           <button onClick={() => setShowRestoreModal(true)} className="hover:text-white transition-colors">
             Restore Purchase
@@ -535,7 +530,7 @@ export default function Step14Paywall() {
         </div>
       </div>
 
-      {/* 3. Sticky Footer CTA */}
+      {/* Sticky Footer CTA */}
       <div
         className={`absolute bottom-0 left-0 w-full z-30 px-5 pb-8 pt-8 bg-gradient-to-t from-[#1A1A26] via-[#1A1A26]/95 to-transparent transition-all duration-700 delay-200 ${
           showContent ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
@@ -563,7 +558,7 @@ export default function Step14Paywall() {
         </div>
       </div>
 
-      {/* 4. STRIPE OVERLAY MODAL */}
+      {/* Stripe Modal */}
       {showCheckoutModal && clientSecret && (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md overflow-y-auto" onClick={() => setShowCheckoutModal(false)}>
           <div className="min-h-full flex items-center justify-center p-4">
@@ -574,7 +569,6 @@ export default function Step14Paywall() {
         </div>
       )}
 
-      {/* 5. RESTORE OVERLAY MODAL */}
       {showRestoreModal && <RestoreModal onClose={() => setShowRestoreModal(false)} />}
     </div>
   );
