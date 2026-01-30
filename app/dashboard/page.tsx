@@ -14,6 +14,7 @@ import {
 import { useUserStore } from "@/lib/store/useUserStore";
 import { getTodaysPrescription } from "@/lib/protocolEngine";
 import SafetyPlayer from "@/components/inside/SafetyPlayer";
+import ButterflyBackground from "@/components/ButterflyBackground";
 
 type TrackLabel = { title: string; subtitle: string };
 
@@ -225,8 +226,11 @@ export default function DashboardTodayPage() {
 
   return (
     <main className="w-full max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      {/* ✅ background (no butterflies) */}
+      {/* ✅ background (butterflies) */}
       <div className="absolute inset-0 -z-10 bg-[color:var(--navy)]" />
+      <div className="absolute inset-0 -z-10 pointer-events-none opacity-[0.22] blur-[0.6px]">
+        <ButterflyBackground />
+      </div>
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-white/0 via-white/0 to-black/25" />
 
       {/* Page grid (content + sticky actions) */}
