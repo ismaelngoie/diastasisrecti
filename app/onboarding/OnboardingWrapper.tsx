@@ -1613,7 +1613,7 @@ function Step14Paywall() {
   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#1A1A26]/75 via-[#1A1A26]/35 to-transparent" />
 
   {/* real content stays closer to bottom + keeps safe area */}
-  <div className="relative pt-4 pb-[calc(env(safe-area-inset-bottom)+16px)]">
+  <div className="relative pt-4 pb-[calc(env(safe-area-inset-bottom)+5px)]">
     <button
       onClick={handleStartPlan}
       disabled={isButtonLoading}
