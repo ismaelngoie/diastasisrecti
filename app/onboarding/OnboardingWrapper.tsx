@@ -1590,101 +1590,38 @@ function Step14Paywall() {
 
         {/* Reviews Section */}
         <div className="w-full bg-black/20 backdrop-blur-md border border-white/10 rounded-[28px] p-5 flex flex-col items-center gap-4 mb-8">
-          <div className="flex items-center gap-1.5">
-            <span className="text-[20px] font-bold text-white">4.9</span>
-            <div className="flex text-yellow-400 gap-0.5">{[...Array(5)].map((_, i) => (<Star key={i} size={16} fill="currentColor" />))}</div>
-            <span className="text-[11px] font-bold text-white/50 uppercase ml-1 tracking-wide">Doctor Approved</span>
-          </div>
-
-          <div className="relative w-full h-[100px] flex items-center justify-center">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentReviewIndex}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.4 }}
-                className="absolute w-full flex flex-col items-center"
-              >
-                <img
-                  src={displayReview.image}
-                  alt={displayReview.name}
-                  className="w-12 h-12 rounded-full border-2 border-white/20 object-cover shadow-md mb-3"
-                />
-                <p className="text-[15px] italic text-white text-center font-medium leading-snug px-4">"{displayReview.text}"</p>
-                <p className="text-[11px] font-bold text-white/40 mt-2 uppercase tracking-wide">{displayReview.name}</p>
-              </motion.div>
-            </AnimatePresence>
-          </div>
+          <div className="flex items-center gap-1.5"><span className="text-[20px] font-bold text-white">4.9</span><div className="flex text-yellow-400 gap-0.5">{[...Array(5)].map((_, i) => (<Star key={i} size={16} fill="currentColor" />))}</div><span className="text-[11px] font-bold text-white/50 uppercase ml-1 tracking-wide">Doctor Approved</span></div>
+          <div className="relative w-full h-[100px] flex items-center justify-center"><AnimatePresence mode="wait"><motion.div key={currentReviewIndex} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.4 }} className="absolute w-full flex flex-col items-center"><img src={displayReview.image} alt={displayReview.name} className="w-12 h-12 rounded-full border-2 border-white/20 object-cover shadow-md mb-3" /><p className="text-[15px] italic text-white text-center font-medium leading-snug px-4">"{displayReview.text}"</p><p className="text-[11px] font-bold text-white/40 mt-2 uppercase tracking-wide">{displayReview.name}</p></motion.div></AnimatePresence></div>
         </div>
 
-        <div
-          onClick={() => setIsFaqOpen(!isFaqOpen)}
-          className="w-full bg-white/5 rounded-2xl p-4 border border-white/5 backdrop-blur-sm cursor-pointer active:scale-[0.99] transition-transform mb-6"
-        >
-          <div className="flex items-center justify-center gap-2 text-white/80">
-            <span className="text-[13px] font-bold">100% Money-Back Guarantee?</span>
-            {isFaqOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </div>
-          <div className={`overflow-hidden transition-all duration-300 ${isFaqOpen ? "max-h-20 opacity-100 mt-2" : "max-h-0 opacity-0"}`}>
-            <p className="text-[13px] text-white/50 text-center leading-relaxed px-2">
-              Yes. If you don&apos;t see results in your gap or symptoms, request a full refund in the app settings. No questions asked.
-            </p>
-          </div>
+        {/* Guarantee Accordion */}
+        <div onClick={() => setIsFaqOpen(!isFaqOpen)} className="w-full bg-white/5 rounded-2xl p-4 border border-white/5 backdrop-blur-sm cursor-pointer active:scale-[0.99] transition-transform mb-6">
+          <div className="flex items-center justify-center gap-2 text-white/80"><span className="text-[13px] font-bold">100% Money-Back Guarantee?</span>{isFaqOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}</div>
+          <div className={`overflow-hidden transition-all duration-300 ${isFaqOpen ? "max-h-20 opacity-100 mt-2" : "max-h-0 opacity-0"}`}><p className="text-[13px] text-white/50 text-center leading-relaxed px-2">Yes. If you don&apos;t see results in your gap or symptoms, request a full refund in the app settings. No questions asked.</p></div>
         </div>
 
-        <div className="flex flex-col items-center gap-2">
-          <div className="flex justify-center items-center gap-3 text-[11px] font-semibold text-white/55">
-            <button
-              onClick={() => setShowRestoreModal(true)}
-              className="underline decoration-white/25 hover:text-white transition-colors"
-              style={{ textDecorationThickness: "2px" }}
-            >
-              Restore Purchase
-            </button>
-            <span>•</span>
-            <span className="cursor-default">Physiotherapist</span>
-            <span>•</span>
-            <span className="cursor-default">Doctor Approved</span>
-          </div>
-        </div>
+        <div className="flex flex-col items-center gap-2"><div className="flex justify-center items-center gap-3 text-[11px] font-semibold text-white/55"><button onClick={() => setShowRestoreModal(true)} className="underline decoration-white/25 hover:text-white transition-colors" style={{ textDecorationThickness: "2px" }}>Restore Purchase</button><span>•</span><span className="cursor-default">Physiotherapist Led</span><span>•</span><span className="cursor-default">Medical Grade</span></div></div>
       </div>
-
-      {/* Bottom CTA */}
-      <div
-        className={`absolute bottom-0 left-0 w-full z-30 px-5 pt-8 bg-gradient-to-t from-[#1A1A26] via-[#1A1A26]/95 to-transparent transition-all duration-700 delay-200 ${
-          showContent ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
-        }`}
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 32px)" }}
-      >
-        <button
-          onClick={handleStartPlan}
-          disabled={isButtonLoading}
-          className="w-full h-[60px] rounded-full shadow-[0_0_40px_rgba(225,29,72,0.4)] flex items-center justify-center gap-3 animate-breathe active:scale-[0.98] transition-transform relative overflow-hidden group bg-gradient-to-r from-[color:var(--pink)] to-[#C23A5B]"
-        >
-          <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-          {isButtonLoading ? (
-            <Loader2 className="animate-spin text-white" />
-          ) : (
-            <>
-              <span className="text-[18px] font-extrabold text-white">Unlock My Repair Protocol</span>
-              <ChevronDown className="-rotate-90 text-white/80" size={20} />
-            </>
-          )}
+      
+      {/* Sticky Bottom CTA Area */}
+      <div className={`absolute bottom-0 left-0 w-full z-30 px-5 pb-8 pt-8 bg-gradient-to-t from-[#1A1A26] via-[#1A1A26]/95 to-transparent transition-all duration-700 delay-200 ${showContent ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"}`}>
+        <button onClick={handleStartPlan} disabled={isButtonLoading} className="w-full h-[60px] rounded-full shadow-[0_0_40px_rgba(225,29,72,0.4)] flex items-center justify-center gap-3 animate-breathe active:scale-[0.98] transition-transform relative overflow-hidden group bg-gradient-to-r from-[color:var(--pink)] to-[#C23A5B]">
+            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+            {isButtonLoading ? (<Loader2 className="animate-spin text-white" />) : (<>
+                {/* STRONGER CTA TEXT */}
+                <span className="text-[18px] font-extrabold text-white">Start Fixing My Diastasis Recti</span>
+                <ArrowRight className="text-white/80" size={20} />
+            </>)}
         </button>
-        <p className="text-center text-white/70 text-[12px] font-semibold mt-3 leading-snug px-4 drop-shadow-sm">{getCtaSubtext()}</p>
+        {/* PRICE ANCHORING */}
+        <p className="text-center text-white/60 text-[12px] font-semibold mt-3 leading-snug px-4 drop-shadow-sm">
+            Less than the cost of one physio visit.
+            <br/>
+            <span className="text-white/40 text-[11px] font-normal">{getCtaSubtext()} Cancel anytime.</span>
+        </p>
       </div>
-
-      {showCheckoutModal && clientSecret && (
-        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md overflow-y-auto" onClick={() => setShowCheckoutModal(false)}>
-          <div className="min-h-full flex items-center justify-center p-4">
-            <Elements options={{ clientSecret, appearance: stripeAppearance }} stripe={stripePromise}>
-              <CheckoutForm onClose={() => setShowCheckoutModal(false)} />
-            </Elements>
-          </div>
-        </div>
-      )}
-
+      
+      {showCheckoutModal && clientSecret && (<div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md overflow-y-auto" onClick={() => setShowCheckoutModal(false)}><div className="min-h-full flex items-center justify-center p-4"><Elements options={{ clientSecret, appearance: stripeAppearance }} stripe={stripePromise}><CheckoutForm onClose={() => setShowCheckoutModal(false)} /></Elements></div></div>)}
       {showRestoreModal && <RestoreModal onClose={() => setShowRestoreModal(false)} />}
     </div>
   );
@@ -1715,23 +1652,11 @@ export default function OnboardingWrapper() {
   const [checkedPremium, setCheckedPremium] = useState(false);
   const [toastState, setToastState] = useState<{ show: boolean; msg: string; tone: ToastTone }>({ show: false, msg: "", tone: "info" });
   const toastTimeoutRef = useRef<number | null>(null);
-
-  const toastApi: ToastAPI = useMemo(
-    () => ({
-      show: (tone, message, ms = 3200) => {
-        if (toastTimeoutRef.current) window.clearTimeout(toastTimeoutRef.current);
-        setToastState({ show: true, tone, msg: message });
-        toastTimeoutRef.current = window.setTimeout(() => {
-          setToastState((p) => ({ ...p, show: false }));
-        }, ms);
-      },
-      hide: () => {
-        if (toastTimeoutRef.current) window.clearTimeout(toastTimeoutRef.current);
-        setToastState((p) => ({ ...p, show: false }));
-      },
-    }),
-    []
-  );
+   
+  const toastApi: ToastAPI = useMemo(() => ({
+    show: (tone, message, ms = 3200) => { if (toastTimeoutRef.current) window.clearTimeout(toastTimeoutRef.current); setToastState({ show: true, tone, msg: message }); toastTimeoutRef.current = window.setTimeout(() => { setToastState((p) => ({ ...p, show: false })); }, ms); },
+    hide: () => { if (toastTimeoutRef.current) window.clearTimeout(toastTimeoutRef.current); setToastState((p) => ({ ...p, show: false })); },
+  }), []);
 
   const [chat, setChat] = useState<Array<{ from: "mia" | "user"; text: string }>>([]);
   const [miaTyping, setMiaTyping] = useState(false);
@@ -1741,49 +1666,10 @@ export default function OnboardingWrapper() {
   const askedAgeRef = useRef(false);
   const screen = onboardingStep;
 
-  const scrollToBottom = () => {
-    setTimeout(() => chatBottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }), 80);
-  };
+  const scrollToBottom = () => { setTimeout(() => chatBottomRef.current?.scrollIntoView({ behavior: "smooth" }), 80); };
 
-  // Keep the newest message visible (iMessage-style), especially when the age picker appears and when the keyboard resizes the viewport.
-  useEffect(() => {
-    if (screen !== 3 && screen !== 4) return;
-    scrollToBottom();
-  }, [screen, chat.length, miaTyping]);
-
-  useEffect(() => {
-    if (screen !== 3 && screen !== 4) return;
-    if (typeof window === "undefined") return;
-    const vv = (window as any).visualViewport as VisualViewport | undefined;
-    if (!vv) return;
-
-    const onVV = () => scrollToBottom();
-    vv.addEventListener("resize", onVV);
-    vv.addEventListener("scroll", onVV);
-    return () => {
-      vv.removeEventListener("resize", onVV);
-      vv.removeEventListener("scroll", onVV);
-    };
-  }, [screen]);
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(USER_STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed?.state?.isPremium === true) {
-          router.replace("/dashboard?plan=monthly");
-          return;
-        }
-      }
-    } catch {}
-    setCheckedPremium(true);
-  }, [router]);
-
-  useEffect(() => {
-    if (!checkedPremium) return;
-    if (isPremium) router.replace("/dashboard?plan=monthly");
-  }, [checkedPremium, isPremium, router]);
+  useEffect(() => { try { const raw = localStorage.getItem(USER_STORAGE_KEY); if (raw) { const parsed = JSON.parse(raw); if (parsed?.state?.isPremium === true) { router.replace("/dashboard?plan=monthly"); return; } } } catch {} setCheckedPremium(true); }, [router]);
+  useEffect(() => { if (!checkedPremium) return; if (isPremium) router.replace("/dashboard?plan=monthly"); }, [checkedPremium, isPremium, router]);
 
   useEffect(() => {
     if (screen !== 3) return;
@@ -1809,10 +1695,7 @@ export default function OnboardingWrapper() {
     if (screen !== 4) return;
     setAgeValue(storedAge || 30);
     if (chat.length === 0) {
-      const seeded: Array<{ from: "mia" | "user"; text: string }> = [
-        { from: "mia", text: MIA_M1 },
-        { from: "mia", text: MIA_M2 },
-      ];
+      const seeded: Array<{ from: "mia" | "user"; text: string }> = [{ from: "mia", text: MIA_M1 }, { from: "mia", text: MIA_M2 }];
       if ((name || "").trim().length >= 2) seeded.push({ from: "user", text: name.trim() });
       setChat(seeded);
       scrollToBottom();
@@ -1821,38 +1704,16 @@ export default function OnboardingWrapper() {
     const safeName = (name || "there").trim() || "there";
     const q = miaAgeQuestion(safeName);
     const alreadyAsked = chat.some((m) => m.from === "mia" && m.text.includes("How young are you?"));
-    if (alreadyAsked) {
-      askedAgeRef.current = true;
-      return;
-    }
+    if (alreadyAsked) { askedAgeRef.current = true; return; }
     askedAgeRef.current = true;
     setMiaTyping(true);
-    const t = setTimeout(() => {
-      setMiaTyping(false);
-      setChat((prev) => [...prev, { from: "mia", text: q }]);
-      scrollToBottom();
-    }, 1500);
+    const t = setTimeout(() => { setMiaTyping(false); setChat((prev) => [...prev, { from: "mia", text: q }]); scrollToBottom(); }, 1500);
     return () => clearTimeout(t);
   }, [screen, name, storedAge]);
 
-  useEffect(() => {
-    if (screen !== 4) return;
-    setAge(ageValue);
-    if (ageValue > 40) {
-      toastApi.show("info", "We will focus on gentle tissue stimulation for you.", 3200);
-      return;
-    }
-    if (ageValue < 30) {
-      toastApi.show("success", "Your recovery potential is high!", 3200);
-      return;
-    }
-    toastApi.hide();
-  }, [ageValue, screen, setAge, toastApi]);
+  useEffect(() => { if (screen !== 4) return; setAge(ageValue); if (ageValue > 40) { toastApi.show("info", "We will focus on gentle tissue stimulation for you.", 3200); return; } if (ageValue < 30) { toastApi.show("success", "Your recovery potential is high!", 3200); return; } toastApi.hide(); }, [ageValue, screen, setAge, toastApi]);
 
-  const goTo = (n: number) => {
-    toastApi.hide();
-    setOnboardingStep(Math.max(1, Math.min(TOTAL_STEPS, n)));
-  };
+  const goTo = (n: number) => { toastApi.hide(); setOnboardingStep(Math.max(1, Math.min(TOTAL_STEPS, n))); };
 
   const submitName = () => {
     const cleaned = inputName.trim();
@@ -1865,10 +1726,7 @@ export default function OnboardingWrapper() {
     setMiaTyping(true);
     window.setTimeout(() => {
       setMiaTyping(false);
-      setChat((prev) => {
-        const exists = prev.some((m) => m.from === "mia" && m.text === q);
-        return exists ? prev : [...prev, { from: "mia", text: q }];
-      });
+      setChat((prev) => { const exists = prev.some((m) => m.from === "mia" && m.text === q); return exists ? prev : [...prev, { from: "mia", text: q }]; });
       scrollToBottom();
       window.setTimeout(() => goTo(4), 180);
     }, 1500);
@@ -1877,10 +1735,7 @@ export default function OnboardingWrapper() {
   const submitAge = () => {
     setAge(ageValue);
     const already = chat.some((m) => m.from === "user" && m.text === String(ageValue));
-    if (!already) {
-      setChat((prev) => [...prev, { from: "user", text: String(ageValue) }]);
-      scrollToBottom();
-    }
+    if (!already) { setChat((prev) => [...prev, { from: "user", text: String(ageValue) }]); scrollToBottom(); }
     toastApi.hide();
     setTimeout(() => goTo(5), 450);
   };
@@ -1896,11 +1751,7 @@ export default function OnboardingWrapper() {
       <div className="absolute inset-0 z-0">
         <div className="clinical-noise absolute inset-0 opacity-100 mix-blend-overlay" />
         {showButterfliesStrong && <ButterflyBackground />}
-        {showButterfliesSoft && (
-          <div className="absolute inset-0 pointer-events-none opacity-[0.22] blur-[0.6px]">
-            <ButterflyBackground />
-          </div>
-        )}
+        {showButterfliesSoft && <div className="absolute inset-0 pointer-events-none opacity-[0.22] blur-[0.6px]"><ButterflyBackground /></div>}
       </div>
 
       <Toast show={toastState.show} message={toastState.msg} tone={toastState.tone} onClose={() => toastApi.hide()} />
@@ -1912,9 +1763,6 @@ export default function OnboardingWrapper() {
           <div className="shrink-0 h-[60px] pt-safe-top">
             <ProgressBar step={Math.min(TOTAL_STEPS, screen)} total={TOTAL_STEPS} />
           </div>
-        ) : screen === 14 ? (
-          // ✅ Remove the "bar" above paywall so the video background fills the whole screen.
-          null
         ) : (
           <div className="shrink-0 h-[20px] pt-safe-top" />
         )}
@@ -1938,7 +1786,10 @@ export default function OnboardingWrapper() {
                       <Logo />
                     </div>
 
-                    <h1 className="text-center text-[34px] leading-[1.08] font-extrabold text-white drop-shadow-sm" style={{ fontFamily: "var(--font-lora)" }}>
+                    <h1
+                      className="text-center text-[34px] leading-[1.08] font-extrabold text-white drop-shadow-sm"
+                      style={{ fontFamily: "var(--font-lora)" }}
+                    >
                       Heal Your Core Separation.
                       <br />
                       Without Surgery.
@@ -1951,9 +1802,21 @@ export default function OnboardingWrapper() {
 
                     <div className="w-full mt-10 rounded-3xl border border-white/15 bg-white/8 backdrop-blur-xl shadow-soft p-5">
                       <div className="flex flex-col gap-4">
-                        <Benefit icon={<Stethoscope className="text-white" size={22} />} title="Medical-Grade Assessment" sub="Clinical logic + immediate personalized flags." />
-                        <Benefit icon={<Ban className="text-white" size={22} />} title="No Crunches. No Surgery." sub="We avoid moves that worsen pressure and bulging." />
-                        <Benefit icon={<Sparkles className="text-white" size={22} />} title="Visible Results in 12 Weeks" sub="A real protocol, not a generic quiz." />
+                        <Benefit
+                          icon={<Stethoscope className="text-white" size={22} />}
+                          title="Medical-Grade Assessment"
+                          sub="Clinical logic + immediate personalized flags."
+                        />
+                        <Benefit
+                          icon={<Ban className="text-white" size={22} />}
+                          title="No Crunches. No Surgery."
+                          sub="We avoid moves that worsen pressure and bulging."
+                        />
+                        <Benefit
+                          icon={<Sparkles className="text-white" size={22} />}
+                          title="Visible Results in 12 Weeks"
+                          sub="A real protocol, not a generic quiz."
+                        />
                       </div>
                     </div>
 
@@ -1992,12 +1855,17 @@ export default function OnboardingWrapper() {
                 <div className="flex-1 overflow-y-auto no-scrollbar">
                   <div className="w-full max-w-md mx-auto flex flex-col pt-4">
                     <div className="mt-2">
-                      <h1 className="text-[28px] leading-[1.12] font-extrabold text-white" style={{ fontFamily: "var(--font-lora)" }}>
+                      <h1
+                        className="text-[28px] leading-[1.12] font-extrabold text-white"
+                        style={{ fontFamily: "var(--font-lora)" }}
+                      >
                         Let’s analyze your core.
                         <br />
                         Which shape resembles yours the most?
                       </h1>
-                      <p className="text-white/65 mt-3 text-[14px] leading-relaxed">Pick the closest match. This helps us start with the right protocol.</p>
+                      <p className="text-white/65 mt-3 text-[14px] leading-relaxed">
+                        Pick the closest match. This helps us start with the right protocol.
+                      </p>
                     </div>
 
                     <div className="mt-7 flex flex-col gap-4 pb-4">
@@ -2028,7 +1896,11 @@ export default function OnboardingWrapper() {
                         selected={visualShape === "cone"}
                         onSelect={() => {
                           setVisualShape("cone");
-                          toastApi.show("warning", "Note: Coning indicates weak tissue tension. We will fix this.", 5200);
+                          toastApi.show(
+                            "warning",
+                            "Note: Coning indicates weak tissue tension. We will fix this.",
+                            5200
+                          );
                         }}
                       />
                     </div>
@@ -2063,9 +1935,10 @@ export default function OnboardingWrapper() {
                 className="flex-1 flex flex-col h-full px-5"
               >
                 <div className="w-full max-w-md mx-auto flex flex-col h-full">
-                  {/* Messages Area - iMessage style: newest always visible at bottom */}
-                  <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar pr-1 flex flex-col pb-4 pt-4">
-                    <div className="mt-auto">
+                  {/* Messages Area - Flex Grow & Scrollable */}
+                  {/* justify-start ensures messages stack from top down */}
+                  <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar pr-1 flex flex-col justify-start pb-4 pt-4">
+                    <div>
                       {chat.map((m, idx) => (
                         <ChatBubble key={idx} from={m.from}>
                           {m.text}
@@ -2089,7 +1962,9 @@ export default function OnboardingWrapper() {
                           transition={{ duration: 0.24 }}
                           className="rounded-[28px] border border-white/12 bg-white/8 backdrop-blur-xl shadow-soft p-4"
                         >
-                          <div className="text-white/60 text-xs font-semibold mb-2">Your name (for your medical file)</div>
+                          <div className="text-white/60 text-xs font-semibold mb-2">
+                            Your name (for your medical file)
+                          </div>
 
                           <input
                             value={inputName}
@@ -2134,7 +2009,9 @@ export default function OnboardingWrapper() {
                         >
                           <div className="text-center">
                             <div className="text-slate-900 font-extrabold text-[18px]">Select your age</div>
-                            <div className="text-slate-500 text-[13px] font-semibold mt-1">This helps Mia tailor tissue recovery pacing.</div>
+                            <div className="text-slate-500 text-[13px] font-semibold mt-1">
+                              This helps Mia tailor tissue recovery pacing.
+                            </div>
                           </div>
 
                           <WheelPicker min={18} max={70} value={ageValue} onChange={setAgeValue} />
@@ -2146,7 +2023,9 @@ export default function OnboardingWrapper() {
                             Next
                           </button>
 
-                          <div className="mt-3 text-center text-slate-400 text-[11px] font-semibold">Saved instantly • You can leave and resume anytime</div>
+                          <div className="mt-3 text-center text-slate-400 text-[11px] font-semibold">
+                            Saved instantly • You can leave and resume anytime
+                          </div>
                         </motion.div>
                       )}
                     </AnimatePresence>
