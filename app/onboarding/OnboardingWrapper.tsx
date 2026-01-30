@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { Ban, Sparkles, Stethoscope, ChevronLeft, CheckCircle2 } from "lucide-react";
+import { Ban, Sparkles, Stethoscope, CheckCircle2 } from "lucide-react";
 
 import ButterflyBackground from "@/components/ButterflyBackground";
 import { Toast } from "@/components/Toast";
@@ -51,15 +51,15 @@ function Logo() {
   );
 }
 
+/**
+ * Progress bar ONLY (no "Step X of 14" text).
+ * Render it only on screens 2–11.
+ */
 function ProgressBar({ step }: { step: number }) {
   const pct = Math.max(0, Math.min(100, (step / TOTAL_STEPS) * 100));
   return (
     <div className="px-6 pt-6">
-      <div className="flex items-center justify-between text-white/55 text-xs font-extrabold">
-        <span>Step {step} of {TOTAL_STEPS}</span>
-        <span>{Math.round(pct)}%</span>
-      </div>
-      <div className="mt-2 h-2 bg-white/10 rounded-full overflow-hidden">
+      <div className="h-2 bg-white/10 rounded-full overflow-hidden">
         <div className="h-full bg-white/70" style={{ width: `${pct}%` }} />
       </div>
     </div>
@@ -193,7 +193,12 @@ function VisualCard({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <div className={["text-[16px] font-extrabold leading-snug", selected ? "text-white" : "text-white/90"].join(" ")}>
+            <div
+              className={[
+                "text-[16px] font-extrabold leading-snug",
+                selected ? "text-white" : "text-white/90"
+              ].join(" ")}
+            >
               {title}
             </div>
             {selected && <CheckCircle2 size={18} className="text-[color:var(--pink)]" />}
@@ -380,7 +385,7 @@ export default function OnboardingWrapper() {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed?.state?.isPremium === true) {
-          router.replace("/dashboard");
+          router.replace("/dashboard?plan=monthly");
           return;
         }
       }
@@ -391,7 +396,7 @@ export default function OnboardingWrapper() {
   // Premium redirect (store)
   useEffect(() => {
     if (!checkedPremium) return;
-    if (isPremium) router.replace("/dashboard");
+    if (isPremium) router.replace("/dashboard?plan=monthly");
   }, [checkedPremium, isPremium, router]);
 
   // Screen 3 init
@@ -414,7 +419,7 @@ export default function OnboardingWrapper() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen]);
 
-  // Screen 4 hydration + ask age
+  // Screen 4 hydration + ask age (only if not already asked)
   useEffect(() => {
     if (screen !== 4) return;
     setAgeValue(storedAge || 30);
@@ -431,7 +436,8 @@ export default function OnboardingWrapper() {
 
     if (askedAgeRef.current) return;
 
-    const q = miaAgeQuestion((name || "there").trim() || "there");
+    const safeName = (name || "there").trim() || "there";
+    const q = miaAgeQuestion(safeName);
     const alreadyAsked = chat.some((m) => m.from === "mia" && m.text.includes("How young are you?"));
     if (alreadyAsked) {
       askedAgeRef.current = true;
@@ -473,15 +479,39 @@ export default function OnboardingWrapper() {
     setOnboardingStep(Math.max(1, Math.min(TOTAL_STEPS, n)));
   };
 
+  /**
+   * Makes name → age feel like ONE continuous chat:
+   * - user submits name
+   * - Mia "types"
+   * - Mia asks age
+   * - age picker appears (screen 4) WITHOUT changing the whole chat screen
+   */
   const submitName = () => {
     const cleaned = inputName.trim();
     if (cleaned.length < 2) return;
 
     setName(cleaned);
+
+    // add user's message
     setChat((prev) => [...prev, { from: "user", text: cleaned }]);
     scrollToBottom();
 
-    setTimeout(() => goTo(4), 450);
+    // Mia types then asks age
+    const q = miaAgeQuestion(cleaned);
+    askedAgeRef.current = true;
+    setMiaTyping(true);
+
+    window.setTimeout(() => {
+      setMiaTyping(false);
+      setChat((prev) => {
+        const exists = prev.some((m) => m.from === "mia" && m.text === q);
+        return exists ? prev : [...prev, { from: "mia", text: q }];
+      });
+      scrollToBottom();
+
+      // move to screen 4 to show age picker (same chat screen; no "new page" feeling)
+      window.setTimeout(() => goTo(4), 180);
+    }, 650);
   };
 
   const submitAge = () => {
@@ -497,9 +527,23 @@ export default function OnboardingWrapper() {
 
   if (!checkedPremium) return null;
 
+  // Butterfly rules:
+  // - Screen 1: normal butterflies
+  // - Screens 2–11: butterflies dimmed behind content
+  // - Screens 12–14: no butterflies
+  const showButterfliesStrong = screen === 1;
+  const showButterfliesSoft = screen >= 2 && screen <= 11;
+
+  const showTopProgress = screen >= 2 && screen <= 11;
+
   return (
     <main className="min-h-screen clinical-noise relative overflow-hidden bg-[color:var(--navy)]">
-      <ButterflyBackground />
+      {showButterfliesStrong && <ButterflyBackground />}
+      {showButterfliesSoft && (
+        <div className="absolute inset-0 pointer-events-none opacity-[0.22] blur-[0.6px]">
+          <ButterflyBackground />
+        </div>
+      )}
 
       <Toast
         show={toastState.show}
@@ -509,7 +553,7 @@ export default function OnboardingWrapper() {
       />
 
       <div className="relative z-10 min-h-screen flex flex-col">
-        <ProgressBar step={Math.min(TOTAL_STEPS, screen)} />
+        {showTopProgress && <ProgressBar step={Math.min(TOTAL_STEPS, screen)} />}
 
         <AnimatePresence mode="wait">
           {/* Screen 1 */}
@@ -593,16 +637,13 @@ export default function OnboardingWrapper() {
               className="flex-1 flex flex-col px-6 pt-8 pb-10"
             >
               <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1">
-                <button
-                  onClick={() => goTo(1)}
-                  className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors w-fit"
-                >
-                  <ChevronLeft size={18} />
-                  <span className="text-sm font-semibold">Back</span>
-                </button>
+                {/* Back button removed */}
 
                 <div className="mt-6">
-                  <h1 className="text-[28px] leading-[1.12] font-extrabold text-white" style={{ fontFamily: "var(--font-lora)" }}>
+                  <h1
+                    className="text-[28px] leading-[1.12] font-extrabold text-white"
+                    style={{ fontFamily: "var(--font-lora)" }}
+                  >
                     Let’s analyze your core.
                     <br />
                     Which shape resembles yours the most?
@@ -663,71 +704,10 @@ export default function OnboardingWrapper() {
             </motion.section>
           )}
 
-          {/* Screen 3 */}
-          {screen === 3 && (
+          {/* Screens 3–4 (ONE continuous chat screen) */}
+          {(screen === 3 || screen === 4) && (
             <motion.section
-              key="chat-name"
-              initial={{ opacity: 0, x: 22 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -22 }}
-              transition={{ duration: 0.38, ease: "easeOut" }}
-              className="flex-1 flex flex-col px-5 pt-6 pb-6"
-              style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
-            >
-              <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1">
-                <button onClick={() => goTo(2)} className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors w-fit">
-                  <ChevronLeft size={18} />
-                  <span className="text-sm font-semibold">Back</span>
-                </button>
-
-                <div className="flex-1 min-h-0 mt-5 overflow-y-auto no-scrollbar pr-1">
-                  {chat.map((m, idx) => (
-                    <ChatBubble key={idx} from={m.from}>{m.text}</ChatBubble>
-                  ))}
-                  {miaTyping && <ChatBubble from="mia" typing />}
-                  <div ref={chatBottomRef} className="h-2" />
-                </div>
-
-                <div className="mt-4 rounded-[28px] border border-white/12 bg-white/8 backdrop-blur-xl shadow-soft p-4">
-                  <div className="text-white/60 text-xs font-semibold mb-2">Your name (for your medical file)</div>
-
-                  <input
-                    value={inputName}
-                    onChange={(e) => setInputName(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && submitName()}
-                    placeholder="Type your name..."
-                    className={[
-                      "w-full h-14 rounded-2xl px-4",
-                      "bg-black/20 border border-white/10",
-                      "text-white text-[18px] font-extrabold",
-                      "placeholder:text-white/30",
-                      "focus:outline-none focus:border-[color:var(--pink)]"
-                    ].join(" ")}
-                    autoFocus
-                  />
-
-                  <button
-                    onClick={submitName}
-                    disabled={inputName.trim().length < 2}
-                    className={[
-                      "mt-3 w-full rounded-full font-extrabold text-[16px] transition-all",
-                      inputName.trim().length >= 2
-                        ? "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)] active:scale-[0.985]"
-                        : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed"
-                    ].join(" ")}
-                    style={{ height: 52 }}
-                  >
-                    Continue
-                  </button>
-                </div>
-              </div>
-            </motion.section>
-          )}
-
-          {/* Screen 4 */}
-          {screen === 4 && (
-            <motion.section
-              key="chat-age"
+              key="chat"
               initial={{ opacity: 0, x: 22 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -22 }}
@@ -736,40 +716,96 @@ export default function OnboardingWrapper() {
               style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
             >
               <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1">
-                <button onClick={() => goTo(3)} className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors w-fit">
-                  <ChevronLeft size={18} />
-                  <span className="text-sm font-semibold">Back</span>
-                </button>
+                {/* Back button removed */}
 
                 <div className="flex-1 min-h-0 mt-5 overflow-y-auto no-scrollbar pr-1">
                   {chat.map((m, idx) => (
-                    <ChatBubble key={idx} from={m.from}>{m.text}</ChatBubble>
+                    <ChatBubble key={idx} from={m.from}>
+                      {m.text}
+                    </ChatBubble>
                   ))}
                   {miaTyping && <ChatBubble from="mia" typing />}
                   <div ref={chatBottomRef} className="h-2" />
                 </div>
 
-                <div className="mt-4 bg-white rounded-t-[34px] shadow-[0_-16px_60px_rgba(0,0,0,0.35)] p-5 pb-6">
-                  <div className="text-center">
-                    <div className="text-slate-900 font-extrabold text-[18px]">Select your age</div>
-                    <div className="text-slate-500 text-[13px] font-semibold mt-1">
-                      This helps Mia tailor tissue recovery pacing.
-                    </div>
-                  </div>
+                <AnimatePresence mode="wait">
+                  {/* Name input (screen 3) */}
+                  {screen === 3 && (
+                    <motion.div
+                      key="nameBox"
+                      initial={{ opacity: 0, y: 14 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 14 }}
+                      transition={{ duration: 0.24 }}
+                      className="mt-4 rounded-[28px] border border-white/12 bg-white/8 backdrop-blur-xl shadow-soft p-4"
+                      style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
+                    >
+                      <div className="text-white/60 text-xs font-semibold mb-2">Your name (for your medical file)</div>
 
-                  <WheelPicker min={18} max={70} value={ageValue} onChange={setAgeValue} />
+                      <input
+                        value={inputName}
+                        onChange={(e) => setInputName(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && submitName()}
+                        placeholder="Type your name..."
+                        className={[
+                          "w-full h-14 rounded-2xl px-4",
+                          "bg-black/20 border border-white/10",
+                          "text-white text-[18px] font-extrabold",
+                          "placeholder:text-white/30",
+                          "focus:outline-none focus:border-[color:var(--pink)]"
+                        ].join(" ")}
+                        autoFocus
+                      />
 
-                  <button
-                    onClick={submitAge}
-                    className="mt-4 w-full h-14 rounded-full bg-[color:var(--pink)] text-white font-extrabold text-[17px] shadow-[0_18px_50px_rgba(230,84,115,0.30)] active:scale-[0.985] transition-transform"
-                  >
-                    Next
-                  </button>
+                      <button
+                        onClick={submitName}
+                        disabled={inputName.trim().length < 2}
+                        className={[
+                          "mt-3 w-full rounded-full font-extrabold text-[16px] transition-all",
+                          inputName.trim().length >= 2
+                            ? "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)] active:scale-[0.985]"
+                            : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed"
+                        ].join(" ")}
+                        style={{ height: 52 }}
+                      >
+                        Continue
+                      </button>
+                    </motion.div>
+                  )}
 
-                  <div className="mt-3 text-center text-slate-400 text-[11px] font-semibold">
-                    Saved instantly • You can leave and resume anytime
-                  </div>
-                </div>
+                  {/* Age picker (screen 4) */}
+                  {screen === 4 && (
+                    <motion.div
+                      key="ageBox"
+                      initial={{ opacity: 0, y: 14 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 14 }}
+                      transition={{ duration: 0.24 }}
+                      className="mt-4 bg-white rounded-t-[34px] shadow-[0_-16px_60px_rgba(0,0,0,0.35)] p-5 pb-6"
+                      style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 18px)" }}
+                    >
+                      <div className="text-center">
+                        <div className="text-slate-900 font-extrabold text-[18px]">Select your age</div>
+                        <div className="text-slate-500 text-[13px] font-semibold mt-1">
+                          This helps Mia tailor tissue recovery pacing.
+                        </div>
+                      </div>
+
+                      <WheelPicker min={18} max={70} value={ageValue} onChange={setAgeValue} />
+
+                      <button
+                        onClick={submitAge}
+                        className="mt-4 w-full h-14 rounded-full bg-[color:var(--pink)] text-white font-extrabold text-[17px] shadow-[0_18px_50px_rgba(230,84,115,0.30)] active:scale-[0.985] transition-transform"
+                      >
+                        Next
+                      </button>
+
+                      <div className="mt-3 text-center text-slate-400 text-[11px] font-semibold">
+                        Saved instantly • You can leave and resume anytime
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </motion.section>
           )}
