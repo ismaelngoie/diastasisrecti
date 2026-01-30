@@ -900,12 +900,6 @@ function Step13PlanReveal({ onNext, onBack }: { onNext: () => void; onBack: () =
 // --- Step 14: Paywall ---
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 const REVIEW_IMAGES = ["/review9.png", "/review1.png", "/review5.png", "/review4.png", "/review2.png"];
-const MEDICAL_FEATURES = [
-  { icon: <Brain size={24} className="text-white" />, title: "AI-Driven Protocol", desc: "Adapts to your gap width daily." },
-  { icon: <ShieldCheck size={24} className="text-white" />, title: "Diastasis Safe", desc: "Zero crunches. Zero bulging." },
-  { icon: <Stethoscope size={24} className="text-white" />, title: "Physio Approved", desc: "Clinical logic, home comfort." },
-  { icon: <Activity size={24} className="text-white" />, title: "Tissue Tracking", desc: "Visual trackers for gap closure." },
-];
 const REVIEWS = [
   { name: "Sarah W.", text: "I closed my 3-finger gap in 9 weeks. No surgery.", image: "/review9.png" },
   { name: "Michelle T.", text: "The 'coning' stopped after 12 days. Finally safe.", image: "/review1.png" },
@@ -1010,7 +1004,6 @@ function Step14Paywall() {
     setDateString(d.toLocaleDateString("en-US", { month: "short", day: "numeric" }));
   }, []);
   useEffect(() => {
-    const featureTimer = setInterval(() => setActiveFeatureIndex((p) => (p + 1) % MEDICAL_FEATURES.length), 3000);
     const reviewTimer = setInterval(() => setCurrentReviewIndex((p) => (p + 1) % REVIEWS.length), 5000);
     return () => { clearInterval(featureTimer); clearInterval(reviewTimer); };
   }, []);
@@ -1047,13 +1040,6 @@ function Step14Paywall() {
         <div className="flex justify-center mb-6"><div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/10 backdrop-blur-md shadow-lg"><Lock size={14} className="text-white/90" /><span className="text-[11px] font-extrabold text-white tracking-widest uppercase">Clinical Protocol Locked</span></div></div>
         <h1 className="text-[34px] font-extrabold text-white text-center mb-4 leading-[1.1] drop-shadow-xl" style={{ fontFamily: "var(--font-lora)" }}><span className="text-white/90">{name}, your repair</span><br /><span className="text-[color:var(--pink)]">protocol is ready.</span></h1>
         <p className="text-center text-white/70 text-[15px] font-medium leading-relaxed mb-8 max-w-xs mx-auto">Join <span className="text-white font-bold">{userCount.toLocaleString()}+ women</span> who closed their gap without surgery.</p>
-        <div className="w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 mb-6 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-white/10"><motion.div className="h-full bg-[color:var(--pink)]" initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: 3, repeat: Infinity, ease: "linear" }} /></div>
-          <div className="flex flex-col items-center text-center">
-            <div className="mb-4 w-14 h-14 rounded-2xl bg-gradient-to-br from-[color:var(--pink)] to-[#C23A5B] flex items-center justify-center shadow-lg shadow-pink-500/20"><AnimatePresence mode="wait"><motion.div key={activeFeatureIndex} initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.5 }} transition={{ duration: 0.3 }}>{MEDICAL_FEATURES[activeFeatureIndex].icon}</motion.div></AnimatePresence></div>
-            <AnimatePresence mode="wait"><motion.div key={activeFeatureIndex} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex flex-col items-center"><h3 className="text-lg font-bold text-white mb-1">{MEDICAL_FEATURES[activeFeatureIndex].title}</h3><p className="text-white/60 text-sm font-medium">{MEDICAL_FEATURES[activeFeatureIndex].desc}</p></motion.div></AnimatePresence>
-          </div>
-        </div>
         <div className="w-full bg-black/20 backdrop-blur-md border border-white/10 rounded-[28px] p-5 flex flex-col items-center gap-4 mb-8">
           <div className="flex items-center gap-1.5"><span className="text-[20px] font-bold text-white">4.9</span><div className="flex text-yellow-400 gap-0.5">{[...Array(5)].map((_, i) => (<Star key={i} size={16} fill="currentColor" />))}</div><span className="text-[11px] font-bold text-white/50 uppercase ml-1 tracking-wide">Doctor Approved</span></div>
           <div className="relative w-full h-[100px] flex items-center justify-center"><AnimatePresence mode="wait"><motion.div key={currentReviewIndex} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.4 }} className="absolute w-full flex flex-col items-center"><img src={displayReview.image} alt={displayReview.name} className="w-12 h-12 rounded-full border-2 border-white/20 object-cover shadow-md mb-3" /><p className="text-[15px] italic text-white text-center font-medium leading-snug px-4">"{displayReview.text}"</p><p className="text-[11px] font-bold text-white/40 mt-2 uppercase tracking-wide">{displayReview.name}</p></motion.div></AnimatePresence></div>
