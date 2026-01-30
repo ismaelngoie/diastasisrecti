@@ -107,9 +107,7 @@ export default function Step07SabotageCheck({
         )}
       </AnimatePresence>
 
-      <button onClick={onBack} className="text-white/70 hover:text-white font-semibold w-fit">
-        ← Back
-      </button>
+      {/* Back button removed (prop kept for compatibility) */}
 
       <div className="mt-6">
         <h1 className="text-white font-extrabold text-[30px] leading-[1.08]" style={{ fontFamily: "var(--font-lora)" }}>
