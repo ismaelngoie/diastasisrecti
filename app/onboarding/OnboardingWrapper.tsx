@@ -2630,7 +2630,7 @@ export default function OnboardingWrapper() {
                     </div>
 
                     <div className="mt-6 text-center text-white/55 text-xs font-semibold pb-6">
-                      Designed for postpartum bodies • Evidence-informed • Gentle progressions
+                      Physiotherapist Led • Surgically-Alternative • 100% Core Safe
                     </div>
                   </div>
                 </div>
