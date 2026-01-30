@@ -1328,6 +1328,7 @@ const CheckoutForm = ({ onClose }: { onClose: () => void }) => {
     setMessage("An unexpected error occurred.");
     setIsLoading(false);
   };
+  const getStripeSubtext = () => { if (!dateString) return ""; return `Feel real progress by ${dateString}. If not, one tap full $24.99 refund.`; };
   const paymentElementOptions: StripePaymentElementOptions = { layout: "tabs", fields: { billingDetails: { phone: "never" } } };
   return (
     <form
@@ -1522,9 +1523,6 @@ function Step14Paywall() {
     setIsButtonLoading(false);
     setShowCheckoutModal(true);
   };
-
-  const getStripeSubtext = () => { if (!dateString) return ""; return `Feel real progress by ${dateString}. If not, one tap full $24.99 refund.`; };
-
   const stripeAppearance = {
     theme: "night" as const,
     variables: {
@@ -1606,22 +1604,39 @@ function Step14Paywall() {
       </div>
       
       {/* Sticky Bottom CTA Area */}
-      <div className={`absolute bottom-0 left-0 w-full z-30 px-5 pb-8 pt-8 bg-gradient-to-t from-[#1A1A26] via-[#1A1A26]/95 to-transparent transition-all duration-700 delay-200 ${showContent ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"}`}>
-        <button onClick={handleStartPlan} disabled={isButtonLoading} className="w-full h-[60px] rounded-full shadow-[0_0_40px_rgba(225,29,72,0.4)] flex items-center justify-center gap-3 animate-breathe active:scale-[0.98] transition-transform relative overflow-hidden group bg-gradient-to-r from-[color:var(--pink)] to-[#C23A5B]">
-            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-            {isButtonLoading ? (<Loader2 className="animate-spin text-white" />) : (<>
-                {/* STRONGER CTA TEXT */}
-                <span className="text-[18px] font-extrabold text-white">Start Fixing My Diastasis Recti</span>
-                <ArrowRight className="text-white/80" size={20} />
-            </>)}
-        </button>
-        {/* PRICE ANCHORING */}
-        <p className="text-center text-white/60 text-[12px] font-semibold mt-3 leading-snug px-4 drop-shadow-sm">
-            Less than the cost of one physio visit.
-            <br/>
-            <span className="text-white/40 text-[11px] font-normal">{getCtaSubtext()} Cancel anytime.</span>
-        </p>
-      </div>
+      <div
+  className={`absolute bottom-0 left-0 w-full z-30 px-5 transition-all duration-700 delay-200 ${
+    showContent ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
+  }`}
+>
+  {/* thin, softer fade (this is what removes the big black slab) */}
+  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#1A1A26]/75 via-[#1A1A26]/35 to-transparent" />
+
+  {/* real content stays closer to bottom + keeps safe area */}
+  <div className="relative pt-4 pb-[calc(env(safe-area-inset-bottom)+16px)]">
+    <button
+      onClick={handleStartPlan}
+      disabled={isButtonLoading}
+      className="w-full h-[60px] rounded-full shadow-[0_0_40px_rgba(225,29,72,0.4)] flex items-center justify-center gap-3 animate-breathe active:scale-[0.98] transition-transform relative overflow-hidden group bg-gradient-to-r from-[color:var(--pink)] to-[#C23A5B]"
+    >
+      <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+      {isButtonLoading ? (
+        <Loader2 className="animate-spin text-white" />
+      ) : (
+        <>
+          <span className="text-[18px] font-extrabold text-white">Start Fixing My Diastasis Recti</span>
+          <ArrowRight className="text-white/80" size={20} />
+        </>
+      )}
+    </button>
+
+    <p className="text-center text-white/60 text-[12px] font-semibold mt-3 leading-snug px-4 drop-shadow-sm">
+      Less than the cost of one physio visit.
+      <br />
+      <span className="text-white/40 text-[11px] font-normal">{getCtaSubtext()} Cancel anytime.</span>
+    </p>
+  </div>
+</div>
       
       {showCheckoutModal && clientSecret && (<div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md overflow-y-auto" onClick={() => setShowCheckoutModal(false)}><div className="min-h-full flex items-center justify-center p-4"><Elements options={{ clientSecret, appearance: stripeAppearance }} stripe={stripePromise}><CheckoutForm onClose={() => setShowCheckoutModal(false)} /></Elements></div></div>)}
       {showRestoreModal && <RestoreModal onClose={() => setShowRestoreModal(false)} />}
