@@ -116,7 +116,7 @@ export default function BridgeProtocol({ onDone }: { onDone: () => void }) {
 
         <div className="mt-6 text-center px-4">
           <p className="text-white/40 text-[12px] font-medium leading-relaxed">
-            This is a specialized clinical path to close your gap — not a generic workout library.
+            ${name}, your recovery starts now. Let’s get to work.
           </p>
         </div>
       </div>
