@@ -9,18 +9,25 @@
 
 html, body {
   height: 100%;
+  width: 100%;
+  /* CRITICAL: Stops the rubber-band bounce effect on iOS */
+  overscroll-behavior: none; 
+  -webkit-overflow-scrolling: touch;
+  /* CRITICAL: Allows content to go behind the Dynamic Island/Notch */
+  viewport-fit: cover; 
 }
 
 body {
   background: var(--navy);
   color: white;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* no-scrollbar helper */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Nice tap behavior on mobile */
 button {
   -webkit-tap-highlight-color: transparent;
 }
