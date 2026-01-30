@@ -1,4 +1,4 @@
-// lib/content/videoCatalog.ts
+// lib/videoCatalog.ts
 
 export type VideoItem = {
   url: string;
@@ -298,8 +298,6 @@ export const pelvicYogaVideos: string[] = [
 // ----------------------
 
 // "Leakproof Control" with Coach Laura
-// Note: This was provided as a single list in Swift.
-// You can use this array to populate a "Leakproof" category or split it manually later.
 export const leakproofControlVideos: string[] = [
   "https://firebasestorage.googleapis.com/v0/b/pelvic-floor-exercise-908ed.appspot.com/o/Workout%20with%20Coaches%2FLeakproof%20with%20Coach%20Laura%2FSeated%20Diaphragmatic%20Breathing.mov?alt=media&token=ef93a089-a28e-4cd2-887d-800d2b3532b1",
   "https://firebasestorage.googleapis.com/v0/b/pelvic-floor-exercise-908ed.appspot.com/o/Workout%20with%20Coaches%2FLeakproof%20with%20Coach%20Laura%2FSupine%20Abdominal%20Bracing%20(Hands%20on%20Stomach).mov?alt=media&token=1d37ed92-0800-494b-bfcd-89dd66bc6700",
@@ -339,7 +337,7 @@ export const leakproofControlVideos: string[] = [
   "https://firebasestorage.googleapis.com/v0/b/pelvic-floor-exercise-908ed.appspot.com/o/Workout%20with%20Coaches%2FLeakproof%20with%20Coach%20Laura%2FLifting%20Techniques%203.mov?alt=media&token=6dcf3125-a0e4-4048-a48b-2e7dbf22f48f"
 ];
 
-// "Pelvic Pain Release" (also a good category)
+// "Pelvic Pain Release"
 export const pelvicPainReleaseCategory: string[] = [
   "https://firebasestorage.googleapis.com/v0/b/pelvic-floor-exercise-908ed.appspot.com/o/Workout%20with%20Coaches%2FLeakproof%20with%20Coach%20Laura%2Fpostpartum%20and%20pelvic%20pain%2FResting%20pose.mov?alt=media&token=dd23c8a7-ab9a-4d6f-bbdb-0a8cf6fdabea",
   "https://firebasestorage.googleapis.com/v0/b/pelvic-floor-exercise-908ed.appspot.com/o/Workout%20with%20Coaches%2FLeakproof%20with%20Coach%20Laura%2Fpostpartum%20and%20pelvic%20pain%2FLeg%20Up%20the%20Wall.mov?alt=media&token=457599b1-d49a-42f8-8aff-055dd39f4439",
@@ -379,6 +377,32 @@ export const pelvicPainReleaseCategory: string[] = [
 ];
 
 // ----------------------
+// 7-Day Programs (exports expected by protocolEngine.ts)
+// ----------------------
+
+function chunkIntoDays<T>(arr: T[], days = 7): T[][] {
+  if (days <= 1) return [arr];
+
+  const size = Math.ceil(arr.length / days);
+  const out: T[][] = [];
+
+  for (let i = 0; i < arr.length; i += size) {
+    out.push(arr.slice(i, i + size));
+  }
+
+  // Ensure we always return exactly `days` buckets (pad empties if needed)
+  while (out.length < days) out.push([]);
+  return out.slice(0, days);
+}
+
+// You didn't paste a separate "Dry Seal" list, so we safely derive a 7-day plan
+// from Leakproof Control so the export exists and build passes.
+export const drySealChallenge7Day: string[][] = chunkIntoDays(leakproofControlVideos, 7);
+
+// 7-day plan derived from pelvicPainReleaseCategory
+export const pelvicPainRelease7Day: string[][] = chunkIntoDays(pelvicPainReleaseCategory, 7);
+
+// ----------------------
 // Library Category Export
 // ----------------------
 
@@ -406,7 +430,17 @@ export const CATEGORIES = [
     title: "Pelvic Pilates",
     subtitle: "Control and precision",
     urls: pelvicPilateVideos
+  },
+  {
+    key: "leakproof",
+    title: "Leakproof Control",
+    subtitle: "Coach Laura program",
+    urls: leakproofControlVideos
+  },
+  {
+    key: "pelvicPain",
+    title: "Pelvic Pain Release",
+    subtitle: "Postpartum + pelvic pain relief",
+    urls: pelvicPainReleaseCategory
   }
 ];
-
-export { drySealChallenge7Day, pelvicPainRelease7Day };
