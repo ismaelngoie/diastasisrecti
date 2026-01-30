@@ -1,47 +1,58 @@
-import { json, stripeRequest } from "../_stripe";
+import Stripe from 'stripe';
 
-type Env = {
-  STRIPE_SECRET_KEY: string;
-};
-
-export async function onRequestPost(context: { request: Request; env: Env }) {
+export async function onRequestPost(context: any) {
   try {
-    const { request, env } = context;
-    const { email } = (await request.json().catch(() => ({}))) as { email?: string };
+    const stripe = new Stripe(context.env.STRIPE_SECRET_KEY);
+    const { email } = await context.request.json();
 
-    if (!email) return json({ isPremium: false, error: "Email required" }, { status: 400 });
+    if (!email) {
+      return new Response(JSON.stringify({ error: "Email required" }), { 
+        status: 400,
+        headers: { "Content-Type": "application/json" }
+      });
+    }
 
-    // 1) Find customer by email
-    const customers = await stripeRequest<{ data: Array<{ id: string; name?: string | null }> }>(
-      env,
-      "/customers",
-      { method: "GET", query: { email, limit: "1" } }
-    );
+    // 1. Find Customer by Email
+    const customers = await stripe.customers.list({ 
+      email: email, 
+      limit: 1 
+    });
 
-    if (!customers.data?.length) {
-      return json({ isPremium: false, error: "No account found." });
+    if (customers.data.length === 0) {
+      return new Response(JSON.stringify({ isPremium: false, error: "No account found." }), {
+        headers: { "Content-Type": "application/json" }
+      });
     }
 
     const customer = customers.data[0];
 
-    // 2) Check active or trialing subscriptions
-    const active = await stripeRequest<{ data: any[] }>(env, "/subscriptions", {
-      method: "GET",
-      query: { customer: customer.id, status: "active", limit: "1" },
+    // 2. Check for Active Subscriptions
+    const subscriptions = await stripe.subscriptions.list({
+      customer: customer.id,
+      status: 'active',
+      limit: 1
     });
 
-    const trialing = await stripeRequest<{ data: any[] }>(env, "/subscriptions", {
-      method: "GET",
-      query: { customer: customer.id, status: "trialing", limit: "1" },
+    // Optional: Check for Trialing if you ever add trials
+    const trialing = await stripe.subscriptions.list({
+      customer: customer.id,
+      status: 'trialing',
+      limit: 1
     });
 
-    const isPremium = (active.data?.length || 0) > 0 || (trialing.data?.length || 0) > 0;
+    const isPremium = subscriptions.data.length > 0 || trialing.data.length > 0;
 
-    return json({
+    return new Response(JSON.stringify({ 
       isPremium,
-      customerName: customer.name ?? null,
+      customerName: customer.name // Returns the name to personalize the app
+    }), {
+      headers: { "Content-Type": "application/json" }
     });
+
   } catch (err: any) {
-    return json({ error: err?.message || "Unknown error" }, { status: 500 });
+    return new Response(JSON.stringify({ error: err.message || "Unknown error" }), { 
+      status: 500,
+      headers: { "Content-Type": "application/json" }
+    });
   }
 }
