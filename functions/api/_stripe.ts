@@ -1,3 +1,5 @@
+// functions/_stripe.ts
+
 type StripeEnv = {
   STRIPE_SECRET_KEY: string;
 };
@@ -28,21 +30,26 @@ export async function stripeRequest<T>(
     Object.entries(opts.query).forEach(([k, v]) => url.searchParams.set(k, v));
   }
 
+  // FIXED: Explicitly convert body to string to ensure params like 'expand' are sent correctly
+  const bodyString = opts.body?.toString();
+
   const res = await fetch(url.toString(), {
     method: opts.method || "POST",
     headers: {
       Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: opts.body,
+    body: bodyString, 
   });
 
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
     const msg =
-      (data?.error?.message as string) ||
+      (data as any)?.error?.message ||
       `Stripe error (${res.status}) calling ${path}`;
+    // Log the error so you can see it in Cloudflare logs
+    console.error(`Stripe Error: ${msg}`, data);
     throw new Error(msg);
   }
 
