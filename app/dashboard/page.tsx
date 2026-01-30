@@ -19,8 +19,27 @@ import ButterflyBackground from "@/components/ButterflyBackground";
 
 type TrackLabel = { title: string; subtitle: string };
 
+/**
+ * Removes old branding ("Pelvi") from any user-facing strings.
+ * Does NOT change track keys or protocol logic.
+ */
+function sanitizeCopy(input?: string) {
+  const s = String(input || "");
+  if (!s) return "";
+  return s
+    .replace(/pelvi\.health/gi, "Fix Diastasis Recti")
+    .replace(/pelvi health/gi, "Fix Diastasis Recti")
+    .replace(/\bpelvi\b/gi, "Core Rehab")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 function formatLocalDate(isoYYYYMMDD: string) {
+  // Guard against unexpected formats
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(isoYYYYMMDD)) return "Today";
   const d = new Date(`${isoYYYYMMDD}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return "Today";
+
   return d.toLocaleDateString("en-US", {
     weekday: "long",
     month: "short",
@@ -44,7 +63,7 @@ function trackLabel(track: string): TrackLabel {
     default:
       return {
         title: "Midline Repair Session",
-        subtitle: "Linea alba support + transverse abdominis re-activation",
+        subtitle: "Linea alba support + transverse abdominis activation",
       };
   }
 }
@@ -169,6 +188,7 @@ function PrimaryButton({
 
   return (
     <button
+      type="button"
       disabled={disabled}
       onClick={onClick}
       className={[
@@ -190,20 +210,22 @@ export default function DashboardTodayPage() {
 
   // ✅ If user lands on /dashboard?plan=monthly after payment,
   // wait 5 seconds then remove ONLY the `plan` query param.
+  const planParam = searchParams.get("plan");
+  const searchParamsString = searchParams.toString();
+
   useEffect(() => {
-    const plan = searchParams.get("plan");
-    if (!plan) return;
+    if (!planParam) return;
 
     const t = window.setTimeout(() => {
-      const next = new URLSearchParams(searchParams.toString());
+      const next = new URLSearchParams(searchParamsString);
       next.delete("plan");
 
       const qs = next.toString();
-      router.replace(qs ? `/dashboard?${qs}` : "/dashboard");
+      router.replace(qs ? `/dashboard?${qs}` : "/dashboard", { scroll: false });
     }, 5000);
 
     return () => window.clearTimeout(t);
-  }, [router, searchParams]);
+  }, [router, planParam, searchParamsString]);
 
   const user = useUserStore();
   const [showWhy, setShowWhy] = useState(false);
@@ -221,6 +243,9 @@ export default function DashboardTodayPage() {
 
   const p = useMemo(() => getTodaysPrescription(user), [user]);
 
+  const videos = useMemo(() => (p?.videos ? p.videos : []), [p?.videos]);
+  const hasVideos = videos.length > 0;
+
   const todaysCompletion = useMemo(() => {
     return (completions || []).find((c) => c.dateISO === p.dateISO) || null;
   }, [completions, p.dateISO]);
@@ -234,9 +259,15 @@ export default function DashboardTodayPage() {
   const headerDate = useMemo(() => formatLocalDate(p.dateISO), [p.dateISO]);
 
   const label = useMemo(() => trackLabel(p.track), [p.track]);
-  const pressureTone = useMemo(
-    () => pressureBadge(p.pressureLabel),
+
+  const pressureLabelDisplay = useMemo(
+    () => sanitizeCopy(p.pressureLabel) || p.pressureLabel || "—",
     [p.pressureLabel]
+  );
+
+  const pressureTone = useMemo(
+    () => pressureBadge(pressureLabelDisplay),
+    [pressureLabelDisplay]
   );
 
   const habitItems = useMemo(
@@ -263,19 +294,32 @@ export default function DashboardTodayPage() {
   }, [habitsDoneCount, habitItems.length]);
 
   const startSession = (videoIndex = 0) => {
+    if (!hasVideos) return;
+
     if (p.track === "drySeal") startDrySeal();
-    const v = p.videos[videoIndex];
-    if (v) {
+    const v = videos[videoIndex];
+
+    if (v?.url) {
       setPlayerUrl(v.url);
-      setPlayerTitle(v.title);
+      setPlayerTitle(sanitizeCopy(v.title) || v.title || "Exercise");
     }
   };
 
   const exerciseCountText = useMemo(() => {
-    const n = p.videos.length;
+    const n = videos.length;
     if (n === 1) return "1";
     return String(n);
-  }, [p.videos.length]);
+  }, [videos.length]);
+
+  const phaseNameDisplay = useMemo(() => {
+    const raw = p?.phaseName || "Today";
+    return sanitizeCopy(raw) || raw;
+  }, [p?.phaseName]);
+
+  const whyDisplay = useMemo(() => {
+    const raw = p?.why || "";
+    return sanitizeCopy(raw) || raw;
+  }, [p?.why]);
 
   return (
     <main className="w-full max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -298,13 +342,13 @@ export default function DashboardTodayPage() {
               style={{ fontFamily: "var(--font-lora)" }}
             >
               Day {p.dayNumber}:{" "}
-              <span className="text-white/90">{p.phaseName}</span>
+              <span className="text-white/90">{phaseNameDisplay}</span>
             </h1>
 
             <div className="mt-3 flex flex-wrap gap-2">
               <Pill tone="pink">
                 <Sparkles size={14} className="text-[color:var(--pink)]" />
-                {safeName}&apos;s Recovery Lab
+                {safeName}&apos;s Core Rehab Plan
               </Pill>
 
               <div
@@ -320,14 +364,14 @@ export default function DashboardTodayPage() {
                     pressureTone.text,
                   ].join(" ")}
                 >
-                  {p.pressureLabel}
+                  {pressureLabelDisplay}
                 </span>
               </div>
 
               {noCrunch && (
                 <Pill tone="danger">
                   <Ban size={14} className="text-red-200" />
-                  Avoid Crunches
+                  No Crunches
                 </Pill>
               )}
 
@@ -338,16 +382,26 @@ export default function DashboardTodayPage() {
                 </Pill>
               )}
             </div>
+
+            {!hasVideos && (
+              <div className="mt-3 text-white/60 text-[12px] font-semibold leading-relaxed">
+                Today&apos;s session videos are not available yet. Please refresh,
+                or check again soon.
+              </div>
+            )}
           </div>
 
           <button
+            type="button"
             onClick={() => startSession(0)}
+            disabled={!hasVideos}
             className={[
               "shrink-0 h-12 px-4 rounded-2xl",
               "border border-white/10 bg-white/8 backdrop-blur-xl",
               "text-white font-extrabold text-[13px]",
               "active:scale-[0.985] transition-transform",
               "inline-flex items-center gap-2",
+              !hasVideos ? "opacity-60 cursor-not-allowed" : "",
             ].join(" ")}
           >
             <div className="w-8 h-8 rounded-xl bg-[color:var(--pink)]/18 border border-[color:var(--pink)]/28 flex items-center justify-center">
@@ -373,26 +427,22 @@ export default function DashboardTodayPage() {
 
               <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2">
                 <StatTile label="Minutes" value={String(p.minutes)} sub="min" />
-                <StatTile
-                  label="Exercises"
-                  value={exerciseCountText}
-                  sub="moves"
-                />
-                <StatTile
-                  label="Pressure"
-                  value={shortPressure(p.pressureLabel)}
-                />
+                <StatTile label="Exercises" value={exerciseCountText} sub="moves" />
+                <StatTile label="Pressure" value={shortPressure(pressureLabelDisplay)} />
               </div>
             </div>
 
             <button
+              type="button"
               onClick={() => startSession(0)}
+              disabled={!hasVideos}
               className={[
                 "shrink-0 w-14 h-14 rounded-2xl",
                 "bg-[color:var(--pink)]/18 border border-[color:var(--pink)]/28",
                 "flex items-center justify-center",
                 "active:scale-[0.985] transition-transform",
                 "shadow-[0_18px_50px_rgba(230,84,115,0.18)]",
+                !hasVideos ? "opacity-60 cursor-not-allowed" : "",
               ].join(" ")}
               aria-label="Play first exercise"
             >
@@ -415,41 +465,57 @@ export default function DashboardTodayPage() {
             </div>
 
             <div className="mt-3 flex flex-col gap-2">
-              {p.videos.map((v, idx) => (
-                <button
-                  key={`${v.title}-${idx}`}
-                  onClick={() => startSession(idx)}
-                  className={[
-                    "w-full text-left rounded-2xl border border-white/10 bg-black/20",
-                    "px-4 py-3",
-                    "flex items-center gap-3",
-                    "active:scale-[0.99] transition-transform",
-                  ].join(" ")}
-                >
-                  <div className="shrink-0 w-9 h-9 rounded-xl border border-white/10 bg-white/6 flex items-center justify-center">
-                    <div className="text-white/85 font-extrabold text-[13px] tabular-nums">
-                      {idx + 1}
+              {videos.map((v, idx) => {
+                const title = sanitizeCopy(v.title) || v.title || `Exercise ${idx + 1}`;
+                return (
+                  <button
+                    type="button"
+                    key={`${v.url || v.title}-${idx}`}
+                    onClick={() => startSession(idx)}
+                    className={[
+                      "w-full text-left rounded-2xl border border-white/10 bg-black/20",
+                      "px-4 py-3",
+                      "flex items-center gap-3",
+                      "active:scale-[0.99] transition-transform",
+                    ].join(" ")}
+                  >
+                    <div className="shrink-0 w-9 h-9 rounded-xl border border-white/10 bg-white/6 flex items-center justify-center">
+                      <div className="text-white/85 font-extrabold text-[13px] tabular-nums">
+                        {idx + 1}
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="min-w-0 flex-1">
-                    <div className="text-white/90 text-[13px] font-extrabold truncate">
-                      {v.title}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-white/90 text-[13px] font-extrabold truncate">
+                        {title}
+                      </div>
+                      <div className="text-white/45 text-[11px] font-semibold mt-0.5 truncate">
+                        Follow on-screen cues • ribs down • exhale on effort
+                      </div>
                     </div>
-                    <div className="text-white/45 text-[11px] font-semibold mt-0.5 truncate">
-                      Follow on-screen cues • ribs down • exhale on effort
-                    </div>
-                  </div>
 
-                  <div className="shrink-0 w-10 h-10 rounded-xl border border-white/10 bg-white/6 flex items-center justify-center">
-                    <Play className="text-white/75" size={16} />
+                    <div className="shrink-0 w-10 h-10 rounded-xl border border-white/10 bg-white/6 flex items-center justify-center">
+                      <Play className="text-white/75" size={16} />
+                    </div>
+                  </button>
+                );
+              })}
+
+              {!hasVideos && (
+                <div className="mt-2 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                  <div className="text-white/80 text-[13px] font-extrabold">
+                    Session not available
                   </div>
-                </button>
-              ))}
+                  <div className="text-white/55 text-[12px] font-semibold mt-1 leading-relaxed">
+                    We don&apos;t have the video set for today yet. Please refresh, or try again later.
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
           <button
+            type="button"
             onClick={() => setShowWhy((v) => !v)}
             className="mt-5 w-full rounded-2xl border border-white/10 bg-white/6 px-4 py-3 flex items-center justify-between"
           >
@@ -475,7 +541,7 @@ export default function DashboardTodayPage() {
                 className="overflow-hidden"
               >
                 <div className="mt-3 text-white/70 text-[13px] font-semibold leading-relaxed">
-                  {p.why}
+                  {whyDisplay || "Today’s plan focuses on safe pressure control and midline support."}
                 </div>
               </motion.div>
             )}
@@ -529,6 +595,7 @@ export default function DashboardTodayPage() {
                       setHabitDone(p.dateISO, h.id, e.target.checked)
                     }
                     className="sr-only"
+                    aria-label={h.text}
                   />
 
                   <div
@@ -559,7 +626,7 @@ export default function DashboardTodayPage() {
                       {h.text}
                     </div>
                     <div className="mt-1 text-white/35 text-[11px] font-semibold">
-                      {done ? "Done • great protective habit" : "Tap to mark as done"}
+                      {done ? "Done • protective habit logged" : "Tap to mark as done"}
                     </div>
                   </div>
                 </label>
@@ -587,13 +654,16 @@ export default function DashboardTodayPage() {
         <div className="relative w-full max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3">
           <div className="grid grid-cols-2 gap-3">
             <button
+              type="button"
               onClick={() => startSession(0)}
+              disabled={!hasVideos}
               className={[
                 "h-14 rounded-full",
                 "border border-white/10 bg-white/8 backdrop-blur-xl",
                 "text-white font-extrabold",
                 "active:scale-[0.985] transition-transform",
                 "inline-flex items-center justify-center gap-2",
+                !hasVideos ? "opacity-60 cursor-not-allowed" : "",
               ].join(" ")}
             >
               <Play size={18} />
@@ -602,9 +672,9 @@ export default function DashboardTodayPage() {
 
             <PrimaryButton
               tone={isComplete ? "success" : "pink"}
-              disabled={isComplete}
+              disabled={isComplete || !hasVideos}
               onClick={() => {
-                if (isComplete) return;
+                if (isComplete || !hasVideos) return;
 
                 addWorkoutCompletion({
                   dateISO: p.dateISO,
