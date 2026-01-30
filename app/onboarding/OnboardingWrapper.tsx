@@ -2394,7 +2394,7 @@ export default function OnboardingWrapper() {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed?.state?.isPremium === true) {
-          router.replace("/dashboard?plan=monthly");
+          router.replace("/dashboard");
           return;
         }
       }
@@ -2404,7 +2404,7 @@ export default function OnboardingWrapper() {
 
   useEffect(() => {
     if (!checkedPremium) return;
-    if (isPremium) router.replace("/dashboard?plan=monthly");
+    if (isPremium) router.replace("/dashboard");
   }, [checkedPremium, isPremium, router]);
 
   useEffect(() => {
