@@ -22,8 +22,7 @@ import Step14Paywall from "@/components/onboarding/steps/Step14Paywall";
 
 const TOTAL_STEPS = 14;
 
-const MIA_M1 =
-  "Hi! I'm Coach Mia, your Core Specialist. I've helped 10,000+ women close their gap.";
+const MIA_M1 = "Hi! I'm Coach Mia, your Core Specialist. I've helped 10,000+ women close their gap.";
 const MIA_M2 = "To start your medical file, what should I call you?";
 
 function miaAgeQuestion(safeName: string) {
@@ -43,9 +42,7 @@ function Logo() {
       />
       <div className="ml-3">
         <div className="text-white font-extrabold text-lg tracking-tight">Fix Diastasis</div>
-        <div className="text-white/55 text-xs font-semibold tracking-wide uppercase">
-          Clinical Assessment
-        </div>
+        <div className="text-white/55 text-xs font-semibold tracking-wide uppercase">Clinical Assessment</div>
       </div>
     </div>
   );
@@ -112,18 +109,8 @@ function ShapeArt({ id }: { id: Exclude<VisualShape, null> }) {
           strokeWidth="10"
           strokeLinecap="round"
         />
-        <path
-          d="M160 34v84"
-          stroke="rgba(230,84,115,0.70)"
-          strokeWidth="8"
-          strokeLinecap="round"
-        />
-        <path
-          d="M160 34v84"
-          stroke="rgba(255,255,255,0.25)"
-          strokeWidth="14"
-          strokeLinecap="round"
-        />
+        <path d="M160 34v84" stroke="rgba(230,84,115,0.70)" strokeWidth="8" strokeLinecap="round" />
+        <path d="M160 34v84" stroke="rgba(255,255,255,0.25)" strokeWidth="14" strokeLinecap="round" />
       </svg>
     );
   }
@@ -182,23 +169,13 @@ function VisualCard({
       style={{ minHeight: 120 }}
     >
       <div className="p-5 flex gap-4 items-center">
-        <div
-          className={[
-            "w-28 h-[72px] rounded-2xl overflow-hidden border",
-            selected ? "border-white/20" : "border-white/10"
-          ].join(" ")}
-        >
+        <div className={["w-28 h-[72px] rounded-2xl overflow-hidden border", selected ? "border-white/20" : "border-white/10"].join(" ")}>
           <ShapeArt id={id} />
         </div>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <div
-              className={[
-                "text-[16px] font-extrabold leading-snug",
-                selected ? "text-white" : "text-white/90"
-              ].join(" ")}
-            >
+            <div className={["text-[16px] font-extrabold leading-snug", selected ? "text-white" : "text-white/90"].join(" ")}>
               {title}
             </div>
             {selected && <CheckCircle2 size={18} className="text-[color:var(--pink)]" />}
@@ -308,9 +285,7 @@ function WheelPicker({
             key={num}
             className={[
               "h-[54px] flex items-center justify-center snap-center transition-all duration-200",
-              num === value
-                ? "scale-110 font-extrabold text-[color:var(--pink)] text-3xl"
-                : "scale-90 text-slate-400 text-2xl"
+              num === value ? "scale-110 font-extrabold text-[color:var(--pink)] text-3xl" : "scale-90 text-slate-400 text-2xl"
             ].join(" ")}
           >
             {num}
@@ -377,6 +352,68 @@ export default function OnboardingWrapper() {
   const scrollToBottom = () => {
     setTimeout(() => chatBottomRef.current?.scrollIntoView({ behavior: "smooth" }), 80);
   };
+
+  // ✅ Hard-disable page scrolling while onboarding is mounted (no scroll anywhere)
+  useEffect(() => {
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverscroll = (document.documentElement.style as any).overscrollBehaviorY;
+    const prevBodyOverscroll = (document.body.style as any).overscrollBehaviorY;
+
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    (document.documentElement.style as any).overscrollBehaviorY = "none";
+    (document.body.style as any).overscrollBehaviorY = "none";
+
+    return () => {
+      document.documentElement.style.overflow = prevHtmlOverflow;
+      document.body.style.overflow = prevBodyOverflow;
+      (document.documentElement.style as any).overscrollBehaviorY = prevHtmlOverscroll;
+      (document.body.style as any).overscrollBehaviorY = prevBodyOverscroll;
+    };
+  }, []);
+
+  // ✅ Auto-fit scale so EVERY screen is fully visible with NO scrolling
+  const fitRef = useRef<HTMLDivElement | null>(null);
+  const [fitScale, setFitScale] = useState(1);
+
+  useEffect(() => {
+    const calc = () => {
+      const el = fitRef.current;
+      if (!el) return;
+
+      // scrollHeight is NOT affected by CSS transform -> perfect for fit math
+      const contentH = el.scrollHeight;
+      const vh = window.innerHeight;
+
+      // small breathing room
+      const padding = 10;
+      const available = Math.max(320, vh - padding);
+
+      const next = Math.min(1, available / Math.max(1, contentH));
+      // clamp so it never becomes microscopic
+      const clamped = Math.max(0.78, Math.min(1, next));
+
+      setFitScale(clamped);
+    };
+
+    // run twice to catch late layout (fonts/images)
+    requestAnimationFrame(() => {
+      calc();
+      requestAnimationFrame(calc);
+    });
+
+    window.addEventListener("resize", calc);
+    return () => window.removeEventListener("resize", calc);
+  }, [
+    screen,
+    chat.length,
+    miaTyping,
+    toastState.show,
+    visualShape,
+    inputName,
+    ageValue
+  ]);
 
   // Premium redirect (fast storage path)
   useEffect(() => {
@@ -537,7 +574,7 @@ export default function OnboardingWrapper() {
   const showTopProgress = screen >= 2 && screen <= 11;
 
   return (
-    <main className="min-h-screen clinical-noise relative overflow-hidden bg-[color:var(--navy)]">
+    <main className="h-[100dvh] clinical-noise relative overflow-hidden bg-[color:var(--navy)] overscroll-none">
       {showButterfliesStrong && <ButterflyBackground />}
       {showButterfliesSoft && (
         <div className="absolute inset-0 pointer-events-none opacity-[0.22] blur-[0.6px]">
@@ -545,348 +582,414 @@ export default function OnboardingWrapper() {
         </div>
       )}
 
-      <Toast
-        show={toastState.show}
-        message={toastState.msg}
-        tone={toastState.tone}
-        onClose={() => toastApi.hide()}
-      />
+      <Toast show={toastState.show} message={toastState.msg} tone={toastState.tone} onClose={() => toastApi.hide()} />
 
-      <div className="relative z-10 min-h-screen flex flex-col">
-        {showTopProgress && <ProgressBar step={Math.min(TOTAL_STEPS, screen)} />}
+      {/* ✅ Fixed-height viewport container + scaled-to-fit inner content */}
+      <div className="relative z-10 h-[100dvh] flex flex-col overflow-hidden">
+        <div
+          ref={fitRef}
+          className="flex-1 flex flex-col"
+          style={{
+            transform: fitScale < 1 ? `scale(${fitScale})` : undefined,
+            transformOrigin: "top center"
+          }}
+        >
+          {showTopProgress && <ProgressBar step={Math.min(TOTAL_STEPS, screen)} />}
 
-        <AnimatePresence mode="wait">
-          {/* Screen 1 */}
-          {screen === 1 && (
-            <motion.section
-              key="welcome"
-              initial={{ opacity: 0, x: 22 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -22 }}
-              transition={{ duration: 0.38, ease: "easeOut" }}
-              className="flex-1 flex flex-col items-center justify-between px-6 pt-10 pb-10"
-            >
-              <div className="w-full max-w-md flex flex-col items-center">
-                <div className="mb-10">
-                  <Logo />
-                </div>
+          <AnimatePresence mode="wait">
+            {/* Screen 1 */}
+            {screen === 1 && (
+              <motion.section
+                key="welcome"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 flex flex-col items-center justify-between px-6 pt-10 pb-10"
+              >
+                <div className="w-full max-w-md flex flex-col items-center">
+                  <div className="mb-10">
+                    <Logo />
+                  </div>
 
-                <h1
-                  className="text-center text-[34px] leading-[1.08] font-extrabold text-white drop-shadow-sm"
-                  style={{ fontFamily: "var(--font-lora)" }}
-                >
-                  Heal Your Core Separation.
-                  <br />
-                  Without Surgery.
-                </h1>
+                  <h1
+                    className="text-center text-[34px] leading-[1.08] font-extrabold text-white drop-shadow-sm"
+                    style={{ fontFamily: "var(--font-lora)" }}
+                  >
+                    Heal Your Core Separation.
+                    <br />
+                    Without Surgery.
+                  </h1>
 
-                <p className="text-center text-white/70 mt-4 text-[15px] leading-relaxed max-w-sm">
-                  The only AI-driven protocol designed to close Diastasis Recti gaps of{" "}
-                  <span className="text-white font-semibold">2+ fingers</span>.
-                </p>
+                  <p className="text-center text-white/70 mt-4 text-[15px] leading-relaxed max-w-sm">
+                    The only AI-driven protocol designed to close Diastasis Recti gaps of{" "}
+                    <span className="text-white font-semibold">2+ fingers</span>.
+                  </p>
 
-                <div className="w-full mt-10 rounded-3xl border border-white/15 bg-white/8 backdrop-blur-xl shadow-soft p-5">
-                  <div className="flex flex-col gap-4">
-                    <Benefit
-                      icon={<Stethoscope className="text-white" size={22} />}
-                      title="Medical-Grade Assessment"
-                      sub="Clinical logic + immediate personalized flags."
-                    />
-                    <Benefit
-                      icon={<Ban className="text-white" size={22} />}
-                      title="No Crunches. No Surgery."
-                      sub="We avoid moves that worsen pressure and bulging."
-                    />
-                    <Benefit
-                      icon={<Sparkles className="text-white" size={22} />}
-                      title="Visible Results in 12 Weeks"
-                      sub="A real protocol, not a generic quiz."
-                    />
+                  <div className="w-full mt-10 rounded-3xl border border-white/15 bg-white/8 backdrop-blur-xl shadow-soft p-5">
+                    <div className="flex flex-col gap-4">
+                      <Benefit
+                        icon={<Stethoscope className="text-white" size={22} />}
+                        title="Medical-Grade Assessment"
+                        sub="Clinical logic + immediate personalized flags."
+                      />
+                      <Benefit
+                        icon={<Ban className="text-white" size={22} />}
+                        title="No Crunches. No Surgery."
+                        sub="We avoid moves that worsen pressure and bulging."
+                      />
+                      <Benefit
+                        icon={<Sparkles className="text-white" size={22} />}
+                        title="Visible Results in 12 Weeks"
+                        sub="A real protocol, not a generic quiz."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-6 text-center text-white/55 text-xs font-semibold">
+                    Designed for postpartum bodies • Evidence-informed • Gentle progressions
                   </div>
                 </div>
 
-                <div className="mt-6 text-center text-white/55 text-xs font-semibold">
-                  Designed for postpartum bodies • Evidence-informed • Gentle progressions
-                </div>
-              </div>
-
-              <div className="w-full max-w-md">
-                <button
-                  onClick={() => goTo(2)}
-                  className={[
-                    "w-full h-14 rounded-full font-extrabold text-[17px]",
-                    "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)]",
-                    "active:scale-[0.985] transition-transform",
-                    "animate-breathe"
-                  ].join(" ")}
-                >
-                  Start My Assessment
-                </button>
-              </div>
-            </motion.section>
-          )}
-
-          {/* Screen 2 */}
-          {screen === 2 && (
-            <motion.section
-              key="visual"
-              initial={{ opacity: 0, x: 22 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -22 }}
-              transition={{ duration: 0.38, ease: "easeOut" }}
-              className="flex-1 flex flex-col px-6 pt-8 pb-10"
-            >
-              <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1">
-                {/* Back button removed */}
-
-                <div className="mt-6">
-                  <h1
-                    className="text-[28px] leading-[1.12] font-extrabold text-white"
-                    style={{ fontFamily: "var(--font-lora)" }}
-                  >
-                    Let’s analyze your core.
-                    <br />
-                    Which shape resembles yours the most?
-                  </h1>
-                  <p className="text-white/65 mt-3 text-[14px] leading-relaxed">
-                    Pick the closest match. This helps us start with the right protocol.
-                  </p>
-                </div>
-
-                <div className="mt-7 flex flex-col gap-4">
-                  <VisualCard
-                    id="pooch"
-                    title="Lower Belly “Pooch”"
-                    subtitle="Bulge sits lower, especially by end of day."
-                    selected={visualShape === "pooch"}
-                    onSelect={() => {
-                      setVisualShape("pooch");
-                      toastApi.hide();
-                    }}
-                  />
-                  <VisualCard
-                    id="gap"
-                    title="Visible Gap / Trench"
-                    subtitle="A line or trench down the midline."
-                    selected={visualShape === "gap"}
-                    onSelect={() => {
-                      setVisualShape("gap");
-                      toastApi.hide();
-                    }}
-                  />
-                  <VisualCard
-                    id="cone"
-                    title="Coning / Doming"
-                    subtitle="Belly peaks like a tent when sitting up."
-                    selected={visualShape === "cone"}
-                    onSelect={() => {
-                      setVisualShape("cone");
-                      toastApi.show("warning", "Note: Coning indicates weak tissue tension. We will fix this.", 5200);
-                    }}
-                  />
-                </div>
-
-                <div className="mt-auto pt-8">
+                <div className="w-full max-w-md">
                   <button
-                    onClick={() => goTo(3)}
-                    disabled={!visualShape}
+                    onClick={() => goTo(2)}
                     className={[
-                      "w-full h-14 rounded-full font-extrabold text-[17px] transition-all",
-                      visualShape
-                        ? "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)] active:scale-[0.985]"
-                        : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed"
+                      "w-full h-14 rounded-full font-extrabold text-[17px]",
+                      "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)]",
+                      "active:scale-[0.985] transition-transform",
+                      "animate-breathe"
                     ].join(" ")}
                   >
-                    Continue
+                    Start My Assessment
                   </button>
                 </div>
-              </div>
-            </motion.section>
-          )}
+              </motion.section>
+            )}
 
-          {/* Screens 3–4 (ONE continuous chat screen) */}
-          {(screen === 3 || screen === 4) && (
-            <motion.section
-              key="chat"
-              initial={{ opacity: 0, x: 22 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -22 }}
-              transition={{ duration: 0.38, ease: "easeOut" }}
-              className="flex-1 flex flex-col px-5 pt-6"
-              style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-            >
-              <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1">
-                {/* Back button removed */}
+            {/* Screen 2 */}
+            {screen === 2 && (
+              <motion.section
+                key="visual"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 flex flex-col px-6 pt-8 pb-10"
+              >
+                <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1">
+                  {/* Back button removed */}
 
-                <div className="flex-1 min-h-0 mt-5 overflow-y-auto no-scrollbar pr-1">
-                  {chat.map((m, idx) => (
-                    <ChatBubble key={idx} from={m.from}>
-                      {m.text}
-                    </ChatBubble>
-                  ))}
-                  {miaTyping && <ChatBubble from="mia" typing />}
-                  <div ref={chatBottomRef} className="h-2" />
+                  <div className="mt-6">
+                    <h1 className="text-[28px] leading-[1.12] font-extrabold text-white" style={{ fontFamily: "var(--font-lora)" }}>
+                      Let’s analyze your core.
+                      <br />
+                      Which shape resembles yours the most?
+                    </h1>
+                    <p className="text-white/65 mt-3 text-[14px] leading-relaxed">
+                      Pick the closest match. This helps us start with the right protocol.
+                    </p>
+                  </div>
+
+                  <div className="mt-7 flex flex-col gap-4">
+                    <VisualCard
+                      id="pooch"
+                      title="Lower Belly “Pooch”"
+                      subtitle="Bulge sits lower, especially by end of day."
+                      selected={visualShape === "pooch"}
+                      onSelect={() => {
+                        setVisualShape("pooch");
+                        toastApi.hide();
+                      }}
+                    />
+                    <VisualCard
+                      id="gap"
+                      title="Visible Gap / Trench"
+                      subtitle="A line or trench down the midline."
+                      selected={visualShape === "gap"}
+                      onSelect={() => {
+                        setVisualShape("gap");
+                        toastApi.hide();
+                      }}
+                    />
+                    <VisualCard
+                      id="cone"
+                      title="Coning / Doming"
+                      subtitle="Belly peaks like a tent when sitting up."
+                      selected={visualShape === "cone"}
+                      onSelect={() => {
+                        setVisualShape("cone");
+                        toastApi.show("warning", "Note: Coning indicates weak tissue tension. We will fix this.", 5200);
+                      }}
+                    />
+                  </div>
+
+                  <div className="mt-auto pt-8">
+                    <button
+                      onClick={() => goTo(3)}
+                      disabled={!visualShape}
+                      className={[
+                        "w-full h-14 rounded-full font-extrabold text-[17px] transition-all",
+                        visualShape
+                          ? "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)] active:scale-[0.985]"
+                          : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed"
+                      ].join(" ")}
+                    >
+                      Continue
+                    </button>
+                  </div>
                 </div>
+              </motion.section>
+            )}
 
-                <AnimatePresence mode="wait">
-                  {/* Name input (screen 3) */}
-                  {screen === 3 && (
-                    <motion.div
-                      key="nameBox"
-                      initial={{ opacity: 0, y: 14 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 14 }}
-                      transition={{ duration: 0.24 }}
-                      className="mt-4 rounded-[28px] border border-white/12 bg-white/8 backdrop-blur-xl shadow-soft p-4"
-                      style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
-                    >
-                      <div className="text-white/60 text-xs font-semibold mb-2">Your name (for your medical file)</div>
+            {/* Screens 3–4 (ONE continuous chat screen) */}
+            {(screen === 3 || screen === 4) && (
+              <motion.section
+                key="chat"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 flex flex-col px-5 pt-6"
+                style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+              >
+                <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1">
+                  {/* Back button removed */}
 
-                      <input
-                        value={inputName}
-                        onChange={(e) => setInputName(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && submitName()}
-                        placeholder="Type your name..."
-                        className={[
-                          "w-full h-14 rounded-2xl px-4",
-                          "bg-black/20 border border-white/10",
-                          "text-white text-[18px] font-extrabold",
-                          "placeholder:text-white/30",
-                          "focus:outline-none focus:border-[color:var(--pink)]"
-                        ].join(" ")}
-                        autoFocus
-                      />
+                  {/* ✅ No scrolling: clamp to available space + scale handles small screens */}
+                  <div className="flex-1 min-h-0 mt-5 overflow-hidden pr-1">
+                    {chat.map((m, idx) => (
+                      <ChatBubble key={idx} from={m.from}>
+                        {m.text}
+                      </ChatBubble>
+                    ))}
+                    {miaTyping && <ChatBubble from="mia" typing />}
+                    <div ref={chatBottomRef} className="h-2" />
+                  </div>
 
-                      <button
-                        onClick={submitName}
-                        disabled={inputName.trim().length < 2}
-                        className={[
-                          "mt-3 w-full rounded-full font-extrabold text-[16px] transition-all",
-                          inputName.trim().length >= 2
-                            ? "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)] active:scale-[0.985]"
-                            : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed"
-                        ].join(" ")}
-                        style={{ height: 52 }}
+                  <AnimatePresence mode="wait">
+                    {/* Name input (screen 3) */}
+                    {screen === 3 && (
+                      <motion.div
+                        key="nameBox"
+                        initial={{ opacity: 0, y: 14 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 14 }}
+                        transition={{ duration: 0.24 }}
+                        className="mt-4 rounded-[28px] border border-white/12 bg-white/8 backdrop-blur-xl shadow-soft p-4"
+                        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
                       >
-                        Continue
-                      </button>
-                    </motion.div>
-                  )}
+                        <div className="text-white/60 text-xs font-semibold mb-2">Your name (for your medical file)</div>
 
-                  {/* Age picker (screen 4) */}
-                  {screen === 4 && (
-                    <motion.div
-                      key="ageBox"
-                      initial={{ opacity: 0, y: 14 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 14 }}
-                      transition={{ duration: 0.24 }}
-                      className="mt-4 bg-white rounded-t-[34px] shadow-[0_-16px_60px_rgba(0,0,0,0.35)] p-5 pb-6"
-                      style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 18px)" }}
-                    >
-                      <div className="text-center">
-                        <div className="text-slate-900 font-extrabold text-[18px]">Select your age</div>
-                        <div className="text-slate-500 text-[13px] font-semibold mt-1">
-                          This helps Mia tailor tissue recovery pacing.
+                        <input
+                          value={inputName}
+                          onChange={(e) => setInputName(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && submitName()}
+                          placeholder="Type your name..."
+                          className={[
+                            "w-full h-14 rounded-2xl px-4",
+                            "bg-black/20 border border-white/10",
+                            "text-white text-[18px] font-extrabold",
+                            "placeholder:text-white/30",
+                            "focus:outline-none focus:border-[color:var(--pink)]"
+                          ].join(" ")}
+                          autoFocus
+                        />
+
+                        <button
+                          onClick={submitName}
+                          disabled={inputName.trim().length < 2}
+                          className={[
+                            "mt-3 w-full rounded-full font-extrabold text-[16px] transition-all",
+                            inputName.trim().length >= 2
+                              ? "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)] active:scale-[0.985]"
+                              : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed"
+                          ].join(" ")}
+                          style={{ height: 52 }}
+                        >
+                          Continue
+                        </button>
+                      </motion.div>
+                    )}
+
+                    {/* Age picker (screen 4) */}
+                    {screen === 4 && (
+                      <motion.div
+                        key="ageBox"
+                        initial={{ opacity: 0, y: 14 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 14 }}
+                        transition={{ duration: 0.24 }}
+                        className="mt-4 bg-white rounded-t-[34px] shadow-[0_-16px_60px_rgba(0,0,0,0.35)] p-5 pb-6"
+                        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 18px)" }}
+                      >
+                        <div className="text-center">
+                          <div className="text-slate-900 font-extrabold text-[18px]">Select your age</div>
+                          <div className="text-slate-500 text-[13px] font-semibold mt-1">
+                            This helps Mia tailor tissue recovery pacing.
+                          </div>
                         </div>
-                      </div>
 
-                      <WheelPicker min={18} max={70} value={ageValue} onChange={setAgeValue} />
+                        <WheelPicker min={18} max={70} value={ageValue} onChange={setAgeValue} />
 
-                      <button
-                        onClick={submitAge}
-                        className="mt-4 w-full h-14 rounded-full bg-[color:var(--pink)] text-white font-extrabold text-[17px] shadow-[0_18px_50px_rgba(230,84,115,0.30)] active:scale-[0.985] transition-transform"
-                      >
-                        Next
-                      </button>
+                        <button
+                          onClick={submitAge}
+                          className="mt-4 w-full h-14 rounded-full bg-[color:var(--pink)] text-white font-extrabold text-[17px] shadow-[0_18px_50px_rgba(230,84,115,0.30)] active:scale-[0.985] transition-transform"
+                        >
+                          Next
+                        </button>
 
-                      <div className="mt-3 text-center text-slate-400 text-[11px] font-semibold">
-                        Saved instantly • You can leave and resume anytime
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </motion.section>
-          )}
+                        <div className="mt-3 text-center text-slate-400 text-[11px] font-semibold">
+                          Saved instantly • You can leave and resume anytime
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </motion.section>
+            )}
 
-          {/* Screen 5 */}
-          {screen === 5 && (
-            <motion.section key="s5" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
-              <Step05FingerTest onBack={() => goTo(4)} onNext={() => goTo(6)} toast={toastApi} />
-            </motion.section>
-          )}
+            {/* Screen 5 */}
+            {screen === 5 && (
+              <motion.section
+                key="s5"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1"
+              >
+                <Step05FingerTest onBack={() => goTo(4)} onNext={() => goTo(6)} toast={toastApi} />
+              </motion.section>
+            )}
 
-          {/* Screen 6 */}
-          {screen === 6 && (
-            <motion.section key="s6" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
-              <Step06TissueDepth onBack={() => goTo(5)} onNext={() => goTo(7)} toast={toastApi} />
-            </motion.section>
-          )}
+            {/* Screen 6 */}
+            {screen === 6 && (
+              <motion.section
+                key="s6"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1"
+              >
+                <Step06TissueDepth onBack={() => goTo(5)} onNext={() => goTo(7)} toast={toastApi} />
+              </motion.section>
+            )}
 
-          {/* Screen 7 */}
-          {screen === 7 && (
-            <motion.section key="s7" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
-              <Step07SabotageCheck onBack={() => goTo(6)} onNext={() => goTo(8)} toast={toastApi} />
-            </motion.section>
-          )}
+            {/* Screen 7 */}
+            {screen === 7 && (
+              <motion.section
+                key="s7"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1"
+              >
+                <Step07SabotageCheck onBack={() => goTo(6)} onNext={() => goTo(8)} toast={toastApi} />
+              </motion.section>
+            )}
 
-          {/* Screen 8 */}
-          {screen === 8 && (
-            <motion.section key="s8" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
-              <Step08Symptoms onBack={() => goTo(7)} onNext={() => goTo(9)} toast={toastApi} />
-            </motion.section>
-          )}
+            {/* Screen 8 */}
+            {screen === 8 && (
+              <motion.section
+                key="s8"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1"
+              >
+                <Step08Symptoms onBack={() => goTo(7)} onNext={() => goTo(9)} toast={toastApi} />
+              </motion.section>
+            )}
 
-          {/* Screen 9 */}
-          {screen === 9 && (
-            <motion.section key="s9" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
-              <Step09Timeline onBack={() => goTo(8)} onNext={() => goTo(10)} toast={toastApi} />
-            </motion.section>
-          )}
+            {/* Screen 9 */}
+            {screen === 9 && (
+              <motion.section
+                key="s9"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1"
+              >
+                <Step09Timeline onBack={() => goTo(8)} onNext={() => goTo(10)} toast={toastApi} />
+              </motion.section>
+            )}
 
-          {/* Screen 10 */}
-          {screen === 10 && (
-            <motion.section key="s10" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
-              <Step10Navel onBack={() => goTo(9)} onNext={() => goTo(11)} toast={toastApi} />
-            </motion.section>
-          )}
+            {/* Screen 10 */}
+            {screen === 10 && (
+              <motion.section
+                key="s10"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1"
+              >
+                <Step10Navel onBack={() => goTo(9)} onNext={() => goTo(11)} toast={toastApi} />
+              </motion.section>
+            )}
 
-          {/* Screen 11 */}
-          {screen === 11 && (
-            <motion.section key="s11" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
-              <Step11Commitment onBack={() => goTo(10)} onNext={() => goTo(12)} toast={toastApi} />
-            </motion.section>
-          )}
+            {/* Screen 11 */}
+            {screen === 11 && (
+              <motion.section
+                key="s11"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1"
+              >
+                <Step11Commitment onBack={() => goTo(10)} onNext={() => goTo(12)} toast={toastApi} />
+              </motion.section>
+            )}
 
-          {/* Screen 12 */}
-          {screen === 12 && (
-            <motion.section
-              key="s12"
-              initial={{ opacity: 0, x: 22 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -22 }}
-              transition={{ duration: 0.38, ease: "easeOut" }}
-              className="flex-1"
-            >
-              <Step12Analysis onDone={() => goTo(13)} />
-            </motion.section>
-          )}
+            {/* Screen 12 */}
+            {screen === 12 && (
+              <motion.section
+                key="s12"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1"
+              >
+                <Step12Analysis onDone={() => goTo(13)} />
+              </motion.section>
+            )}
 
-          {/* Screen 13 */}
-          {screen === 13 && (
-            <motion.section key="s13" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
-              <Step13PlanReveal onBack={() => goTo(12)} onNext={() => goTo(14)} />
-            </motion.section>
-          )}
+            {/* Screen 13 */}
+            {screen === 13 && (
+              <motion.section
+                key="s13"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1"
+              >
+                <Step13PlanReveal onBack={() => goTo(12)} onNext={() => goTo(14)} />
+              </motion.section>
+            )}
 
-          {/* Screen 14 */}
-          {screen === 14 && (
-            <motion.section key="s14" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
-              <Step14Paywall />
-            </motion.section>
-          )}
-        </AnimatePresence>
+            {/* Screen 14 */}
+            {screen === 14 && (
+              <motion.section
+                key="s14"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1"
+              >
+                <Step14Paywall />
+              </motion.section>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </main>
   );
