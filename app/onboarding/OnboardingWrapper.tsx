@@ -1292,7 +1292,7 @@ const REVIEWS = [
 ];
 const DASHBOARD_PATH = "/dashboard?plan=monthly";
 
-const CheckoutForm = ({ onClose }: { onClose: () => void }) => {
+const CheckoutForm = ({ onClose, dateString }: { onClose: () => void; dateString: string }) => {
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
@@ -1638,7 +1638,8 @@ function Step14Paywall() {
   </div>
 </div>
       
-      {showCheckoutModal && clientSecret && (<div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md overflow-y-auto" onClick={() => setShowCheckoutModal(false)}><div className="min-h-full flex items-center justify-center p-4"><Elements options={{ clientSecret, appearance: stripeAppearance }} stripe={stripePromise}><CheckoutForm onClose={() => setShowCheckoutModal(false)} /></Elements></div></div>)}
+      {showCheckoutModal && clientSecret && (<div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md overflow-y-auto" onClick={() => setShowCheckoutModal(false)}><div className="min-h-full flex items-center justify-center p-4"><Elements options={{ clientSecret, appearance: stripeAppearance }} stripe={stripePromise}><CheckoutForm onClose={() => setShowCheckoutModal(false)} dateString={dateString} />
+</Elements></div></div>)}
       {showRestoreModal && <RestoreModal onClose={() => setShowRestoreModal(false)} />}
     </div>
   );
