@@ -1,4 +1,4 @@
-import { json, stripeRequest } from "./_stripe";
+import { json, stripeRequest } from "../_stripe";
 
 type Env = {
   STRIPE_SECRET_KEY: string;
