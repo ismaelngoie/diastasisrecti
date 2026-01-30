@@ -5,8 +5,11 @@ import GapVisualizer from "@/components/inside/GapVisualizer";
 import { FingerGap, TissueDepth, useUserStore } from "@/lib/store/useUserStore";
 import { getTodaysPrescription } from "@/lib/protocolEngine";
 
+type GapValue = NonNullable<FingerGap>;
+type DepthValue = NonNullable<TissueDepth>;
+
 function todayISO() {
-  // YYYY-MM-DD in local time (safe for “today” display & grouping)
+  // YYYY-MM-DD in local time
   const d = new Date();
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -14,11 +17,16 @@ function todayISO() {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-function normalizeGap(v: number): FingerGap {
+function normalizeGap(v: number): GapValue {
   if (v <= 1) return 1;
   if (v === 2) return 2;
   if (v === 3) return 3;
-  return 4; // treat 4 as "4+"
+  return 4; // 4 means "4+"
+}
+
+function normalizeDepth(v: unknown): DepthValue {
+  if (v === "firm" || v === "soft" || v === "pulse") return v;
+  return "soft";
 }
 
 export default function GapLabPage() {
@@ -35,18 +43,15 @@ export default function GapLabPage() {
 
   const history = useUserStore((s) => s.measurementHistory);
 
-  // local form state (so user can preview before saving)
-  const [gap, setGap] = useState<FingerGap>(fingerGap ?? 3);
-  const [depth, setDepth] = useState<TissueDepth>(tissueDepth ?? "soft");
+  // ✅ local form state is NON-nullable so <select value> never receives null
+  const [gap, setGap] = useState<GapValue>(normalizeGap(Number(fingerGap ?? 3)));
+  const [depth, setDepth] = useState<DepthValue>(normalizeDepth(tissueDepth ?? "soft"));
 
   const [isSaving, setIsSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
 
   const save = () => {
     if (isSaving) return;
-
-    // Basic guard (types ensure these are valid, but keep it defensive)
-    if (!gap || !depth) return;
 
     setIsSaving(true);
     setJustSaved(false);
@@ -58,9 +63,9 @@ export default function GapLabPage() {
       setTissueDepth(depth);
       addMeasurement({ dateISO, fingerGap: gap, tissueDepth: depth });
 
-      // Only mark milestone if protocol engine provides the fields
-      const cycleKey = p?.cycleKey;
-      const milestoneDay = (p as any)?.checkinMilestoneDay;
+      // Defensive: only mark milestone if protocol engine provides expected fields
+      const cycleKey = (p as any)?.cycleKey as string | undefined;
+      const milestoneDay = (p as any)?.checkinMilestoneDay as number | undefined;
 
       if (cycleKey && typeof milestoneDay === "number" && milestoneDay > 0) {
         setCheckinDone(cycleKey, milestoneDay, true);
@@ -97,7 +102,7 @@ export default function GapLabPage() {
         </div>
       </div>
 
-      {/* ✅ Show the current selected values (not stale store values) */}
+      {/* Show what user is currently selecting */}
       <GapVisualizer fingerGap={gap} tissueDepth={depth} />
 
       <div className="rounded-3xl border border-white/12 bg-white/6 backdrop-blur-xl shadow-soft p-5">
@@ -122,7 +127,7 @@ export default function GapLabPage() {
             <span className="sr-only">Tissue feel</span>
             <select
               value={depth}
-              onChange={(e) => setDepth(e.target.value as TissueDepth)}
+              onChange={(e) => setDepth(normalizeDepth(e.target.value))}
               className="w-full h-12 rounded-2xl bg-black/25 border border-white/10 text-white font-semibold px-3"
             >
               <option value="firm">Firm</option>
