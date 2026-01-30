@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Hand } from "lucide-react";
 import { FingerGap, useUserStore } from "@/lib/store/useUserStore";
 
@@ -102,6 +102,11 @@ export default function Step05FingerTest({
 
   const [selected, setSelected] = useState<FingerGap>(fingerGap);
 
+  // keep state in sync if store updates externally
+  useEffect(() => {
+    setSelected(fingerGap);
+  }, [fingerGap]);
+
   const canContinue = useMemo(() => selected !== null, [selected]);
 
   const pick = (gap: Exclude<FingerGap, null>) => {
@@ -114,9 +119,7 @@ export default function Step05FingerTest({
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1 px-6 pt-8 pb-10">
-      <button onClick={onBack} className="text-white/70 hover:text-white font-semibold w-fit">
-        ← Back
-      </button>
+      {/* Back button removed (prop kept for compatibility) */}
 
       <div className="mt-6">
         <h1 className="text-white font-extrabold text-[30px] leading-[1.08]" style={{ fontFamily: "var(--font-lora)" }}>
