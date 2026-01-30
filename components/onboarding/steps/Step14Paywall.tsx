@@ -559,10 +559,6 @@ export default function Step14Paywall() {
 
         {/* Pelvi-style footer links (brand + labels) */}
         <div className="flex flex-col items-center gap-2">
-          <div className="text-[12px] font-semibold text-white/45 text-center">
-            Already purchased? Restore your access in seconds.
-          </div>
-
           <div className="flex justify-center items-center gap-3 text-[11px] font-semibold text-white/55">
             <button
               onClick={() => setShowRestoreModal(true)}
