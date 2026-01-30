@@ -13,436 +13,58 @@ import {
   ShieldAlert,
   Waves,
   AlertTriangle,
-  Circle,
+  PersonStanding,
   Droplets,
   HeartPulse,
-  PersonStanding,
+  Circle,
   Shield,
   Timer,
   Star,
   ChevronDown,
   ChevronUp,
+  Brain,
   X,
   Loader2,
   Lock,
   Mail,
-  Brain
 } from "lucide-react";
-
-import ButterflyBackground from "@/components/ButterflyBackground";
-import { Toast } from "@/components/Toast";
-import {
-  USER_STORAGE_KEY,
-  useUserStore,
-  useUserData,
-  VisualShape,
-  FingerGap,
-  TissueDepth,
-  PostpartumTimeline,
-  NavelAssessment,
-  Commitment
-} from "@/lib/store/useUserStore";
-
-import { loadStripe } from "@stripe/stripe-js";
-import type { StripePaymentElementOptions } from "@stripe/stripe-js";
+import { loadStripe, StripePaymentElementOptions } from "@stripe/stripe-js";
 import {
   Elements,
   PaymentElement,
   LinkAuthenticationElement,
   useStripe,
-  useElements
+  useElements,
 } from "@stripe/react-stripe-js";
 
-/* ------------------------------- CONSTANTS ------------------------------ */
+// --- External Component & Store Imports ---
+// Assuming these files exist in your project based on the provided code
+import ButterflyBackground from "@/components/ButterflyBackground";
+import { Toast } from "@/components/Toast";
+import {
+  USER_STORAGE_KEY,
+  useUserStore,
+  useUserData, // Used in Step 14
+  VisualShape,
+  FingerGap,
+  TissueDepth,
+  PostpartumTimeline,
+  NavelAssessment,
+  Commitment,
+} from "@/lib/store/useUserStore";
 
-const TOTAL_STEPS = 14;
-
-const MIA_M1 =
-  "Hi! I'm Coach Mia, your Core Specialist. I've helped 10,000+ women close their gap.";
-const MIA_M2 = "To start your medical file, what should I call you?";
-
-function miaAgeQuestion(safeName: string) {
-  return `Lovely to meet you, ${safeName}. Age helps me determine your collagen elasticity levels. How young are you?`;
-}
-
-/* ------------------------------- UI HELPERS ------------------------------ */
-
+// ==========================================
+// SHARED TYPES (Originally from Step 5)
+// ==========================================
 export type ToastTone = "success" | "info" | "warning" | "danger";
 export type ToastAPI = {
   show: (tone: ToastTone, message: string, ms?: number) => void;
   hide: () => void;
 };
 
-function Logo() {
-  return (
-    <div className="flex items-center justify-center">
-      <img
-        src="/logo.png"
-        alt="Fix Diastasis"
-        className="w-16 h-16 object-contain drop-shadow"
-        onError={(e) => {
-          (e.currentTarget as HTMLImageElement).style.display = "none";
-        }}
-      />
-      <div className="ml-3">
-        <div className="text-white font-extrabold text-lg tracking-tight">Fix Diastasis</div>
-        <div className="text-white/55 text-xs font-semibold tracking-wide uppercase">
-          Clinical Assessment
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ProgressBarBarOnly({ step }: { step: number }) {
-  const pct = Math.max(0, Math.min(100, (step / TOTAL_STEPS) * 100));
-  return (
-    <div className="px-6 pt-6">
-      <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-        <div className="h-full bg-white/70" style={{ width: `${pct}%` }} />
-      </div>
-    </div>
-  );
-}
-
-function TypingIndicator() {
-  return (
-    <div className="flex items-center gap-1.5 px-1 py-1">
-      <div className="w-2 h-2 bg-white/40 rounded-full animate-bounce [animation-delay:-0.3s]" />
-      <div className="w-2 h-2 bg-white/40 rounded-full animate-bounce [animation-delay:-0.15s]" />
-      <div className="w-2 h-2 bg-white/40 rounded-full animate-bounce" />
-    </div>
-  );
-}
-
-function ChatBubble({
-  from,
-  children,
-  typing
-}: {
-  from: "mia" | "user";
-  children?: React.ReactNode;
-  typing?: boolean;
-}) {
-  const isUser = from === "user";
-  return (
-    <div className={`w-full flex ${isUser ? "justify-end" : "justify-start"} mb-4`}>
-      {!isUser && (
-        <div className="w-10 h-10 rounded-full overflow-hidden border border-white/15 bg-white/10 shrink-0 mr-3 mt-auto relative flex items-center justify-center">
-          <img
-            src="/coachMiaAvatar.png"
-            alt="Mia"
-            className="absolute inset-0 w-full h-full object-cover"
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).style.display = "none";
-            }}
-          />
-          {/* Fallback initial if image fails */}
-          <span className="text-white/80 font-extrabold text-sm select-none">M</span>
-        </div>
-      )}
-
-      <div
-        className={[
-          "max-w-[86%] px-5 py-3.5 text-[15px] leading-relaxed font-semibold",
-          "shadow-soft",
-          isUser
-            ? "bg-[color:var(--pink)] text-white rounded-2xl rounded-br-none"
-            : "bg-white/10 border border-white/12 text-white rounded-2xl rounded-bl-none"
-        ].join(" ")}
-      >
-        {typing ? <TypingIndicator /> : children}
-      </div>
-    </div>
-  );
-}
-
-function WheelPicker({
-  min,
-  max,
-  value,
-  onChange
-}: {
-  min: number;
-  max: number;
-  value: number;
-  onChange: (v: number) => void;
-}) {
-  const range = useMemo(
-    () => Array.from({ length: max - min + 1 }, (_, i) => min + i),
-    [min, max]
-  );
-  const scrollerRef = useRef<HTMLDivElement | null>(null);
-  const ITEM_HEIGHT = 54;
-
-  useEffect(() => {
-    if (!scrollerRef.current) return;
-    const idx = range.indexOf(value);
-    if (idx >= 0) scrollerRef.current.scrollTo({ top: idx * ITEM_HEIGHT, behavior: "auto" });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleScroll = () => {
-    if (!scrollerRef.current) return;
-    const scrollY = scrollerRef.current.scrollTop;
-    const centerIndex = Math.round(scrollY / ITEM_HEIGHT);
-    const newValue = range[centerIndex];
-    if (newValue !== undefined && newValue !== value) onChange(newValue);
-  };
-
-  return (
-    <div className="relative h-[220px] w-full max-w-[340px] mx-auto overflow-hidden mt-1">
-      <div className="absolute top-1/2 left-0 w-full h-[54px] -translate-y-1/2 border-t-2 border-b-2 border-[color:var(--pink)]/10 bg-[color:var(--pink)]/5 pointer-events-none z-10" />
-      <div className="absolute top-0 left-0 w-full h-[80px] bg-gradient-to-b from-white via-white/90 to-transparent z-20 pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-full h-[80px] bg-gradient-to-t from-white via-white/90 to-transparent z-20 pointer-events-none" />
-
-      <div
-        ref={scrollerRef}
-        onScroll={handleScroll}
-        className="h-full w-full overflow-y-scroll snap-y snap-mandatory no-scrollbar py-[83px]"
-      >
-        {range.map((num) => (
-          <div
-            key={num}
-            className={[
-              "h-[54px] flex items-center justify-center snap-center transition-all duration-200",
-              num === value
-                ? "scale-110 font-extrabold text-[color:var(--pink)] text-3xl"
-                : "scale-90 text-slate-400 text-2xl"
-            ].join(" ")}
-          >
-            {num}
-            <span className="text-sm ml-2 mt-1 font-semibold text-slate-400/80">years</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------ VISUAL STEP 2 ---------------------------- */
-
-// --- HIGH-END 3D DEFINITIONS ---
-const SvgDefs = () => (
-  <defs>
-    {/* 1. Body Glass Gradient: Gives the torso volume/depth */}
-    <linearGradient id="body-glass" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0%" stopColor="white" stopOpacity="0.15" />
-      <stop offset="50%" stopColor="white" stopOpacity="0.05" />
-      <stop offset="100%" stopColor="white" stopOpacity="0.02" />
-    </linearGradient>
-
-    {/* 2. The "Pooch" Sphere Gradient: Makes it look round/protruding */}
-    <radialGradient id="pooch-3d" cx="0.5" cy="0.8" r="0.4">
-      <stop offset="0%" stopColor="#E65473" stopOpacity="0.4" />
-      <stop offset="60%" stopColor="#E65473" stopOpacity="0.1" />
-      <stop offset="100%" stopColor="#E65473" stopOpacity="0" />
-    </radialGradient>
-
-    {/* 3. The "Gap" Depth Gradient: Makes the middle look like a deep trench */}
-    <linearGradient id="gap-depth" x1="0" x2="1" y1="0" y2="0">
-      <stop offset="0%" stopColor="white" stopOpacity="0.1" />
-      <stop offset="40%" stopColor="#1A1A26" stopOpacity="0.8" /> {/* Dark middle */}
-      <stop offset="60%" stopColor="#1A1A26" stopOpacity="0.8" />
-      <stop offset="100%" stopColor="white" stopOpacity="0.1" />
-    </linearGradient>
-
-    {/* 4. The "Cone" Ridge Gradient: Simulates light hitting a pyramid peak */}
-    <linearGradient id="cone-ridge" x1="0" x2="1" y1="0" y2="0">
-      <stop offset="0%" stopColor="white" stopOpacity="0" />
-      <stop offset="48%" stopColor="white" stopOpacity="0.1" />
-      <stop offset="50%" stopColor="#E65473" stopOpacity="0.8" /> {/* The Peak Highlight */}
-      <stop offset="52%" stopColor="white" stopOpacity="0.1" />
-      <stop offset="100%" stopColor="white" stopOpacity="0" />
-    </linearGradient>
-
-    {/* 5. Glow Filter for lasers/lines */}
-    <filter id="laser-glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="1.5" result="blur" />
-      <feComposite in="SourceGraphic" in2="blur" operator="over" />
-    </filter>
-  </defs>
-);
-
-function ShapeArt({ id }: { id: Exclude<VisualShape, null> }) {
-  // Shared Torso Path (Hourglass shape)
-  const torsoPath = "M50 40 C 50 40, 60 90, 55 120 C 50 150, 70 170, 100 180 C 130 170, 150 150, 145 120 C 140 90, 150 40, 150 40";
-
-  return (
-    <svg viewBox="0 0 200 200" className="w-full h-full" fill="none">
-      <SvgDefs />
-      
-      {/* 1. Base Body Layer (Glass Effect) */}
-      <path
-        d={torsoPath}
-        fill="url(#body-glass)"
-        stroke="white"
-        strokeWidth="1.5"
-        strokeOpacity="0.3"
-      />
-      
-      {/* --- THE POOCH (Volumetric Sphere) --- */}
-      {id === "pooch" && (
-        <>
-          {/* The 3D Volume Fill */}
-          <path
-            d="M75 110 C 75 110, 100 120, 125 110 C 125 110, 135 150, 100 160 C 65 150, 75 110, 75 110"
-            fill="url(#pooch-3d)"
-            filter="url(#laser-glow)"
-          />
-          {/* Top Contour Line (Crisp) */}
-          <path d="M75 110 Q 100 125, 125 110" stroke="white" strokeWidth="2" strokeLinecap="round" />
-          {/* Bottom Heavy Curve (Sag) */}
-          <path d="M80 115 Q 100 155, 120 115" stroke="white" strokeWidth="3" strokeOpacity="0.9" />
-          {/* Navel */}
-          <circle cx="100" cy="95" r="2" fill="white" />
-        </>
-      )}
-
-      {/* --- THE GAP (Deep Trench Scan) --- */}
-      {id === "gap" && (
-        <>
-          {/* Dark Channel in the middle to simulate depth */}
-          <path
-            d="M85 60 Q 85 100, 85 140 L 115 140 Q 115 100, 115 60 Z"
-            fill="url(#gap-depth)"
-          />
-          {/* Muscle Walls (Left & Right) */}
-          <path d="M85 60 Q 80 100, 85 140" stroke="white" strokeWidth="2" opacity="0.8" />
-          <path d="M115 60 Q 120 100, 115 140" stroke="white" strokeWidth="2" opacity="0.8" />
-          
-          {/* Laser Measurement Lines (Pink/White) */}
-          <g filter="url(#laser-glow)">
-            {/* Top Laser */}
-            <path d="M60 90 L 80 90" stroke="white" strokeWidth="1" strokeDasharray="3 3" opacity="0.5"/>
-            <path d="M80 90 L 120 90" stroke="#E65473" strokeWidth="1.5" />
-            <path d="M120 90 L 140 90" stroke="white" strokeWidth="1" strokeDasharray="3 3" opacity="0.5"/>
-            
-            {/* Bottom Laser */}
-            <path d="M60 110 L 80 110" stroke="white" strokeWidth="1" strokeDasharray="3 3" opacity="0.5"/>
-            <path d="M80 110 L 120 110" stroke="#E65473" strokeWidth="1.5" />
-            <path d="M120 110 L 140 110" stroke="white" strokeWidth="1" strokeDasharray="3 3" opacity="0.5"/>
-          </g>
-          
-          {/* Tiny arrowheads */}
-          <path d="M80 87 L 85 90 L 80 93" fill="white" />
-          <path d="M120 87 L 115 90 L 120 93" fill="white" />
-        </>
-      )}
-
-      {/* --- THE CONE (Holographic Ridge) --- */}
-      {id === "cone" && (
-        <>
-          {/* The Ridge Gradient (Simulating a tent shape rising up) */}
-          <path
-            d="M80 140 L 100 60 L 120 140"
-            fill="url(#cone-ridge)"
-          />
-          {/* The Sharp Spine (Pink Highlight) */}
-          <path
-            d="M100 60 L 100 140"
-            stroke="#E65473"
-            strokeWidth="2"
-            strokeLinecap="round"
-            filter="url(#laser-glow)"
-          />
-          {/* Tension Lines radiating out (Stress) */}
-          <path d="M100 80 L 70 85" stroke="white" strokeWidth="1" opacity="0.2" />
-          <path d="M100 100 L 65 105" stroke="white" strokeWidth="1" opacity="0.3" />
-          <path d="M100 120 L 70 125" stroke="white" strokeWidth="1" opacity="0.2" />
-          
-          <path d="M100 80 L 130 85" stroke="white" strokeWidth="1" opacity="0.2" />
-          <path d="M100 100 L 135 105" stroke="white" strokeWidth="1" opacity="0.3" />
-          <path d="M100 120 L 130 125" stroke="white" strokeWidth="1" opacity="0.2" />
-
-          {/* Navel at the peak */}
-          <circle cx="100" cy="90" r="2" fill="white" />
-        </>
-      )}
-    </svg>
-  );
-}
-function VisualCard({
-  id,
-  title,
-  subtitle,
-  selected,
-  onSelect
-}: {
-  id: Exclude<VisualShape, null>;
-  title: string;
-  subtitle: string;
-  selected: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      onClick={onSelect}
-      className={[
-        "w-full text-left rounded-3xl border transition-all duration-300",
-        "bg-white/8 backdrop-blur-xl shadow-soft",
-        "active:scale-[0.99]",
-        selected
-          ? "border-[rgba(230,84,115,0.75)] shadow-[0_0_0_6px_rgba(230,84,115,0.12),0_28px_70px_rgba(0,0,0,0.35)]"
-          : "border-white/12 hover:border-white/20"
-      ].join(" ")}
-      style={{ minHeight: 120 }}
-    >
-      <div className="p-5 flex gap-4 items-center">
-        <div
-          className={[
-            "w-28 h-[72px] rounded-2xl overflow-hidden border",
-            selected ? "border-white/20" : "border-white/10"
-          ].join(" ")}
-        >
-          <ShapeArt id={id} />
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <div
-              className={[
-                "text-[16px] font-extrabold leading-snug",
-                selected ? "text-white" : "text-white/90"
-              ].join(" ")}
-            >
-              {title}
-            </div>
-            {selected && <CheckCircle2 size={18} className="text-[color:var(--pink)]" />}
-          </div>
-          <div className="text-[13px] text-white/60 leading-snug mt-1">{subtitle}</div>
-        </div>
-      </div>
-    </button>
-  );
-}
-
-function Benefit({
-  icon,
-  title,
-  sub
-}: {
-  icon: React.ReactNode;
-  title: string;
-  sub: string;
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center shrink-0">
-        {icon}
-      </div>
-      <div className="flex-1">
-        <div className="text-white font-extrabold text-[15px] leading-snug">{title}</div>
-        <div className="text-white/60 text-[13px] leading-snug mt-0.5">{sub}</div>
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------- STEPS 5–11 ------------------------------ */
-/* NOTE: Back buttons removed per your request. */
-
-/* --- Step 05 --- */
+// ==========================================
+// STEP 05: FINGER TEST
+// ==========================================
 
 const step05Options: Array<{
   gap: Exclude<FingerGap, null>;
@@ -451,17 +73,41 @@ const step05Options: Array<{
   tone: ToastTone;
   toast: string;
 }> = [
-  { gap: 1, title: "1 Finger", sub: "Normal", tone: "success", toast: "Great news. We focus on maintenance and strengthening." },
-  { gap: 2, title: "2 Fingers", sub: "Mild", tone: "info", toast: "Very common. Highly treatable in 8 weeks." },
-  { gap: 3, title: "3 Fingers", sub: "Moderate", tone: "warning", toast: "Significant separation detected. 'No-Crunch' protocol activated." },
-  { gap: 4, title: "4+ Fingers", sub: "Severe", tone: "danger", toast: "Warning: Deep separation. High caution advised. We are modifying your plan." }
+  {
+    gap: 1,
+    title: "1 Finger",
+    sub: "Normal",
+    tone: "success",
+    toast: "Great news. We focus on maintenance and strengthening.",
+  },
+  {
+    gap: 2,
+    title: "2 Fingers",
+    sub: "Mild",
+    tone: "info",
+    toast: "Very common. Highly treatable in 8 weeks.",
+  },
+  {
+    gap: 3,
+    title: "3 Fingers",
+    sub: "Moderate",
+    tone: "warning",
+    toast: "Significant separation detected. 'No-Crunch' protocol activated.",
+  },
+  {
+    gap: 4,
+    title: "4+ Fingers",
+    sub: "Severe",
+    tone: "danger",
+    toast: "Warning: Deep separation. High caution advised. We are modifying your plan.",
+  },
 ];
 
 function Step05Card({
   selected,
   onClick,
   title,
-  sub
+  sub,
 }: {
   selected: boolean;
   onClick: () => void;
@@ -476,14 +122,14 @@ function Step05Card({
         "min-h-[110px]",
         selected
           ? "border-[color:var(--pink)] bg-white/12 shadow-[0_0_0_6px_rgba(230,84,115,0.12),0_30px_80px_rgba(0,0,0,0.35)]"
-          : "border-white/12 bg-white/8 hover:border-white/20"
+          : "border-white/12 bg-white/8 hover:border-white/20",
       ].join(" ")}
     >
       <div className="flex items-start gap-4">
         <div
           className={[
             "w-12 h-12 rounded-2xl border flex items-center justify-center shrink-0",
-            selected ? "border-white/20 bg-white/10" : "border-white/10 bg-black/10"
+            selected ? "border-white/20 bg-white/10" : "border-white/10 bg-black/10",
           ].join(" ")}
         >
           <Hand className="text-white" size={22} />
@@ -500,15 +146,23 @@ function Step05Card({
 
 function Step05FingerTest({
   onNext,
-  toast
+  onBack,
+  toast,
 }: {
   onNext: () => void;
+  onBack: () => void;
   toast: ToastAPI;
 }) {
   const fingerGap = useUserStore((s) => s.fingerGap);
   const setFingerGap = useUserStore((s) => s.setFingerGap);
 
   const [selected, setSelected] = useState<FingerGap>(fingerGap);
+
+  // keep state in sync if store updates externally
+  useEffect(() => {
+    setSelected(fingerGap);
+  }, [fingerGap]);
+
   const canContinue = useMemo(() => selected !== null, [selected]);
 
   const pick = (gap: Exclude<FingerGap, null>) => {
@@ -521,7 +175,9 @@ function Step05FingerTest({
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1 px-6 pt-8 pb-10">
-      <div className="mt-2">
+      {/* Back button removed (prop kept for compatibility) */}
+
+      <div className="mt-6">
         <h1 className="text-white font-extrabold text-[30px] leading-[1.08]" style={{ fontFamily: "var(--font-lora)" }}>
           The Finger Test.
         </h1>
@@ -553,7 +209,7 @@ function Step05FingerTest({
             "w-full h-14 rounded-full font-extrabold text-[17px] transition-all",
             canContinue
               ? "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)] active:scale-[0.985]"
-              : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed"
+              : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed",
           ].join(" ")}
         >
           Continue
@@ -563,7 +219,9 @@ function Step05FingerTest({
   );
 }
 
-/* --- Step 06 --- */
+// ==========================================
+// STEP 06: TISSUE DEPTH
+// ==========================================
 
 const step06Opts: Array<{
   id: Exclude<TissueDepth, null>;
@@ -573,7 +231,7 @@ const step06Opts: Array<{
 }> = [
   { id: "firm", title: "Firm", sub: "Like hitting a trampoline.", icon: <Activity className="text-white" size={22} /> },
   { id: "soft", title: "Soft", sub: "Like sinking into a marshmallow.", icon: <Waves className="text-white" size={22} /> },
-  { id: "pulse", title: "Pulse", sub: "I can feel my pulse.", icon: <ShieldAlert className="text-white" size={22} /> }
+  { id: "pulse", title: "Pulse", sub: "I can feel my pulse.", icon: <ShieldAlert className="text-white" size={22} /> },
 ];
 
 function Step06Card({
@@ -581,7 +239,7 @@ function Step06Card({
   onClick,
   title,
   sub,
-  icon
+  icon,
 }: {
   selected: boolean;
   onClick: () => void;
@@ -597,7 +255,7 @@ function Step06Card({
         "min-h-[100px]",
         selected
           ? "border-[color:var(--pink)] bg-white/12 shadow-[0_0_0_6px_rgba(230,84,115,0.12),0_30px_80px_rgba(0,0,0,0.35)]"
-          : "border-white/12 bg-white/8 hover:border-white/20"
+          : "border-white/12 bg-white/8 hover:border-white/20",
       ].join(" ")}
     >
       <div className="flex items-start gap-4">
@@ -615,9 +273,11 @@ function Step06Card({
 
 function Step06TissueDepth({
   onNext,
-  toast
+  onBack,
+  toast,
 }: {
   onNext: () => void;
+  onBack: () => void;
   toast: ToastAPI;
 }) {
   const name = useUserStore((s) => s.name) || "there";
@@ -626,6 +286,11 @@ function Step06TissueDepth({
   const setHighRisk = useUserStore((s) => s.setHighRisk);
 
   const [selected, setSelected] = useState<TissueDepth>(tissueDepth);
+
+  useEffect(() => {
+    setSelected(tissueDepth);
+  }, [tissueDepth]);
+
   const canContinue = useMemo(() => selected !== null, [selected]);
 
   const pick = (id: Exclude<TissueDepth, null>) => {
@@ -643,7 +308,9 @@ function Step06TissueDepth({
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1 px-6 pt-8 pb-10">
-      <div className="mt-2">
+      {/* Back button removed (prop kept for compatibility) */}
+
+      <div className="mt-6">
         <h1 className="text-white font-extrabold text-[30px] leading-[1.08]" style={{ fontFamily: "var(--font-lora)" }}>
           {name}, it’s not just about width.
         </h1>
@@ -676,7 +343,7 @@ function Step06TissueDepth({
             "w-full h-14 rounded-full font-extrabold text-[17px] transition-all",
             canContinue
               ? "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)] active:scale-[0.985]"
-              : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed"
+              : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed",
           ].join(" ")}
         >
           Continue
@@ -686,20 +353,22 @@ function Step06TissueDepth({
   );
 }
 
-/* --- Step 07 --- */
+// ==========================================
+// STEP 07: SABOTAGE CHECK
+// ==========================================
 
-const STEP07_OPTIONS = [
+const step07Options = [
   { id: "crunches", label: "Crunches / Sit-ups", redFlag: true },
   { id: "planks", label: "Planks / Push-ups", redFlag: true },
   { id: "running", label: "Running / Jumping", redFlag: false },
-  { id: "nothing", label: "Nothing yet", redFlag: false }
+  { id: "nothing", label: "Nothing yet", redFlag: false },
 ] as const;
 
 function Step07Chip({
   selected,
   onClick,
   label,
-  redFlag
+  redFlag,
 }: {
   selected: boolean;
   onClick: () => void;
@@ -714,23 +383,15 @@ function Step07Chip({
         "min-h-[56px]",
         selected
           ? "border-[color:var(--pink)] bg-white/12 shadow-[0_0_0_5px_rgba(230,84,115,0.10)]"
-          : "border-white/12 bg-white/8 hover:border-white/20"
+          : "border-white/12 bg-white/8 hover:border-white/20",
       ].join(" ")}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="text-white font-extrabold text-[15px] truncate">{label}</div>
-          {redFlag && (
-            <div className="text-white/55 text-[12px] font-semibold mt-1">
-              Often worsens pressure + bulging.
-            </div>
-          )}
+          {redFlag && <div className="text-white/55 text-[12px] font-semibold mt-1">Often worsens pressure + bulging.</div>}
         </div>
-        {selected ? (
-          <CheckCircle2 className="text-[color:var(--pink)]" />
-        ) : (
-          <div className="w-6 h-6 rounded-full border border-white/15" />
-        )}
+        {selected ? <CheckCircle2 className="text-[color:var(--pink)]" /> : <div className="w-6 h-6 rounded-full border border-white/15" />}
       </div>
     </button>
   );
@@ -738,9 +399,11 @@ function Step07Chip({
 
 function Step07SabotageCheck({
   onNext,
-  toast
+  onBack,
+  toast,
 }: {
   onNext: () => void;
+  onBack: () => void;
   toast: ToastAPI;
 }) {
   const name = useUserStore((s) => s.name) || "there";
@@ -795,7 +458,9 @@ function Step07SabotageCheck({
         )}
       </AnimatePresence>
 
-      <div className="mt-2">
+      {/* Back button removed (prop kept for compatibility) */}
+
+      <div className="mt-6">
         <h1 className="text-white font-extrabold text-[30px] leading-[1.08]" style={{ fontFamily: "var(--font-lora)" }}>
           We need to stop the damage, {name}.
         </h1>
@@ -805,7 +470,7 @@ function Step07SabotageCheck({
       </div>
 
       <div className="mt-7 grid grid-cols-1 gap-3">
-        {STEP07_OPTIONS.map((o) => (
+        {step07Options.map((o) => (
           <Step07Chip
             key={o.id}
             selected={selected.includes(o.id)}
@@ -827,7 +492,7 @@ function Step07SabotageCheck({
             "w-full h-14 rounded-full font-extrabold text-[17px] transition-all",
             canContinue
               ? "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)] active:scale-[0.985]"
-              : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed"
+              : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed",
           ].join(" ")}
         >
           Continue
@@ -888,20 +553,22 @@ function Step07SabotageCheck({
   );
 }
 
-/* --- Step 08 --- */
+// ==========================================
+// STEP 08: SYMPTOMS
+// ==========================================
 
-const STEP08_OPTIONS = [
+const step08Options = [
   { id: "backPain", label: "Lower Back Pain", icon: <PersonStanding className="text-white" size={20} /> },
   { id: "incontinence", label: "Leaking when sneezing", icon: <Droplets className="text-white" size={20} /> },
   { id: "bloating", label: "Bloating / “Looking Pregnant”", icon: <Waves className="text-white" size={20} /> },
-  { id: "pelvicPain", label: "Pelvic Pain", icon: <HeartPulse className="text-white" size={20} /> }
+  { id: "pelvicPain", label: "Pelvic Pain", icon: <HeartPulse className="text-white" size={20} /> },
 ];
 
 function Step08Row({
   selected,
   onClick,
   label,
-  icon
+  icon,
 }: {
   selected: boolean;
   onClick: () => void;
@@ -916,7 +583,7 @@ function Step08Row({
         "min-h-[56px]",
         selected
           ? "border-[color:var(--pink)] bg-white/12 shadow-[0_0_0_5px_rgba(230,84,115,0.10)]"
-          : "border-white/12 bg-white/8 hover:border-white/20"
+          : "border-white/12 bg-white/8 hover:border-white/20",
       ].join(" ")}
     >
       <div className="flex items-center gap-3">
@@ -924,7 +591,11 @@ function Step08Row({
           {icon}
         </div>
         <div className="flex-1 text-white font-extrabold text-[15px]">{label}</div>
-        {selected ? <CheckCircle2 className="text-[color:var(--pink)]" /> : <Circle className="text-white/20" />}
+        {selected ? (
+          <CheckCircle2 className="text-[color:var(--pink)]" />
+        ) : (
+          <Circle className="text-white/20" />
+        )}
       </div>
     </button>
   );
@@ -932,15 +603,19 @@ function Step08Row({
 
 function Step08Symptoms({
   onNext,
-  toast
+  onBack,
+  toast,
 }: {
   onNext: () => void;
+  onBack: () => void;
   toast: ToastAPI;
 }) {
   const stored = useUserStore((s) => s.symptoms);
   const setSymptoms = useUserStore((s) => s.setSymptoms);
 
   const [selected, setSelected] = useState<string[]>(stored || []);
+
+  const canContinue = useMemo(() => true, []);
 
   const toggle = (id: string) => {
     const next = selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id];
@@ -950,7 +625,9 @@ function Step08Symptoms({
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1 px-6 pt-8 pb-10">
-      <div className="mt-2">
+      {/* Back button removed (prop kept for compatibility) */}
+
+      <div className="mt-6">
         <h1 className="text-white font-extrabold text-[30px] leading-[1.08]" style={{ fontFamily: "var(--font-lora)" }}>
           Diastasis rarely comes alone.
         </h1>
@@ -960,7 +637,7 @@ function Step08Symptoms({
       </div>
 
       <div className="mt-7 flex flex-col gap-3">
-        {STEP08_OPTIONS.map((o) => (
+        {step08Options.map((o) => (
           <Step08Row
             key={o.id}
             selected={selected.includes(o.id)}
@@ -986,40 +663,54 @@ function Step08Symptoms({
   );
 }
 
-/* --- Step 09 --- */
+// ==========================================
+// STEP 09: TIMELINE
+// ==========================================
 
-const STEP09_OPTIONS: Array<{ id: Exclude<PostpartumTimeline, null>; label: string }> = [
+const step09Options: Array<{ id: Exclude<PostpartumTimeline, null>; label: string }> = [
   { id: "pregnant", label: "Currently Pregnant" },
   { id: "0-6", label: "0–6 Months ago" },
   { id: "6-12", label: "6–12 Months ago" },
   { id: "1-3", label: "1–3 Years ago" },
-  { id: "3+", label: "3+ Years ago" }
+  { id: "3+", label: "3+ Years ago" },
 ];
 
 function Step09Timeline({
   onNext,
-  toast
+  onBack,
+  toast,
 }: {
   onNext: () => void;
+  onBack: () => void;
   toast: ToastAPI;
 }) {
   const stored = useUserStore((s) => s.postpartumTimeline);
   const setPostpartum = useUserStore((s) => s.setPostpartumTimeline);
 
   const [selected, setSelected] = useState<PostpartumTimeline>(stored);
+
+  useEffect(() => {
+    setSelected(stored);
+  }, [stored]);
+
   const canContinue = useMemo(() => selected !== null, [selected]);
 
   const pick = (id: Exclude<PostpartumTimeline, null>) => {
     setSelected(id);
     setPostpartum(id);
 
-    if (id === "3+") toast.show("success", "It is never too late. We have fixed gaps 10 years postpartum.", 5200);
-    else toast.hide();
+    if (id === "3+") {
+      toast.show("success", "It is never too late. We have fixed gaps 10 years postpartum.", 5200);
+    } else {
+      toast.hide();
+    }
   };
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1 px-6 pt-8 pb-10">
-      <div className="mt-2">
+      {/* Back button removed (prop kept for compatibility) */}
+
+      <div className="mt-6">
         <h1 className="text-white font-extrabold text-[30px] leading-[1.08]" style={{ fontFamily: "var(--font-lora)" }}>
           When was your last pregnancy?
         </h1>
@@ -1029,7 +720,7 @@ function Step09Timeline({
       </div>
 
       <div className="mt-7 flex flex-col gap-3">
-        {STEP09_OPTIONS.map((o) => {
+        {step09Options.map((o) => {
           const is = selected === o.id;
           return (
             <button
@@ -1040,7 +731,7 @@ function Step09Timeline({
                 "min-h-[56px]",
                 is
                   ? "border-[color:var(--pink)] bg-white/12 shadow-[0_0_0_5px_rgba(230,84,115,0.10)]"
-                  : "border-white/12 bg-white/8 hover:border-white/20"
+                  : "border-white/12 bg-white/8 hover:border-white/20",
               ].join(" ")}
             >
               <div className="flex items-center justify-between gap-3">
@@ -1063,7 +754,7 @@ function Step09Timeline({
             "w-full h-14 rounded-full font-extrabold text-[17px] transition-all",
             canContinue
               ? "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)] active:scale-[0.985]"
-              : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed"
+              : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed",
           ].join(" ")}
         >
           Continue
@@ -1073,20 +764,24 @@ function Step09Timeline({
   );
 }
 
-/* --- Step 10 --- */
+// ==========================================
+// STEP 10: NAVEL
+// ==========================================
 
-const STEP10_OPTIONS: Array<{ id: Exclude<NavelAssessment, null>; label: string; note?: string }> = [
+const step10Options: Array<{ id: Exclude<NavelAssessment, null>; label: string; note?: string }> = [
   { id: "outie", label: "It pokes out (Outie)." },
   { id: "flat", label: "It disappeared / stretches flat." },
   { id: "no_change", label: "No change." },
-  { id: "hernia", label: "I have a diagnosed Umbilical Hernia.", note: "We’ll keep your plan hernia-safe." }
+  { id: "hernia", label: "I have a diagnosed Umbilical Hernia.", note: "We’ll keep your plan hernia-safe." },
 ];
 
 function Step10Navel({
   onNext,
-  toast
+  onBack,
+  toast,
 }: {
   onNext: () => void;
+  onBack: () => void;
   toast: ToastAPI;
 }) {
   const stored = useUserStore((s) => s.navelAssessment);
@@ -1094,6 +789,11 @@ function Step10Navel({
   const setHerniaSafe = useUserStore((s) => s.setHerniaSafe);
 
   const [selected, setSelected] = useState<NavelAssessment>(stored);
+
+  useEffect(() => {
+    setSelected(stored);
+  }, [stored]);
+
   const canContinue = useMemo(() => selected !== null, [selected]);
 
   const pick = (id: Exclude<NavelAssessment, null>) => {
@@ -1111,7 +811,9 @@ function Step10Navel({
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1 px-6 pt-8 pb-10">
-      <div className="mt-2">
+      {/* Back button removed (prop kept for compatibility) */}
+
+      <div className="mt-6">
         <h1 className="text-white font-extrabold text-[30px] leading-[1.08]" style={{ fontFamily: "var(--font-lora)" }}>
           Has the shape of your belly button changed?
         </h1>
@@ -1121,7 +823,7 @@ function Step10Navel({
       </div>
 
       <div className="mt-7 flex flex-col gap-3">
-        {STEP10_OPTIONS.map((o) => {
+        {step10Options.map((o) => {
           const is = selected === o.id;
           return (
             <button
@@ -1132,7 +834,7 @@ function Step10Navel({
                 "min-h-[56px]",
                 is
                   ? "border-[color:var(--pink)] bg-white/12 shadow-[0_0_0_5px_rgba(230,84,115,0.10)]"
-                  : "border-white/12 bg-white/8 hover:border-white/20"
+                  : "border-white/12 bg-white/8 hover:border-white/20",
               ].join(" ")}
             >
               <div className="flex items-start justify-between gap-3">
@@ -1167,7 +869,7 @@ function Step10Navel({
             "w-full h-14 rounded-full font-extrabold text-[17px] transition-all",
             canContinue
               ? "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)] active:scale-[0.985]"
-              : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed"
+              : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed",
           ].join(" ")}
         >
           Continue
@@ -1177,19 +879,23 @@ function Step10Navel({
   );
 }
 
-/* --- Step 11 --- */
+// ==========================================
+// STEP 11: COMMITMENT
+// ==========================================
 
-const STEP11_OPTIONS: Array<{ id: Exclude<Commitment, null>; label: string; badge?: string }> = [
+const step11Options: Array<{ id: Exclude<Commitment, null>; label: string; badge?: string }> = [
   { id: "5-7", label: "5–7 Minutes", badge: "Most Successful • Physio Recommended" },
   { id: "15", label: "15 Minutes" },
-  { id: "30", label: "30 Minutes" }
+  { id: "30", label: "30 Minutes" },
 ];
 
 function Step11Commitment({
   onNext,
-  toast
+  onBack,
+  toast,
 }: {
   onNext: () => void;
+  onBack: () => void;
   toast: ToastAPI;
 }) {
   const stored = useUserStore((s) => s.commitment);
@@ -1197,6 +903,7 @@ function Step11Commitment({
 
   const [selected, setSelected] = useState<Commitment>(stored);
 
+  // Auto-highlight 5–7 min if nothing is set
   useEffect(() => {
     if (!stored) {
       setSelected("5-7");
@@ -1204,6 +911,10 @@ function Step11Commitment({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (stored) setSelected(stored);
+  }, [stored]);
 
   const canContinue = useMemo(() => selected !== null, [selected]);
 
@@ -1215,7 +926,9 @@ function Step11Commitment({
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1 px-6 pt-8 pb-10">
-      <div className="mt-2">
+      {/* Back button removed (prop kept for compatibility) */}
+
+      <div className="mt-6">
         <h1 className="text-white font-extrabold text-[30px] leading-[1.08]" style={{ fontFamily: "var(--font-lora)" }}>
           Healing tissue takes consistency, not intensity.
         </h1>
@@ -1225,7 +938,7 @@ function Step11Commitment({
       </div>
 
       <div className="mt-7 flex flex-col gap-3">
-        {STEP11_OPTIONS.map((o) => {
+        {step11Options.map((o) => {
           const is = selected === o.id;
           return (
             <button
@@ -1236,7 +949,7 @@ function Step11Commitment({
                 "min-h-[56px]",
                 is
                   ? "border-[color:var(--pink)] bg-white/12 shadow-[0_0_0_5px_rgba(230,84,115,0.10)]"
-                  : "border-white/12 bg-white/8 hover:border-white/20"
+                  : "border-white/12 bg-white/8 hover:border-white/20",
               ].join(" ")}
             >
               <div className="flex items-start justify-between gap-3">
@@ -1270,7 +983,7 @@ function Step11Commitment({
             "w-full h-14 rounded-full font-extrabold text-[17px] transition-all",
             canContinue
               ? "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)] active:scale-[0.985]"
-              : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed"
+              : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed",
           ].join(" ")}
         >
           Continue
@@ -1280,76 +993,129 @@ function Step11Commitment({
   );
 }
 
-/* ------------------------------- STEP 12 --------------------------------- */
-/* Minimal “analysis” screen (single file). */
+// ==========================================
+// STEP 12: ANALYSIS
+// ==========================================
 
-function Step12Analysis({ onDone }: { onDone: () => void }) {
-  const [pct, setPct] = useState(0);
+function AICoreView() {
+  return (
+    <div className="relative w-44 h-44 flex items-center justify-center">
+      <div className="absolute w-[86px] h-[86px] border-[3px] border-[color:var(--pink)]/80 rounded-full animate-spin [animation-duration:8s] border-t-transparent border-l-transparent" />
+      <div className="absolute w-[120px] h-[120px] border-[2px] border-[color:var(--pink)]/60 rounded-full animate-spin [animation-duration:12s] [animation-direction:reverse] border-b-transparent border-r-transparent" />
+      <div className="absolute w-[154px] h-[154px] border-[1px] border-[color:var(--pink)]/40 rounded-full animate-spin [animation-duration:15s] border-t-transparent" />
+      <div className="absolute w-10 h-10 bg-[color:var(--pink)]/45 rounded-full blur-md animate-pulse" />
+      <div className="absolute w-6 h-6 bg-[color:var(--pink)] rounded-full shadow-[0_0_20px_rgba(230,84,115,0.8)]" />
+    </div>
+  );
+}
+
+function Typewriter({ text }: { text: string }) {
+  const [out, setOut] = useState("");
+  const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    let p = 0;
-    const t = setInterval(() => {
-      p += 7;
-      if (p >= 100) {
-        p = 100;
-        setPct(p);
-        clearInterval(t);
-        setTimeout(onDone, 450);
-      } else setPct(p);
-    }, 140);
+    setOut("");
+    if (timerRef.current) window.clearInterval(timerRef.current);
 
-    return () => clearInterval(t);
-  }, [onDone]);
+    let i = 0;
+    timerRef.current = window.setInterval(() => {
+      i += 1;
+      setOut(text.slice(0, i));
+      if (i >= text.length) {
+        if (timerRef.current) window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    }, 28);
+
+    return () => {
+      if (timerRef.current) window.clearInterval(timerRef.current);
+      timerRef.current = null;
+    };
+  }, [text]);
 
   return (
-    <div className="min-h-screen bg-[#1A1A26] flex flex-col items-center justify-center px-6">
-      <div className="w-full max-w-md">
-        <div className="text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5">
-            <Sparkles size={16} className="text-[color:var(--pink)]" />
-            <span className="text-white/80 text-xs font-extrabold tracking-wide uppercase">
-              Running Clinical Analysis
-            </span>
-          </div>
+    <span>
+      {out}
+      <span className="animate-pulse text-[color:var(--pink)]">|</span>
+    </span>
+  );
+}
 
-          <h1 className="mt-6 text-white font-extrabold text-[30px] leading-tight" style={{ fontFamily: "var(--font-lora)" }}>
-            Building your repair protocol…
-          </h1>
-          <p className="mt-3 text-white/60 text-sm font-semibold">
-            We’re matching your gap + tissue profile to safe progressions.
-          </p>
+function Step12Analysis({ onDone }: { onDone: () => void }) {
+  const name = useUserStore((s) => s.name) || "there";
+  const sabotage = useUserStore((s) => s.sabotageExercises);
+
+  const lines = useMemo(() => {
+    const base = [
+      `Analyzing Linea Alba density for ${name}...`,
+      "Calculating Gap Closure trajectory...",
+      "Identifying harmful exercises in current routine...",
+    ];
+    const hasCrunches = (sabotage || []).includes("crunches");
+    if (hasCrunches) base.push("Flagging 'Crunches' as dangerous...");
+    base.push("Building 12-Week 'No-Crunch' Protocol...");
+    base.push("Calibration Complete.");
+    return base;
+  }, [name, sabotage]);
+
+  const [idx, setIdx] = useState(0);
+
+  useEffect(() => {
+    const totalMs = 7000;
+    const stepMs = Math.floor(totalMs / Math.max(1, lines.length));
+
+    const t = window.setInterval(() => {
+      setIdx((p) => Math.min(lines.length - 1, p + 1));
+    }, stepMs);
+
+    const done = window.setTimeout(() => {
+      window.clearInterval(t);
+      onDone();
+    }, totalMs);
+
+    return () => {
+      window.clearInterval(t);
+      window.clearTimeout(done);
+    };
+  }, [lines.length, onDone]);
+
+  return (
+    <div className="w-full min-h-screen flex flex-col items-center justify-center px-8 text-center">
+      <div className="mb-10">
+        <AICoreView />
+      </div>
+
+      <div className="max-w-md">
+        <div className="text-white/60 text-xs font-extrabold tracking-widest uppercase mb-3">
+          Clinical Analysis
         </div>
 
-        <div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6">
-          <div className="flex items-center justify-between text-white/70 text-xs font-extrabold">
-            <span>Analysis</span>
-            <span>{pct}%</span>
-          </div>
-          <div className="mt-2 h-2 bg-white/10 rounded-full overflow-hidden">
-            <div className="h-full bg-[color:var(--pink)]" style={{ width: `${pct}%` }} />
-          </div>
+        <h1 className="text-3xl font-extrabold text-white leading-tight" style={{ fontFamily: "var(--font-lora)" }}>
+          Building your repair plan…
+        </h1>
 
-          <div className="mt-5 space-y-3 text-white/70 text-[13px] font-semibold">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 size={16} className="text-[#33B373]" />
-              Tissue tension risk scoring
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 size={16} className="text-[#33B373]" />
-              Pressure + bulging safety rules
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 size={16} className="text-[#33B373]" />
-              Weekly closure pacing estimation
-            </div>
-          </div>
+        <div className="mt-6 text-[15px] font-semibold text-white/85 leading-relaxed min-h-[56px]">
+          <Typewriter text={lines[idx]} />
+        </div>
+
+        <div className="mt-8 h-2 bg-white/10 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-[color:var(--pink)] transition-all duration-300"
+            style={{ width: `${Math.min(100, ((idx + 1) / lines.length) * 100)}%` }}
+          />
+        </div>
+
+        <div className="mt-3 text-[12px] text-white/55 font-semibold">
+          Calibration running • This takes ~7 seconds
         </div>
       </div>
     </div>
   );
 }
 
-/* ------------------------------- STEP 13 --------------------------------- */
+// ==========================================
+// STEP 13: PLAN REVEAL
+// ==========================================
 
 function HolographicTimeline() {
   return (
@@ -1372,6 +1138,7 @@ function HolographicTimeline() {
           stroke="url(#lineGradient)"
           strokeWidth="3"
           strokeLinecap="round"
+          strokeLinejoin="round"
           filter="url(#glow)"
         />
 
@@ -1394,7 +1161,7 @@ function HolographicTimeline() {
   );
 }
 
-function Step13PlanReveal({ onNext }: { onNext: () => void }) {
+function Step13PlanReveal({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
   const name = useUserStore((s) => s.name) || "there";
   const age = useUserStore((s) => s.age);
   const fingerGap = useUserStore((s) => s.fingerGap);
@@ -1417,57 +1184,58 @@ function Step13PlanReveal({ onNext }: { onNext: () => void }) {
   }, [age, commitment, sabotage]);
 
   return (
-    <div className="min-h-screen bg-[#1A1A26] flex flex-col">
-      <div className="flex-1 w-full max-w-md mx-auto flex flex-col min-h-0 px-6 pt-8 pb-10">
-        <div className="mt-4 text-center">
-          <h1 className="text-white font-extrabold text-[30px] leading-[1.08]" style={{ fontFamily: "var(--font-lora)" }}>
-            {name}, your plan is ready.
-          </h1>
-          <p className="text-white/70 mt-3 text-[14px] leading-relaxed">
-            This is your predicted closure timeline based on your assessment.
-          </p>
-        </div>
+    <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1 px-6 pt-8 pb-10">
+      {/* Back button removed (prop kept for compatibility) */}
 
-        <div className="mt-4 rounded-3xl border border-white/12 bg-white/8 backdrop-blur-xl shadow-soft p-5">
-          <HolographicTimeline />
+      <div className="mt-6 text-center">
+        <h1 className="text-white font-extrabold text-[30px] leading-[1.08]" style={{ fontFamily: "var(--font-lora)" }}>
+          {name}, your plan is ready.
+        </h1>
+        <p className="text-white/70 mt-3 text-[14px] leading-relaxed">
+          This is your predicted closure timeline based on your assessment.
+        </p>
+      </div>
 
-          <div className="flex items-center justify-between text-[13px] font-extrabold mt-1">
-            <span className="text-white/80">{gapLabel}</span>
-            <span className="text-white/55">Functional closure by week 6</span>
-            <span className="text-[#33B373]">Fully healed</span>
-          </div>
-        </div>
+      <div className="mt-4 rounded-3xl border border-white/12 bg-white/8 backdrop-blur-xl shadow-soft p-5">
+        <HolographicTimeline />
 
-        <div className="mt-6">
-          <div className="text-white font-extrabold text-[16px] mb-3">Your Personal Insights</div>
-          <div className="flex flex-col gap-3">
-            {insights.map((t, i) => (
-              <div key={i} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
-                <Sparkles className="text-[color:var(--pink)] shrink-0 mt-0.5" size={18} />
-                <div className="text-white/85 text-[13px] font-semibold leading-relaxed">{t}</div>
-              </div>
-            ))}
-          </div>
+        <div className="flex items-center justify-between text-[13px] font-extrabold mt-1">
+          <span className="text-white/80">{gapLabel}</span>
+          <span className="text-white/55">Functional closure by week 6</span>
+          <span className="text-[#33B373]">Fully healed</span>
         </div>
+      </div>
 
-        <div className="mt-auto pt-8">
-          <button
-            onClick={onNext}
-            className="w-full h-14 rounded-full bg-gradient-to-r from-[color:var(--pink)] to-[#C23A5B] text-white font-extrabold text-[17px] shadow-[0_0_30px_rgba(230,84,115,0.45)] active:scale-[0.985] transition-transform"
-          >
-            Unlock My Repair Protocol
-          </button>
+      <div className="mt-6">
+        <div className="text-white font-extrabold text-[16px] mb-3">Your Personal Insights</div>
+        <div className="flex flex-col gap-3">
+          {insights.map((t, i) => (
+            <div key={i} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+              <Sparkles className="text-[color:var(--pink)] shrink-0 mt-0.5" size={18} />
+              <div className="text-white/85 text-[13px] font-semibold leading-relaxed">{t}</div>
+            </div>
+          ))}
         </div>
+      </div>
+
+      <div className="mt-auto pt-8">
+        <button
+          onClick={onNext}
+          className="w-full h-14 rounded-full bg-gradient-to-r from-[color:var(--pink)] to-[#C23A5B] text-white font-extrabold text-[17px] shadow-[0_0_30px_rgba(230,84,115,0.45)] active:scale-[0.985] transition-transform"
+        >
+          Unlock My Repair Protocol
+        </button>
       </div>
     </div>
   );
 }
 
-/* ------------------------------- STEP 14 --------------------------------- */
-/* Stripe paywall embedded + restore purchase + 12-week guarantee text */
+// ==========================================
+// STEP 14: PAYWALL
+// ==========================================
 
+// --- STRIPE SETUP ---
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
-const DASHBOARD_PATH = "/dashboard?plan=monthly";
 
 const REVIEW_IMAGES = ["/review9.png", "/review1.png", "/review5.png", "/review4.png", "/review2.png"];
 
@@ -1475,23 +1243,23 @@ const MEDICAL_FEATURES = [
   {
     icon: <Brain size={24} className="text-white" />,
     title: "AI-Driven Protocol",
-    desc: "Adapts to your gap width daily."
+    desc: "Adapts to your gap width daily.",
   },
   {
-    icon: <ShieldAlert size={24} className="text-white" />,
+    icon: <ShieldCheck size={24} className="text-white" />,
     title: "Diastasis Safe",
-    desc: "Zero crunches. Zero bulging."
+    desc: "Zero crunches. Zero bulging.",
   },
   {
     icon: <Stethoscope size={24} className="text-white" />,
     title: "Physio Approved",
-    desc: "Clinical logic, home comfort."
+    desc: "Clinical logic, home comfort.",
   },
   {
     icon: <Activity size={24} className="text-white" />,
     title: "Tissue Tracking",
-    desc: "Visual trackers for gap closure."
-  }
+    desc: "Visual trackers for gap closure.",
+  },
 ];
 
 const REVIEWS = [
@@ -1499,117 +1267,17 @@ const REVIEWS = [
   { name: "Michelle T.", text: "The 'coning' stopped after 12 days. Finally safe.", image: "/review1.png" },
   { name: "Chloe N.", text: "My back pain vanished when my core reconnected.", image: "/review5.png" },
   { name: "Olivia G.", text: "Better than my $150 physio visits. Truly.", image: "/review4.png" },
-  { name: "Jess P.", text: "I can lift my baby without fear now.", image: "/review2.png" }
+  { name: "Jess P.", text: "I can lift my baby without fear now.", image: "/review2.png" },
 ];
 
-function RestoreModal({ onClose }: { onClose: () => void }) {
-  const [email, setEmail] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+const DASHBOARD_PATH = "/dashboard?plan=monthly";
 
-  const { setPremium, setJoinDate, setName } = useUserData();
-
-  const handleRestoreSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.includes("@")) {
-      alert("Please enter a valid email address.");
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const res = await fetch("/api/restore-purchase", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email })
-      });
-
-      const data = await res.json();
-
-      if (data.isPremium) {
-        setPremium(true);
-        setJoinDate(new Date().toISOString());
-        if (data.customerName) setName(data.customerName);
-
-        const symptoms = useUserData.getState().symptoms || [];
-        if (symptoms.includes("incontinence")) useUserData.getState().startDrySeal();
-
-        router.push(DASHBOARD_PATH);
-      } else {
-        alert("We found your email, but no active subscription was detected.");
-        setIsLoading(false);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Unable to verify purchase. Please check your internet connection.");
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <div
-      className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300"
-      onClick={onClose}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-sm bg-[#1A1A26] border border-white/10 rounded-[32px] p-6 shadow-2xl"
-      >
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-extrabold text-white" style={{ fontFamily: "var(--font-lora)" }}>
-            Restore Purchase
-          </h3>
-          <button onClick={onClose} className="p-2 bg-white/5 rounded-full hover:bg-white/10">
-            <X size={18} className="text-white/70" />
-          </button>
-        </div>
-
-        <p className="text-white/60 text-sm mb-5 font-medium leading-relaxed">
-          Enter the email used at checkout. We’ll verify your subscription and restore access instantly.
-        </p>
-
-        <form onSubmit={handleRestoreSubmit} className="flex flex-col gap-4">
-          <div className="relative">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={18} />
-            <input
-              type="email"
-              placeholder="name@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full h-12 bg-black/20 border border-white/10 rounded-2xl pl-12 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:border-[color:var(--pink)] transition-colors font-semibold"
-              autoFocus
-            />
-          </div>
-
-          <button
-            disabled={isLoading}
-            className="w-full h-12 rounded-2xl font-extrabold text-white bg-gradient-to-r from-[color:var(--pink)] to-[#C23A5B] shadow-[0_12px_40px_rgba(230,84,115,0.30)] active:scale-[0.99] transition-transform flex items-center justify-center gap-2"
-          >
-            {isLoading ? <Loader2 className="animate-spin" /> : "Find My Plan"}
-          </button>
-
-          <div className="text-center text-white/35 text-[11px] font-semibold">
-            Secure verification via Stripe
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-function CheckoutForm({
-  onClose,
-  intentType
-}: {
-  onClose: () => void;
-  intentType: "payment" | "setup";
-}) {
+const CheckoutForm = ({ onClose }: { onClose: () => void }) => {
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
 
-  const { setPremium, setJoinDate } = useUserData();
+  const { setPremium, setJoinDate, setName } = useUserData();
 
   const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -1617,48 +1285,20 @@ function CheckoutForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!stripe || !elements) return;
 
     setIsLoading(true);
 
     const returnUrl = `${window.location.origin}${DASHBOARD_PATH}`;
 
-    if (intentType === "setup") {
-      const { error, setupIntent } = await stripe.confirmSetup({
-        elements,
-        confirmParams: { return_url: returnUrl },
-        redirect: "if_required"
-      });
-
-      if (error) {
-        setMessage(error.message || "Setup failed");
-        setIsLoading(false);
-        return;
-      }
-
-      if (setupIntent && setupIntent.status === "succeeded") {
-        setPremium(true);
-        setJoinDate(new Date().toISOString());
-
-        const symptoms = useUserData.getState().symptoms || [];
-        if (symptoms.includes("incontinence")) useUserData.getState().startDrySeal();
-
-        router.push(DASHBOARD_PATH);
-        return;
-      }
-
-      setMessage("An unexpected setup error occurred.");
-      setIsLoading(false);
-      return;
-    }
-
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: {
         return_url: returnUrl,
-        receipt_email: email
+        receipt_email: email,
       },
-      redirect: "if_required"
+      redirect: "if_required",
     });
 
     if (error) {
@@ -1671,8 +1311,11 @@ function CheckoutForm({
       setPremium(true);
       setJoinDate(new Date().toISOString());
 
+      // ✅ AUTO-START DRY SEAL IF USER HAS LEAKS
       const symptoms = useUserData.getState().symptoms || [];
-      if (symptoms.includes("incontinence")) useUserData.getState().startDrySeal();
+      if (symptoms.includes("incontinence")) {
+        useUserData.getState().startDrySeal();
+      }
 
       router.push(DASHBOARD_PATH);
       return;
@@ -1682,11 +1325,14 @@ function CheckoutForm({
     setIsLoading(false);
   };
 
+  // ✅ Correct PaymentElement typing
   const paymentElementOptions: StripePaymentElementOptions = {
     layout: "tabs",
     fields: {
-      billingDetails: { phone: "never" }
-    }
+      billingDetails: {
+        phone: "never",
+      },
+    },
   };
 
   return (
@@ -1712,7 +1358,10 @@ function CheckoutForm({
 
       <div className="flex flex-col gap-4">
         <div className="text-white">
-          <LinkAuthenticationElement id="link-authentication-element" onChange={(e: any) => setEmail(e.value.email)} />
+          <LinkAuthenticationElement
+            id="link-authentication-element"
+            onChange={(e: any) => setEmail(e.value.email)}
+          />
         </div>
 
         <PaymentElement id="payment-element" options={paymentElementOptions} />
@@ -1736,9 +1385,124 @@ function CheckoutForm({
         <Lock size={12} />
         256-bit SSL Secure Payment
       </div>
+
+      {/* Pelvi-style reassurance */}
+      <p className="text-center text-white/30 text-[11px] font-semibold mt-3">
+        100% secure payment via Stripe
+      </p>
     </form>
   );
-}
+};
+
+const RestoreModal = ({ onClose }: { onClose: () => void }) => {
+  const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const router = useRouter();
+
+  const { setPremium, setJoinDate, setName } = useUserData();
+
+  const handleRestoreSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMessage(null);
+
+    if (!email.includes("@")) {
+      setMessage("Please enter a valid email address.");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const res = await fetch("/api/restore-purchase", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (data.isPremium) {
+        setPremium(true);
+        setJoinDate(new Date().toISOString());
+        if (data.customerName) setName(data.customerName);
+
+        // ✅ AUTO-START DRY SEAL IF USER HAS LEAKS
+        const symptoms = useUserData.getState().symptoms || [];
+        if (symptoms.includes("incontinence")) {
+          useUserData.getState().startDrySeal();
+        }
+
+        router.push(DASHBOARD_PATH);
+        return;
+      }
+
+      setMessage("We found your email, but no active subscription was detected.");
+      setIsLoading(false);
+    } catch (err) {
+      console.error(err);
+      setMessage("Unable to verify purchase. Please check your internet connection.");
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-sm bg-[#1A1A26] border border-white/10 rounded-[32px] p-6 shadow-2xl"
+      >
+        <div className="flex justify-between items-center mb-5">
+          <h3 className="text-xl font-extrabold text-white" style={{ fontFamily: "var(--font-lora)" }}>
+            Restore Purchase
+          </h3>
+          <button onClick={onClose} className="p-2 bg-white/5 rounded-full hover:bg-white/10">
+            <X size={18} className="text-white/70" />
+          </button>
+        </div>
+
+        {/* Pelvi-style explanation */}
+        <p className="text-white/60 text-sm mb-5 font-medium leading-relaxed">
+          Enter the email address you used at checkout. We’ll find your active plan and unlock your dashboard.
+        </p>
+
+        <form onSubmit={handleRestoreSubmit} className="flex flex-col gap-4">
+          <div className="relative">
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={18} />
+            <input
+              type="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full h-12 bg-black/20 border border-white/10 rounded-2xl pl-12 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:border-[color:var(--pink)] transition-colors font-semibold"
+              autoFocus
+            />
+          </div>
+
+          {message && (
+            <div className="text-red-300 text-sm bg-red-500/10 p-3 rounded-xl border border-red-500/20 font-semibold">
+              {message}
+            </div>
+          )}
+
+          <button
+            disabled={isLoading}
+            className="w-full h-12 rounded-2xl font-extrabold text-white shadow-[0_10px_30px_rgba(230,84,115,0.25)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 bg-gradient-to-r from-[color:var(--pink)] to-[#C23A5B]"
+          >
+            {isLoading ? <Loader2 className="animate-spin" /> : "Find My Plan"}
+          </button>
+
+          <p className="text-center text-white/30 text-[11px] font-semibold">
+            If your subscription is active, your access restores instantly.
+          </p>
+        </form>
+      </div>
+    </div>
+  );
+};
 
 function Step14Paywall() {
   const { name } = useUserData();
@@ -1751,24 +1515,33 @@ function Step14Paywall() {
   const [isFaqOpen, setIsFaqOpen] = useState(false);
 
   const [clientSecret, setClientSecret] = useState("");
-  const [intentType, setIntentType] = useState<"payment" | "setup">("payment");
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [showRestoreModal, setShowRestoreModal] = useState(false);
   const [isButtonLoading, setIsButtonLoading] = useState(false);
+
   const [dateString, setDateString] = useState("");
 
   const displayReview = useMemo(() => REVIEWS[currentReviewIndex], [currentReviewIndex]);
 
-  useEffect(() => setShowContent(true), []);
-
   useEffect(() => {
-    const dt = new Date();
-    dt.setDate(dt.getDate() + 84); // 12 weeks
-    setDateString(dt.toLocaleDateString("en-US", { month: "short", day: "numeric" }));
+    setShowContent(true);
+
+    // 12 weeks from now
+    const d = new Date();
+    d.setDate(d.getDate() + 84);
+    setDateString(
+      d.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      })
+    );
   }, []);
 
   useEffect(() => {
-    const featureTimer = setInterval(() => setActiveFeatureIndex((p) => (p + 1) % MEDICAL_FEATURES.length), 3000);
+    const featureTimer = setInterval(
+      () => setActiveFeatureIndex((p) => (p + 1) % MEDICAL_FEATURES.length),
+      3000
+    );
     const reviewTimer = setInterval(() => setCurrentReviewIndex((p) => (p + 1) % REVIEWS.length), 5000);
     return () => {
       clearInterval(featureTimer);
@@ -1789,6 +1562,7 @@ function Step14Paywall() {
     return () => clearInterval(timer);
   }, [showContent]);
 
+  // Preload review images so REVIEW_IMAGES isn't dead weight
   useEffect(() => {
     if (typeof window === "undefined") return;
     REVIEW_IMAGES.forEach((src) => {
@@ -1804,7 +1578,7 @@ function Step14Paywall() {
       try {
         const res = await fetch("/api/create-payment-intent", {
           method: "POST",
-          headers: { "Content-Type": "application/json" }
+          headers: { "Content-Type": "application/json" },
         });
 
         if (!res.ok) {
@@ -1813,13 +1587,9 @@ function Step14Paywall() {
         }
 
         const data = await res.json();
-
-        if (!data?.clientSecret || !data?.intentType) {
-          throw new Error("Server did not return Stripe clientSecret/intentType");
-        }
+        if (!data?.clientSecret) throw new Error("No clientSecret returned from server.");
 
         setClientSecret(data.clientSecret);
-        setIntentType(data.intentType);
       } catch (err: any) {
         console.error("Stripe init error:", err);
         alert(`Could not initialize payment: ${err?.message || "Unknown error"}`);
@@ -1840,16 +1610,17 @@ function Step14Paywall() {
       colorText: "#ffffff",
       colorDanger: "#df1b41",
       fontFamily: "Inter, system-ui, sans-serif",
-      borderRadius: "16px"
-    }
+      borderRadius: "16px",
+    },
   };
 
-  const ctaSubtext = dateString
-    ? `Feel real progress by ${dateString}. If not, one tap full $24.99 refund.`
-    : "";
+  const getCtaSubtext = () => {
+    if (!dateString) return "";
+    return `Feel real progress by ${dateString}. If not, one tap full $24.99 refund.`;
+  };
 
   return (
-    <div className="relative w-full min-h-screen flex flex-col bg-[#1A1A26] overflow-hidden">
+    <div className="relative w-full h-full flex flex-col bg-[#1A1A26] overflow-hidden">
       {/* Video Background */}
       <div className="absolute inset-0 z-0">
         <video
@@ -1859,7 +1630,9 @@ function Step14Paywall() {
           playsInline
           preload="auto"
           onLoadedData={() => setVideoLoaded(true)}
-          className={`w-full h-full object-cover transition-opacity duration-1000 ${videoLoaded ? "opacity-60" : "opacity-0"}`}
+          className={`w-full h-full object-cover transition-opacity duration-1000 ${
+            videoLoaded ? "opacity-60" : "opacity-0"
+          }`}
         >
           <source src="/paywall_video.mp4" type="video/mp4" />
         </video>
@@ -1869,7 +1642,7 @@ function Step14Paywall() {
 
       {/* Scrollable Content */}
       <div
-        className={`z-10 flex-1 flex flex-col overflow-y-auto no-scrollbar pt-14 pb-44 px-6 transition-all duration-700 ${
+        className={`z-10 flex-1 flex flex-col overflow-y-auto no-scrollbar pt-14 pb-40 px-6 transition-all duration-700 ${
           showContent ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
         }`}
       >
@@ -1896,7 +1669,6 @@ function Step14Paywall() {
           without surgery.
         </p>
 
-        {/* Feature Carousel */}
         <div className="w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 mb-6 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-white/10">
             <motion.div
@@ -1937,7 +1709,6 @@ function Step14Paywall() {
           </div>
         </div>
 
-        {/* Reviews */}
         <div className="w-full bg-black/20 backdrop-blur-md border border-white/10 rounded-[28px] p-5 flex flex-col items-center gap-4 mb-8">
           <div className="flex items-center gap-1.5">
             <span className="text-[20px] font-bold text-white">4.9</span>
@@ -1973,39 +1744,50 @@ function Step14Paywall() {
           </div>
         </div>
 
-        {/* FAQ Accordion */}
         <div
           onClick={() => setIsFaqOpen(!isFaqOpen)}
           className="w-full bg-white/5 rounded-2xl p-4 border border-white/5 backdrop-blur-sm cursor-pointer active:scale-[0.99] transition-transform mb-6"
         >
           <div className="flex items-center justify-center gap-2 text-white/80">
-            <span className="text-[13px] font-bold">How do I get my money back?</span>
+            <span className="text-[13px] font-bold">100% Money-Back Guarantee?</span>
             {isFaqOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </div>
-          <div className={`overflow-hidden transition-all duration-300 ${isFaqOpen ? "max-h-20 opacity-100 mt-2" : "max-h-0 opacity-0"}`}>
+          <div
+            className={`overflow-hidden transition-all duration-300 ${
+              isFaqOpen ? "max-h-20 opacity-100 mt-2" : "max-h-0 opacity-0"
+            }`}
+          >
             <p className="text-[13px] text-white/50 text-center leading-relaxed px-2">
-              Tap “Refund” in Settings → “Billing” → Done. No questions asked.
+              Yes. If you don&apos;t see results in your gap or symptoms, request a full refund in the app settings. No
+              questions asked.
             </p>
           </div>
         </div>
 
-        {/* Footer Links (Updated) */}
-        <div className="flex justify-center items-center gap-3 text-[11px] font-semibold text-white/50">
-          <button
-            onClick={() => setShowRestoreModal(true)}
-            className="underline decoration-white/30 hover:text-white transition-colors"
-          >
-            Restore Purchase
-          </button>
-          <span>•</span>
-          <span className="cursor-default">Physiotherapist</span>
-          <span>•</span>
-          <span className="cursor-default">Doctor Approved</span>
+        {/* Pelvi-style footer links (brand + labels) */}
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex justify-center items-center gap-3 text-[11px] font-semibold text-white/55">
+            <button
+              onClick={() => setShowRestoreModal(true)}
+              className="underline decoration-white/25 hover:text-white transition-colors"
+              style={{ textDecorationThickness: "2px" }}
+            >
+              Restore Purchase
+            </button>
+            <span>•</span>
+            <span className="cursor-default">Physiotherapist</span>
+            <span>•</span>
+            <span className="cursor-default">Doctor Approved</span>
+          </div>
         </div>
       </div>
 
       {/* Sticky Footer CTA */}
-      <div className="absolute bottom-0 left-0 w-full z-30 px-5 pb-8 pt-8 bg-gradient-to-t from-[#1A1A26] via-[#1A1A26]/95 to-transparent">
+      <div
+        className={`absolute bottom-0 left-0 w-full z-30 px-5 pb-8 pt-8 bg-gradient-to-t from-[#1A1A26] via-[#1A1A26]/95 to-transparent transition-all duration-700 delay-200 ${
+          showContent ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
+        }`}
+      >
         <button
           onClick={handleStartPlan}
           disabled={isButtonLoading}
@@ -2022,10 +1804,10 @@ function Step14Paywall() {
           )}
         </button>
 
-        <div className="flex flex-col items-center justify-center mt-4 gap-1">
-          <p className="text-white font-extrabold text-[14px]">$24.99 / month</p>
-          <p className="text-white/60 text-[12px] font-semibold text-center max-w-sm">{ctaSubtext}</p>
-        </div>
+        {/* Replace bottom price/cancel text with Pelvi-style subtext */}
+        <p className="text-center text-white/70 text-[12px] font-semibold mt-3 leading-snug px-4 drop-shadow-sm">
+          {getCtaSubtext()}
+        </p>
       </div>
 
       {/* Stripe Modal */}
@@ -2036,7 +1818,7 @@ function Step14Paywall() {
         >
           <div className="min-h-full flex items-center justify-center p-4">
             <Elements options={{ clientSecret, appearance: stripeAppearance }} stripe={stripePromise}>
-              <CheckoutForm onClose={() => setShowCheckoutModal(false)} intentType={intentType} />
+              <CheckoutForm onClose={() => setShowCheckoutModal(false)} />
             </Elements>
           </div>
         </div>
@@ -2047,10 +1829,337 @@ function Step14Paywall() {
   );
 }
 
-/* ----------------------------- MAIN WRAPPER ------------------------------ */
+// ==========================================
+// MAIN ONBOARDING WRAPPER
+// ==========================================
+
+const TOTAL_STEPS = 14;
+
+const MIA_M1 =
+  "Hi! I'm Coach Mia, your Core Specialist. I've helped 10,000+ women close their gap.";
+const MIA_M2 = "To start your medical file, what should I call you?";
+
+function miaAgeQuestion(safeName: string) {
+  return `Lovely to meet you, ${safeName}. Age helps me determine your collagen elasticity levels. How young are you?`;
+}
+
+function Logo() {
+  return (
+    <div className="flex items-center justify-center">
+      <img
+        src="/logo.png"
+        alt="Fix Diastasis"
+        className="w-16 h-16 object-contain drop-shadow"
+        onError={(e) => {
+          (e.currentTarget as HTMLImageElement).style.display = "none";
+        }}
+      />
+      <div className="ml-3">
+        <div className="text-white font-extrabold text-lg tracking-tight">Fix Diastasis</div>
+        <div className="text-white/55 text-xs font-semibold tracking-wide uppercase">
+          Clinical Assessment
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Progress bar ONLY (no "Step X of 14" text).
+ * Render it only on screens 2–11.
+ */
+function ProgressBar({ step }: { step: number }) {
+  const pct = Math.max(0, Math.min(100, (step / TOTAL_STEPS) * 100));
+  return (
+    <div className="px-6 pt-6">
+      <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+        <div className="h-full bg-white/70" style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function ShapeArt({ id }: { id: Exclude<VisualShape, null> }) {
+  if (id === "pooch") {
+    return (
+      <svg viewBox="0 0 320 140" className="w-full h-full">
+        <defs>
+          <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="rgba(255,255,255,0.10)" />
+            <stop offset="1" stopColor="rgba(230,84,115,0.18)" />
+          </linearGradient>
+        </defs>
+        <rect x="10" y="10" width="300" height="120" rx="22" fill="url(#g1)" />
+        <path
+          d="M70 95c30-40 70-55 120-50 40 4 70 22 85 48"
+          fill="none"
+          stroke="rgba(255,255,255,0.65)"
+          strokeWidth="10"
+          strokeLinecap="round"
+        />
+        <path
+          d="M92 98c28-22 58-30 90-26 28 3 50 14 66 28"
+          fill="none"
+          stroke="rgba(210,235,255,0.55)"
+          strokeWidth="6"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+
+  if (id === "gap") {
+    return (
+      <svg viewBox="0 0 320 140" className="w-full h-full">
+        <defs>
+          <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="rgba(255,255,255,0.10)" />
+            <stop offset="1" stopColor="rgba(120,200,255,0.12)" />
+          </linearGradient>
+        </defs>
+        <rect x="10" y="10" width="300" height="120" rx="22" fill="url(#g2)" />
+        <path
+          d="M85 40c22-12 46-16 75-14 30 2 55 9 75 24"
+          fill="none"
+          stroke="rgba(255,255,255,0.65)"
+          strokeWidth="10"
+          strokeLinecap="round"
+        />
+        <path
+          d="M160 34v84"
+          stroke="rgba(230,84,115,0.70)"
+          strokeWidth="8"
+          strokeLinecap="round"
+        />
+        <path
+          d="M160 34v84"
+          stroke="rgba(255,255,255,0.25)"
+          strokeWidth="14"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 320 140" className="w-full h-full">
+      <defs>
+        <linearGradient id="g3" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="rgba(255,255,255,0.10)" />
+          <stop offset="1" stopColor="rgba(245,158,11,0.14)" />
+        </linearGradient>
+      </defs>
+      <rect x="10" y="10" width="300" height="120" rx="22" fill="url(#g3)" />
+      <path
+        d="M70 102c36-58 70-78 90-78s54 20 90 78"
+        fill="none"
+        stroke="rgba(255,255,255,0.65)"
+        strokeWidth="10"
+        strokeLinecap="round"
+      />
+      <path
+        d="M140 70c10-16 18-24 20-24s10 8 20 24"
+        fill="none"
+        stroke="rgba(245,158,11,0.65)"
+        strokeWidth="7"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function VisualCard({
+  id,
+  title,
+  subtitle,
+  selected,
+  onSelect,
+}: {
+  id: Exclude<VisualShape, null>;
+  title: string;
+  subtitle: string;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      onClick={onSelect}
+      className={[
+        "w-full text-left rounded-3xl border transition-all duration-300",
+        "bg-white/8 backdrop-blur-xl shadow-soft",
+        "active:scale-[0.99]",
+        selected
+          ? "border-[rgba(230,84,115,0.75)] shadow-[0_0_0_6px_rgba(230,84,115,0.12),0_28px_70px_rgba(0,0,0,0.35)]"
+          : "border-white/12 hover:border-white/20",
+      ].join(" ")}
+      style={{ minHeight: 120 }}
+    >
+      <div className="p-5 flex gap-4 items-center">
+        <div
+          className={[
+            "w-28 h-[72px] rounded-2xl overflow-hidden border",
+            selected ? "border-white/20" : "border-white/10",
+          ].join(" ")}
+        >
+          <ShapeArt id={id} />
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <div
+              className={[
+                "text-[16px] font-extrabold leading-snug",
+                selected ? "text-white" : "text-white/90",
+              ].join(" ")}
+            >
+              {title}
+            </div>
+            {selected && <CheckCircle2 size={18} className="text-[color:var(--pink)]" />}
+          </div>
+          <div className="text-[13px] text-white/60 leading-snug mt-1">{subtitle}</div>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function TypingIndicator() {
+  return (
+    <div className="flex items-center gap-1.5 px-1 py-1">
+      <div className="w-2 h-2 bg-white/40 rounded-full animate-bounce [animation-delay:-0.3s]" />
+      <div className="w-2 h-2 bg-white/40 rounded-full animate-bounce [animation-delay:-0.15s]" />
+      <div className="w-2 h-2 bg-white/40 rounded-full animate-bounce" />
+    </div>
+  );
+}
+
+function ChatBubble({
+  from,
+  children,
+  typing,
+}: {
+  from: "mia" | "user";
+  children?: React.ReactNode;
+  typing?: boolean;
+}) {
+  const isUser = from === "user";
+  return (
+    <div className={`w-full flex ${isUser ? "justify-end" : "justify-start"} mb-4`}>
+      {!isUser && (
+        <div className="w-10 h-10 rounded-full overflow-hidden border border-white/15 bg-white/10 shrink-0 mr-3 mt-auto relative flex items-center justify-center">
+          <span className="text-white/80 font-extrabold text-sm select-none">M</span>
+          <img
+            src="/coachMiaAvatar.png"
+            alt="Mia"
+            className="absolute inset-0 w-full h-full object-cover"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = "none";
+            }}
+          />
+        </div>
+      )}
+
+      <div
+        className={[
+          "max-w-[86%] px-5 py-3.5 text-[15px] leading-relaxed font-semibold",
+          "shadow-soft",
+          isUser
+            ? "bg-[color:var(--pink)] text-white rounded-2xl rounded-br-none"
+            : "bg-white/10 border border-white/12 text-white rounded-2xl rounded-bl-none",
+        ].join(" ")}
+      >
+        {typing ? <TypingIndicator /> : children}
+      </div>
+    </div>
+  );
+}
+
+function WheelPicker({
+  min,
+  max,
+  value,
+  onChange,
+}: {
+  min: number;
+  max: number;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  const range = useMemo(() => Array.from({ length: max - min + 1 }, (_, i) => min + i), [min, max]);
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const ITEM_HEIGHT = 54;
+
+  useEffect(() => {
+    if (!scrollerRef.current) return;
+    const idx = range.indexOf(value);
+    if (idx >= 0) scrollerRef.current.scrollTo({ top: idx * ITEM_HEIGHT, behavior: "auto" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleScroll = () => {
+    if (!scrollerRef.current) return;
+    const scrollY = scrollerRef.current.scrollTop;
+    const centerIndex = Math.round(scrollY / ITEM_HEIGHT);
+    const newValue = range[centerIndex];
+    if (newValue !== undefined && newValue !== value) onChange(newValue);
+  };
+
+  return (
+    <div className="relative h-[220px] w-full max-w-[340px] mx-auto overflow-hidden mt-1">
+      <div className="absolute top-1/2 left-0 w-full h-[54px] -translate-y-1/2 border-t-2 border-b-2 border-[color:var(--pink)]/10 bg-[color:var(--pink)]/5 pointer-events-none z-10" />
+
+      <div className="absolute top-0 left-0 w-full h-[80px] bg-gradient-to-b from-white via-white/90 to-transparent z-20 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-full h-[80px] bg-gradient-to-t from-white via-white/90 to-transparent z-20 pointer-events-none" />
+
+      <div
+        ref={scrollerRef}
+        onScroll={handleScroll}
+        className="h-full w-full overflow-y-scroll snap-y snap-mandatory no-scrollbar py-[83px]"
+      >
+        {range.map((num) => (
+          <div
+            key={num}
+            className={[
+              "h-[54px] flex items-center justify-center snap-center transition-all duration-200",
+              num === value
+                ? "scale-110 font-extrabold text-[color:var(--pink)] text-3xl"
+                : "scale-90 text-slate-400 text-2xl",
+            ].join(" ")}
+          >
+            {num}
+            <span className="text-sm ml-2 mt-1 font-semibold text-slate-400/80">years</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Benefit({
+  icon,
+  title,
+  sub,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  sub: string;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center shrink-0">
+        {icon}
+      </div>
+      <div className="flex-1">
+        <div className="text-white font-extrabold text-[15px] leading-snug">{title}</div>
+        <div className="text-white/60 text-[13px] leading-snug mt-0.5">{sub}</div>
+      </div>
+    </div>
+  );
+}
 
 export default function OnboardingWrapper() {
   const router = useRouter();
+
   const { isPremium, onboardingStep, setOnboardingStep } = useUserStore();
 
   const visualShape = useUserStore((s) => s.visualShape);
@@ -2067,7 +2176,7 @@ export default function OnboardingWrapper() {
   const [toastState, setToastState] = useState<{ show: boolean; msg: string; tone: ToastTone }>({
     show: false,
     msg: "",
-    tone: "info"
+    tone: "info",
   });
 
   const toastTimeoutRef = useRef<number | null>(null);
@@ -2084,7 +2193,7 @@ export default function OnboardingWrapper() {
       hide: () => {
         if (toastTimeoutRef.current) window.clearTimeout(toastTimeoutRef.current);
         setToastState((p) => ({ ...p, show: false }));
-      }
+      },
     }),
     []
   );
@@ -2111,7 +2220,7 @@ export default function OnboardingWrapper() {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed?.state?.isPremium === true) {
-          router.replace("/dashboard");
+          router.replace("/dashboard?plan=monthly");
           return;
         }
       }
@@ -2119,9 +2228,10 @@ export default function OnboardingWrapper() {
     setCheckedPremium(true);
   }, [router]);
 
+  // Premium redirect (store)
   useEffect(() => {
     if (!checkedPremium) return;
-    if (isPremium) router.replace("/dashboard");
+    if (isPremium) router.replace("/dashboard?plan=monthly");
   }, [checkedPremium, isPremium, router]);
 
   // Screen 3 init
@@ -2144,7 +2254,7 @@ export default function OnboardingWrapper() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen]);
 
-  // Screen 4 hydration + ask age
+  // Screen 4 hydration + ask age (only if not already asked)
   useEffect(() => {
     if (screen !== 4) return;
     setAgeValue(storedAge || 30);
@@ -2152,7 +2262,7 @@ export default function OnboardingWrapper() {
     if (chat.length === 0) {
       const seeded: Array<{ from: "mia" | "user"; text: string }> = [
         { from: "mia", text: MIA_M1 },
-        { from: "mia", text: MIA_M2 }
+        { from: "mia", text: MIA_M2 },
       ];
       if ((name || "").trim().length >= 2) seeded.push({ from: "user", text: name.trim() });
       setChat(seeded);
@@ -2161,7 +2271,8 @@ export default function OnboardingWrapper() {
 
     if (askedAgeRef.current) return;
 
-    const q = miaAgeQuestion((name || "there").trim() || "there");
+    const safeName = (name || "there").trim() || "there";
+    const q = miaAgeQuestion(safeName);
     const alreadyAsked = chat.some((m) => m.from === "mia" && m.text.includes("How young are you?"));
     if (alreadyAsked) {
       askedAgeRef.current = true;
@@ -2193,23 +2304,49 @@ export default function OnboardingWrapper() {
       toastApi.show("success", "Your recovery potential is high!", 3200);
       return;
     }
+
     toastApi.hide();
   }, [ageValue, screen, setAge, toastApi]);
 
+  // Screen actions
   const goTo = (n: number) => {
     toastApi.hide();
     setOnboardingStep(Math.max(1, Math.min(TOTAL_STEPS, n)));
   };
 
+  /**
+   * Makes name → age feel like ONE continuous chat:
+   * - user submits name
+   * - Mia "types"
+   * - Mia asks age
+   * - age picker appears (screen 4) WITHOUT changing the whole chat screen
+   */
   const submitName = () => {
     const cleaned = inputName.trim();
     if (cleaned.length < 2) return;
 
     setName(cleaned);
+
+    // add user's message
     setChat((prev) => [...prev, { from: "user", text: cleaned }]);
     scrollToBottom();
 
-    setTimeout(() => goTo(4), 250);
+    // Mia types then asks age
+    const q = miaAgeQuestion(cleaned);
+    askedAgeRef.current = true;
+    setMiaTyping(true);
+
+    window.setTimeout(() => {
+      setMiaTyping(false);
+      setChat((prev) => {
+        const exists = prev.some((m) => m.from === "mia" && m.text === q);
+        return exists ? prev : [...prev, { from: "mia", text: q }];
+      });
+      scrollToBottom();
+
+      // move to screen 4 to show age picker (same chat screen; no "new page" feeling)
+      window.setTimeout(() => goTo(4), 180);
+    }, 650);
   };
 
   const submitAge = () => {
@@ -2220,23 +2357,25 @@ export default function OnboardingWrapper() {
       scrollToBottom();
     }
     toastApi.hide();
-    setTimeout(() => goTo(5), 250);
+    setTimeout(() => goTo(5), 450);
   };
 
   if (!checkedPremium) return null;
 
-  const showButterflies = screen <= 11; // ✅ NO butterflies on 12–14
-  const butterfliesStyle =
-    screen === 1 ? "opacity-100 blur-0" : "opacity-30 blur-[1px]"; // ✅ faded on 2–11
+  // Butterfly rules:
+  // - Screen 1: normal butterflies
+  // - Screens 2–11: butterflies dimmed behind content
+  // - Screens 12–14: no butterflies
+  const showButterfliesStrong = screen === 1;
+  const showButterfliesSoft = screen >= 2 && screen <= 11;
 
-  const showProgress = screen >= 2 && screen <= 11; // ✅ only screens 2–11
-
-  const isChat = screen === 3 || screen === 4; // ✅ keep same visual container
+  const showTopProgress = screen >= 2 && screen <= 11;
 
   return (
     <main className="min-h-screen clinical-noise relative overflow-hidden bg-[color:var(--navy)]">
-      {showButterflies && (
-        <div className={`absolute inset-0 ${butterfliesStyle}`}>
+      {showButterfliesStrong && <ButterflyBackground />}
+      {showButterfliesSoft && (
+        <div className="absolute inset-0 pointer-events-none opacity-[0.22] blur-[0.6px]">
           <ButterflyBackground />
         </div>
       )}
@@ -2249,7 +2388,7 @@ export default function OnboardingWrapper() {
       />
 
       <div className="relative z-10 min-h-screen flex flex-col">
-        {showProgress && <ProgressBarBarOnly step={Math.min(TOTAL_STEPS, screen)} />}
+        {showTopProgress && <ProgressBar step={Math.min(TOTAL_STEPS, screen)} />}
 
         <AnimatePresence mode="wait">
           {/* Screen 1 */}
@@ -2313,7 +2452,7 @@ export default function OnboardingWrapper() {
                     "w-full h-14 rounded-full font-extrabold text-[17px]",
                     "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)]",
                     "active:scale-[0.985] transition-transform",
-                    "animate-breathe"
+                    "animate-breathe",
                   ].join(" ")}
                 >
                   Start My Assessment
@@ -2333,8 +2472,13 @@ export default function OnboardingWrapper() {
               className="flex-1 flex flex-col px-6 pt-8 pb-10"
             >
               <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1">
-                <div className="mt-2">
-                  <h1 className="text-[28px] leading-[1.12] font-extrabold text-white" style={{ fontFamily: "var(--font-lora)" }}>
+                {/* Back button removed */}
+
+                <div className="mt-6">
+                  <h1
+                    className="text-[28px] leading-[1.12] font-extrabold text-white"
+                    style={{ fontFamily: "var(--font-lora)" }}
+                  >
                     Let’s analyze your core.
                     <br />
                     Which shape resembles yours the most?
@@ -2385,7 +2529,7 @@ export default function OnboardingWrapper() {
                       "w-full h-14 rounded-full font-extrabold text-[17px] transition-all",
                       visualShape
                         ? "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)] active:scale-[0.985]"
-                        : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed"
+                        : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed",
                     ].join(" ")}
                   >
                     Continue
@@ -2395,19 +2539,21 @@ export default function OnboardingWrapper() {
             </motion.section>
           )}
 
-          {/* Screen 3 + 4 (same container so it feels like one conversation) */}
-          {isChat && (
+          {/* Screens 3–4 (ONE continuous chat screen) */}
+          {(screen === 3 || screen === 4) && (
             <motion.section
               key="chat"
               initial={{ opacity: 0, x: 22 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -22 }}
               transition={{ duration: 0.38, ease: "easeOut" }}
-              className="flex-1 flex flex-col px-5 pt-6 pb-6"
-              style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
+              className="flex-1 flex flex-col px-5 pt-6"
+              style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
             >
               <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1">
-                <div className="flex-1 min-h-0 mt-2 overflow-y-auto no-scrollbar pr-1">
+                {/* Back button removed */}
+
+                <div className="flex-1 min-h-0 mt-5 overflow-y-auto no-scrollbar pr-1">
                   {chat.map((m, idx) => (
                     <ChatBubble key={idx} from={m.from}>
                       {m.text}
@@ -2417,92 +2563,161 @@ export default function OnboardingWrapper() {
                   <div ref={chatBottomRef} className="h-2" />
                 </div>
 
-                {screen === 3 && (
-                  <div className="mt-4 rounded-[28px] border border-white/12 bg-white/8 backdrop-blur-xl shadow-soft p-4">
-                    <div className="text-white/60 text-xs font-semibold mb-2">Your name (for your medical file)</div>
-
-                    <input
-                      value={inputName}
-                      onChange={(e) => setInputName(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && submitName()}
-                      placeholder="Type your name..."
-                      className={[
-                        "w-full h-14 rounded-2xl px-4",
-                        "bg-black/20 border border-white/10",
-                        "text-white text-[18px] font-extrabold",
-                        "placeholder:text-white/30",
-                        "focus:outline-none focus:border-[color:var(--pink)]"
-                      ].join(" ")}
-                      autoFocus
-                    />
-
-                    <button
-                      onClick={submitName}
-                      disabled={inputName.trim().length < 2}
-                      className={[
-                        "mt-3 w-full rounded-full font-extrabold text-[16px] transition-all",
-                        inputName.trim().length >= 2
-                          ? "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)] active:scale-[0.985]"
-                          : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed"
-                      ].join(" ")}
-                      style={{ height: 52 }}
+                <AnimatePresence mode="wait">
+                  {/* Name input (screen 3) */}
+                  {screen === 3 && (
+                    <motion.div
+                      key="nameBox"
+                      initial={{ opacity: 0, y: 14 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 14 }}
+                      transition={{ duration: 0.24 }}
+                      className="mt-4 rounded-[28px] border border-white/12 bg-white/8 backdrop-blur-xl shadow-soft p-4"
+                      style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
                     >
-                      Continue
-                    </button>
-                  </div>
-                )}
+                      <div className="text-white/60 text-xs font-semibold mb-2">Your name (for your medical file)</div>
 
-                {screen === 4 && (
-                  <div className="mt-4 bg-white rounded-t-[34px] shadow-[0_-16px_60px_rgba(0,0,0,0.35)] p-5 pb-6">
-                    <div className="text-center">
-                      <div className="text-slate-900 font-extrabold text-[18px]">Select your age</div>
-                      <div className="text-slate-500 text-[13px] font-semibold mt-1">
-                        This helps Mia tailor tissue recovery pacing.
+                      <input
+                        value={inputName}
+                        onChange={(e) => setInputName(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && submitName()}
+                        placeholder="Type your name..."
+                        className={[
+                          "w-full h-14 rounded-2xl px-4",
+                          "bg-black/20 border border-white/10",
+                          "text-white text-[18px] font-extrabold",
+                          "placeholder:text-white/30",
+                          "focus:outline-none focus:border-[color:var(--pink)]",
+                        ].join(" ")}
+                        autoFocus
+                      />
+
+                      <button
+                        onClick={submitName}
+                        disabled={inputName.trim().length < 2}
+                        className={[
+                          "mt-3 w-full rounded-full font-extrabold text-[16px] transition-all",
+                          inputName.trim().length >= 2
+                            ? "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)] active:scale-[0.985]"
+                            : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed",
+                        ].join(" ")}
+                        style={{ height: 52 }}
+                      >
+                        Continue
+                      </button>
+                    </motion.div>
+                  )}
+
+                  {/* Age picker (screen 4) */}
+                  {screen === 4 && (
+                    <motion.div
+                      key="ageBox"
+                      initial={{ opacity: 0, y: 14 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 14 }}
+                      transition={{ duration: 0.24 }}
+                      className="mt-4 bg-white rounded-t-[34px] shadow-[0_-16px_60px_rgba(0,0,0,0.35)] p-5 pb-6"
+                      style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 18px)" }}
+                    >
+                      <div className="text-center">
+                        <div className="text-slate-900 font-extrabold text-[18px]">Select your age</div>
+                        <div className="text-slate-500 text-[13px] font-semibold mt-1">
+                          This helps Mia tailor tissue recovery pacing.
+                        </div>
                       </div>
-                    </div>
 
-                    <WheelPicker min={18} max={70} value={ageValue} onChange={setAgeValue} />
+                      <WheelPicker min={18} max={70} value={ageValue} onChange={setAgeValue} />
 
-                    <button
-                      onClick={submitAge}
-                      className="mt-4 w-full h-14 rounded-full bg-[color:var(--pink)] text-white font-extrabold text-[17px] shadow-[0_18px_50px_rgba(230,84,115,0.30)] active:scale-[0.985] transition-transform"
-                    >
-                      Next
-                    </button>
+                      <button
+                        onClick={submitAge}
+                        className="mt-4 w-full h-14 rounded-full bg-[color:var(--pink)] text-white font-extrabold text-[17px] shadow-[0_18px_50px_rgba(230,84,115,0.30)] active:scale-[0.985] transition-transform"
+                      >
+                        Next
+                      </button>
 
-                    <div className="mt-3 text-center text-slate-400 text-[11px] font-semibold">
-                      Saved instantly • You can leave and resume anytime
-                    </div>
-                  </div>
-                )}
+                      <div className="mt-3 text-center text-slate-400 text-[11px] font-semibold">
+                        Saved instantly • You can leave and resume anytime
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </motion.section>
           )}
 
-          {/* Screen 5–11 */}
-          {screen === 5 && <motion.section key="s5" className="flex-1"><Step05FingerTest onNext={() => goTo(6)} toast={toastApi} /></motion.section>}
-          {screen === 6 && <motion.section key="s6" className="flex-1"><Step06TissueDepth onNext={() => goTo(7)} toast={toastApi} /></motion.section>}
-          {screen === 7 && <motion.section key="s7" className="flex-1"><Step07SabotageCheck onNext={() => goTo(8)} toast={toastApi} /></motion.section>}
-          {screen === 8 && <motion.section key="s8" className="flex-1"><Step08Symptoms onNext={() => goTo(9)} toast={toastApi} /></motion.section>}
-          {screen === 9 && <motion.section key="s9" className="flex-1"><Step09Timeline onNext={() => goTo(10)} toast={toastApi} /></motion.section>}
-          {screen === 10 && <motion.section key="s10" className="flex-1"><Step10Navel onNext={() => goTo(11)} toast={toastApi} /></motion.section>}
-          {screen === 11 && <motion.section key="s11" className="flex-1"><Step11Commitment onNext={() => goTo(12)} toast={toastApi} /></motion.section>}
+          {/* Screen 5 */}
+          {screen === 5 && (
+            <motion.section key="s5" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
+              <Step05FingerTest onBack={() => goTo(4)} onNext={() => goTo(6)} toast={toastApi} />
+            </motion.section>
+          )}
 
-          {/* Screen 12–14 (NO progress bar + NO butterflies) */}
+          {/* Screen 6 */}
+          {screen === 6 && (
+            <motion.section key="s6" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
+              <Step06TissueDepth onBack={() => goTo(5)} onNext={() => goTo(7)} toast={toastApi} />
+            </motion.section>
+          )}
+
+          {/* Screen 7 */}
+          {screen === 7 && (
+            <motion.section key="s7" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
+              <Step07SabotageCheck onBack={() => goTo(6)} onNext={() => goTo(8)} toast={toastApi} />
+            </motion.section>
+          )}
+
+          {/* Screen 8 */}
+          {screen === 8 && (
+            <motion.section key="s8" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
+              <Step08Symptoms onBack={() => goTo(7)} onNext={() => goTo(9)} toast={toastApi} />
+            </motion.section>
+          )}
+
+          {/* Screen 9 */}
+          {screen === 9 && (
+            <motion.section key="s9" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
+              <Step09Timeline onBack={() => goTo(8)} onNext={() => goTo(10)} toast={toastApi} />
+            </motion.section>
+          )}
+
+          {/* Screen 10 */}
+          {screen === 10 && (
+            <motion.section key="s10" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
+              <Step10Navel onBack={() => goTo(9)} onNext={() => goTo(11)} toast={toastApi} />
+            </motion.section>
+          )}
+
+          {/* Screen 11 */}
+          {screen === 11 && (
+            <motion.section key="s11" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
+              <Step11Commitment onBack={() => goTo(10)} onNext={() => goTo(12)} toast={toastApi} />
+            </motion.section>
+          )}
+
+          {/* Screen 12 */}
           {screen === 12 && (
-            <motion.section key="s12" className="flex-1">
+            <motion.section
+              key="s12"
+              initial={{ opacity: 0, x: 22 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -22 }}
+              transition={{ duration: 0.38, ease: "easeOut" }}
+              className="flex-1"
+            >
               <Step12Analysis onDone={() => goTo(13)} />
             </motion.section>
           )}
 
+          {/* Screen 13 */}
           {screen === 13 && (
-            <motion.section key="s13" className="flex-1">
-              <Step13PlanReveal onNext={() => goTo(14)} />
+            <motion.section key="s13" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
+              <Step13PlanReveal onBack={() => goTo(12)} onNext={() => goTo(14)} />
             </motion.section>
           )}
 
+          {/* Screen 14 */}
           {screen === 14 && (
-            <motion.section key="s14" className="flex-1">
+            <motion.section key="s14" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
               <Step14Paywall />
             </motion.section>
           )}
