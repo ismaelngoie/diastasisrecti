@@ -2400,9 +2400,26 @@ export default function OnboardingWrapper() {
 
   const screen = onboardingStep;
 
-  const scrollToBottom = () => {
-    setTimeout(() => chatBottomRef.current?.scrollIntoView({ behavior: "smooth" }), 80);
-  };
+  const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+  // double rAF = wait until layout is fully settled (helps with AnimatePresence)
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      chatBottomRef.current?.scrollIntoView({ behavior, block: "end" });
+    });
+  });
+};
+useEffect(() => {
+  if (screen !== 4) return;
+
+  // 1) immediate pin after mount/layout
+  scrollToBottom("auto");
+
+  // 2) pin again after the wheel panel finishes its enter animation (y: 14 → 0)
+  // your motion transition is 0.24s, so 260ms is safe
+  const t = window.setTimeout(() => scrollToBottom("smooth"), 260);
+
+  return () => window.clearTimeout(t);
+}, [screen]);
 
   useEffect(() => {
     try {
