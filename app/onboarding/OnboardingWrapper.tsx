@@ -1359,9 +1359,9 @@ const CheckoutForm = ({ onClose }: { onClose: () => void }) => {
         {isLoading ? <Loader2 className="animate-spin" /> : "Start My Healing ($24.99)"}
       </button>
       <div className="flex items-center justify-center gap-2 mt-4 text-white/30 text-[11px] font-semibold">
-        <Lock size={12} /> 256-bit SSL Secure Payment
+        <p className="text-center text-white/70 text-[12px] font-semibold mt-3 leading-snug px-4 drop-shadow-sm">{getStripeSubtext()}</p>
       </div>
-      <p className="text-center text-white/30 text-[11px] font-semibold mt-3">100% secure payment via Stripe</p>
+      <p className="text-center text-white/30 text-[11px] font-semibold mt-3"><Lock size={12} /> 100% secure payment.</p>
     </form>
   );
 };
@@ -1522,6 +1522,8 @@ function Step14Paywall() {
     setIsButtonLoading(false);
     setShowCheckoutModal(true);
   };
+
+  const getStripeSubtext = () => { if (!dateString) return ""; return `Feel real progress by ${dateString}. If not, one tap full $24.99 refund.`; };
 
   const stripeAppearance = {
     theme: "night" as const,
