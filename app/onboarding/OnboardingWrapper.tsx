@@ -1880,91 +1880,312 @@ function ProgressBar({ step }: { step: number }) {
   );
 }
 
-function ShapeArt({ id }: { id: Exclude<VisualShape, null> }) {
-  if (id === "pooch") {
-    return (
-      <svg viewBox="0 0 320 140" className="w-full h-full">
-        <defs>
-          <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="rgba(255,255,255,0.10)" />
-            <stop offset="1" stopColor="rgba(230,84,115,0.18)" />
-          </linearGradient>
-        </defs>
-        <rect x="10" y="10" width="300" height="120" rx="22" fill="url(#g1)" />
-        <path
-          d="M70 95c30-40 70-55 120-50 40 4 70 22 85 48"
-          fill="none"
-          stroke="rgba(255,255,255,0.65)"
-          strokeWidth="10"
-          strokeLinecap="round"
-        />
-        <path
-          d="M92 98c28-22 58-30 90-26 28 3 50 14 66 28"
-          fill="none"
-          stroke="rgba(210,235,255,0.55)"
-          strokeWidth="6"
-          strokeLinecap="round"
-        />
-      </svg>
-    );
-  }
+// --- HIGH-END 3D DEFINITIONS (Glow, Texture, Hologram) ---
+const Defs = ({ p }: { p: string }) => (
+  <defs>
+    {/* Background */}
+    <radialGradient id={`${p}-bg`} cx="35%" cy="20%" r="85%">
+      <stop offset="0%" stopColor="#1b1a2a" stopOpacity="1" />
+      <stop offset="55%" stopColor="#0f1020" stopOpacity="1" />
+      <stop offset="100%" stopColor="#070814" stopOpacity="1" />
+    </radialGradient>
 
-  if (id === "gap") {
-    return (
-      <svg viewBox="0 0 320 140" className="w-full h-full">
-        <defs>
-          <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="rgba(255,255,255,0.10)" />
-            <stop offset="1" stopColor="rgba(120,200,255,0.12)" />
-          </linearGradient>
-        </defs>
-        <rect x="10" y="10" width="300" height="120" rx="22" fill="url(#g2)" />
-        <path
-          d="M85 40c22-12 46-16 75-14 30 2 55 9 75 24"
-          fill="none"
-          stroke="rgba(255,255,255,0.65)"
-          strokeWidth="10"
-          strokeLinecap="round"
-        />
-        <path
-          d="M160 34v84"
-          stroke="rgba(230,84,115,0.70)"
-          strokeWidth="8"
-          strokeLinecap="round"
-        />
-        <path
-          d="M160 34v84"
-          stroke="rgba(255,255,255,0.25)"
-          strokeWidth="14"
-          strokeLinecap="round"
-        />
-      </svg>
-    );
-  }
+    {/* Subtle tech dots pattern */}
+    <pattern id={`${p}-dots`} width="10" height="10" patternUnits="userSpaceOnUse">
+      <circle cx="1.5" cy="1.5" r="0.8" fill="#fff" opacity="0.06" />
+    </pattern>
+
+    {/* Bodysuit / figure material */}
+    <linearGradient id={`${p}-figure`} x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stopColor="#ffffff" stopOpacity="0.12" />
+      <stop offset="35%" stopColor="#c9ccff" stopOpacity="0.08" />
+      <stop offset="70%" stopColor="#ffffff" stopOpacity="0.05" />
+      <stop offset="100%" stopColor="#000000" stopOpacity="0.16" />
+    </linearGradient>
+
+    {/* Rim light */}
+    <linearGradient id={`${p}-rim`} x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stopColor="#ffffff" stopOpacity="0.55" />
+      <stop offset="55%" stopColor="#ffffff" stopOpacity="0.18" />
+      <stop offset="100%" stopColor="#ffffff" stopOpacity="0.10" />
+    </linearGradient>
+
+    {/* Sheen band */}
+    <linearGradient id={`${p}-sheen`} x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
+      <stop offset="28%" stopColor="#ffffff" stopOpacity="0.10" />
+      <stop offset="42%" stopColor="#ffffff" stopOpacity="0.22" />
+      <stop offset="58%" stopColor="#ffffff" stopOpacity="0.08" />
+      <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+    </linearGradient>
+
+    {/* Ambient occlusion */}
+    <radialGradient id={`${p}-ao`} cx="50%" cy="55%" r="75%">
+      <stop offset="0%" stopColor="#000000" stopOpacity="0" />
+      <stop offset="70%" stopColor="#000000" stopOpacity="0.10" />
+      <stop offset="100%" stopColor="#000000" stopOpacity="0.22" />
+    </radialGradient>
+
+    {/* Highlight pink (The "Hot" Zone) */}
+    <radialGradient id={`${p}-hot`} cx="40%" cy="35%" r="70%">
+      <stop offset="0%" stopColor="#ff9bb0" stopOpacity="0.65" />
+      <stop offset="45%" stopColor="#e65473" stopOpacity="0.25" />
+      <stop offset="100%" stopColor="#e65473" stopOpacity="0" />
+    </radialGradient>
+
+    {/* Specular highlight */}
+    <radialGradient id={`${p}-spec`} cx="35%" cy="30%" r="40%">
+      <stop offset="0%" stopColor="#ffffff" stopOpacity="0.35" />
+      <stop offset="55%" stopColor="#ffffff" stopOpacity="0.08" />
+      <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+    </radialGradient>
+
+    {/* Gap depth (The Trench) */}
+    <linearGradient id={`${p}-gap`} x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stopColor="#ffffff" stopOpacity="0.10" />
+      <stop offset="45%" stopColor="#070814" stopOpacity="0.92" />
+      <stop offset="55%" stopColor="#070814" stopOpacity="0.92" />
+      <stop offset="100%" stopColor="#ffffff" stopOpacity="0.10" />
+    </linearGradient>
+
+    {/* Laser stroke */}
+    <linearGradient id={`${p}-laser`} x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stopColor="#ffffff" stopOpacity="0.20" />
+      <stop offset="35%" stopColor="#ff7e9a" stopOpacity="0.85" />
+      <stop offset="70%" stopColor="#e65473" stopOpacity="0.95" />
+      <stop offset="100%" stopColor="#ffffff" stopOpacity="0.20" />
+    </linearGradient>
+
+    {/* Premium bloom filter */}
+    <filter id={`${p}-bloom`} x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.8" result="b1" />
+      <feColorMatrix
+        in="b1"
+        type="matrix"
+        values="
+          1 0 0 0 0
+          0 1 0 0 0
+          0 0 1 0 0
+          0 0 0 0.65 0"
+        result="b2"
+      />
+      <feMerge>
+        <feMergeNode in="b2" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    {/* Soft shadow */}
+    <filter id={`${p}-shadow`} x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="7" stdDeviation="7" floodColor="#000000" floodOpacity="0.35" />
+    </filter>
+
+    {/* Inner shadow */}
+    <filter id={`${p}-inner`} x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blur" />
+      <feOffset dx="0" dy="2" result="off" />
+      <feComposite in="off" in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="inner" />
+      <feColorMatrix
+        in="inner"
+        type="matrix"
+        values="
+          0 0 0 0 0
+          0 0 0 0 0
+          0 0 0 0 0
+          0 0 0 0.55 0"
+        result="shade"
+      />
+      <feComposite in="shade" in2="SourceGraphic" operator="over" />
+    </filter>
+
+    {/* Micro grain texture */}
+    <filter id={`${p}-grain`} x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" result="n" />
+      <feColorMatrix
+        in="n"
+        type="matrix"
+        values="
+          0 0 0 0 1
+          0 0 0 0 1
+          0 0 0 0 1
+          0 0 0 0.06 0"
+        result="g"
+      />
+      <feBlend in="SourceGraphic" in2="g" mode="overlay" />
+    </filter>
+  </defs>
+);
+
+function ShapeArt({
+  id,
+  showLabels = true,
+}: {
+  id: Exclude<VisualShape, null>;
+  showLabels?: boolean;
+}) {
+  const uid = React.useId();
+  const p = `s-${uid.replace(/:/g, "")}`; // Ensure ID is safe for SVG
+
+  // A recognizable female torso silhouette (clothed bodysuit feel; non-explicit)
+  const figurePath =
+    "M72 56 Q100 38 128 56 Q140 68 134 84 Q125 104 128 126 Q133 158 112 176 Q100 186 88 176 Q67 158 72 126 Q75 104 66 84 Q60 68 72 56 Z";
+
+  const neckPath = "M92 50 Q100 56 108 50 L108 60 Q100 66 92 60 Z";
+
+  // Callout anchor points
+  const callouts = {
+    pooch: { x: 128, y: 138, label: "Lower belly", lx: 150, ly: 130 },
+    gap: { x: 100, y: 112, label: "Midline / separation", lx: 148, ly: 102 },
+    cone: { x: 100, y: 90, label: "Upper abdomen", lx: 148, ly: 78 },
+  } as const;
+
+  const c = callouts[id];
 
   return (
-    <svg viewBox="0 0 320 140" className="w-full h-full">
+    <svg viewBox="0 0 200 200" className="w-full h-full" fill="none" shapeRendering="geometricPrecision">
+      <Defs p={p} />
+
+      {/* Premium card-like background */}
+      <rect x="10" y="10" width="180" height="180" rx="26" fill={`url(#${p}-bg)`} />
+      <rect x="10" y="10" width="180" height="180" rx="26" fill={`url(#${p}-dots)`} />
+      <rect x="10" y="10" width="180" height="180" rx="26" fill="#000" opacity="0.18" />
+
+      {/* Figure clip */}
       <defs>
-        <linearGradient id="g3" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="rgba(255,255,255,0.10)" />
-          <stop offset="1" stopColor="rgba(245,158,11,0.14)" />
-        </linearGradient>
+        <clipPath id={`${p}-clip`}>
+          <path d={figurePath} />
+        </clipPath>
       </defs>
-      <rect x="10" y="10" width="300" height="120" rx="22" fill="url(#g3)" />
-      <path
-        d="M70 102c36-58 70-78 90-78s54 20 90 78"
-        fill="none"
-        stroke="rgba(255,255,255,0.65)"
-        strokeWidth="10"
-        strokeLinecap="round"
-      />
-      <path
-        d="M140 70c10-16 18-24 20-24s10 8 20 24"
-        fill="none"
-        stroke="rgba(245,158,11,0.65)"
-        strokeWidth="7"
-        strokeLinecap="round"
-      />
+
+      {/* Woman figure */}
+      <g filter={`url(#${p}-shadow)`}>
+        {/* Head */}
+        <circle cx="100" cy="34" r="14" fill={`url(#${p}-figure)`} stroke={`url(#${p}-rim)`} strokeWidth="1.4" />
+        {/* Neck */}
+        <path d={neckPath} fill={`url(#${p}-figure)`} stroke={`url(#${p}-rim)`} strokeWidth="1.2" />
+
+        {/* Torso */}
+        <path
+          d={figurePath}
+          fill={`url(#${p}-figure)`}
+          stroke={`url(#${p}-rim)`}
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+          opacity="0.98"
+        />
+
+        {/* Inner depth + AO + sheen */}
+        <path d={figurePath} fill="transparent" filter={`url(#${p}-inner)`} />
+        <path
+          d={figurePath}
+          fill={`url(#${p}-ao)`}
+          opacity="0.95"
+          style={{ mixBlendMode: "multiply" as any }}
+        />
+        <path
+          d={figurePath}
+          fill={`url(#${p}-sheen)`}
+          opacity="0.9"
+          style={{ mixBlendMode: "screen" as any }}
+        />
+
+        {/* Grain only on torso */}
+        <g clipPath={`url(#${p}-clip)`} filter={`url(#${p}-grain)`} opacity="0.9">
+          <rect x="0" y="0" width="200" height="200" fill="transparent" />
+        </g>
+
+        {/* Subtle “bodysuit seams” */}
+        <path d="M80 74 Q100 88 120 74" stroke="#fff" opacity="0.14" strokeWidth="1.2" />
+        <path d="M86 156 Q100 166 114 156" stroke="#fff" opacity="0.12" strokeWidth="1.2" />
+      </g>
+
+      {/* Focus overlays (Clipped to body) */}
+      <g clipPath={`url(#${p}-clip)`}>
+        {/* --- POOCH --- */}
+        {id === "pooch" && (
+          <>
+            <ellipse cx="100" cy="142" rx="30" ry="20" fill="#000" opacity="0.22" style={{ mixBlendMode: "multiply" as any }} />
+            <path
+              d="M74 132 C 82 120, 118 120, 126 132 C 134 146, 118 162, 100 162 C 82 162, 66 146, 74 132 Z"
+              fill={`url(#${p}-hot)`}
+              filter={`url(#${p}-bloom)`}
+            />
+            <path
+              d="M82 136 C 90 128, 110 128, 120 136 C 112 146, 92 148, 82 136 Z"
+              fill={`url(#${p}-spec)`}
+              opacity="0.95"
+              style={{ mixBlendMode: "screen" as any }}
+            />
+            <path d="M78 132 Q100 144 122 132" stroke="#fff" strokeWidth="1.8" opacity="0.75" strokeLinecap="round" />
+          </>
+        )}
+
+        {/* --- GAP --- */}
+        {id === "gap" && (
+          <>
+            <path
+              d="M95 74 Q95 112 95 150 L105 150 Q105 112 105 74 Z"
+              fill={`url(#${p}-gap)`}
+              filter={`url(#${p}-inner)`}
+            />
+            <path d="M95 74 Q92 112 95 150" stroke="#fff" opacity="0.35" strokeWidth="1.4" />
+            <path d="M105 74 Q108 112 105 150" stroke="#fff" opacity="0.35" strokeWidth="1.4" />
+
+            <g filter={`url(#${p}-bloom)`} opacity="0.95">
+              <path d="M68 104 L88 104" stroke="#fff" strokeWidth="1" strokeDasharray="3 4" opacity="0.35" />
+              <path d="M88 104 L112 104" stroke={`url(#${p}-laser)`} strokeWidth="1.8" />
+              <path d="M112 104 L132 104" stroke="#fff" strokeWidth="1" strokeDasharray="3 4" opacity="0.35" />
+
+              <path d="M68 120 L88 120" stroke="#fff" strokeWidth="1" strokeDasharray="3 4" opacity="0.35" />
+              <path d="M88 120 L112 120" stroke={`url(#${p}-laser)`} strokeWidth="1.8" />
+              <path d="M112 120 L132 120" stroke="#fff" strokeWidth="1" strokeDasharray="3 4" opacity="0.35" />
+            </g>
+
+            <path d="M88 101 L93 104 L88 107" fill="#fff" opacity="0.85" />
+            <path d="M112 101 L107 104 L112 107" fill="#fff" opacity="0.85" />
+          </>
+        )}
+
+        {/* --- CONE --- */}
+        {id === "cone" && (
+          <>
+            <path
+              d="M84 132 L100 76 L116 132"
+              fill={`url(#${p}-hot)`}
+              opacity="0.8"
+              filter={`url(#${p}-bloom)`}
+            />
+            <path
+              d="M100 76 L100 132"
+              stroke="#e65473"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              filter={`url(#${p}-bloom)`}
+            />
+            <path d="M100 92 L76 98" stroke="#fff" strokeWidth="1" opacity="0.16" />
+            <path d="M100 110 L74 116" stroke="#fff" strokeWidth="1" opacity="0.22" />
+            <path d="M100 92 L124 98" stroke="#fff" strokeWidth="1" opacity="0.16" />
+            <path d="M100 110 L126 116" stroke="#fff" strokeWidth="1" opacity="0.22" />
+          </>
+        )}
+      </g>
+
+      {/* Callout label */}
+      {showLabels && (
+        <g opacity="0.95">
+          <path
+            d={`M${c.x} ${c.y} L${c.lx - 8} ${c.ly}`}
+            stroke="#fff"
+            strokeWidth="1.2"
+            opacity="0.55"
+          />
+          <circle cx={c.x} cy={c.y} r="2.2" fill="#fff" opacity="0.85" />
+          <rect x={c.lx - 4} y={c.ly - 10} width="44" height="16" rx="8" fill="#000" opacity="0.35" />
+          <text x={c.lx + 2} y={c.ly + 2} fontSize="8.5" fill="#fff" opacity="0.9" fontFamily="ui-sans-serif, system-ui">
+            {c.label}
+          </text>
+        </g>
+      )}
     </svg>
   );
 }
