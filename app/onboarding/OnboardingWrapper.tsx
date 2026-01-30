@@ -2181,7 +2181,7 @@ function ChatBubble({
         <div className="w-10 h-10 rounded-full overflow-hidden border border-white/15 bg-white/10 shrink-0 mr-3 mt-auto relative flex items-center justify-center">
           <span className="text-white/80 font-extrabold text-sm select-none">M</span>
           <img
-            src="/coachMiaAvatar.png"
+            src="/CoachMiaAvatar.png"
             alt="Mia"
             className="absolute inset-0 w-full h-full object-cover"
             onError={(e) => {
