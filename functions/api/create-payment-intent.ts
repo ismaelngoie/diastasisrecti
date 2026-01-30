@@ -1,4 +1,5 @@
-import { json, stripeRequest } from "./_stripe";
+// functions/api/create-payment-intent.ts
+import { json, stripeRequest } from "../_stripe";
 
 type Env = {
   STRIPE_SECRET_KEY: string;
@@ -19,28 +20,40 @@ export async function onRequestPost(context: { env: Env }) {
       body: new URLSearchParams(),
     });
 
-    // 2) Create subscription (default_incomplete) and expand PI client_secret
+    // 2) Create subscription
     const body = new URLSearchParams();
     body.set("customer", customer.id);
     body.set("items[0][price]", env.STRIPE_PRICE_ID);
     body.set("payment_behavior", "default_incomplete");
     body.set("payment_settings[save_default_payment_method]", "on_subscription");
-    body.append("expand[]", "latest_invoice.payment_intent");
+    
+    // FIXED: Use explicit index [0] to ensure Stripe expands it
+    body.set("expand[0]", "latest_invoice.payment_intent");
 
     const sub = await stripeRequest<any>(env, "/subscriptions", {
       method: "POST",
       body,
     });
 
+    // 3) Extract Client Secret
     const clientSecret =
       sub?.latest_invoice?.payment_intent?.client_secret ?? null;
 
     if (!clientSecret) {
-      return json({ error: "Stripe did not return a client secret." }, { status: 500 });
+      // DEBUGGING: Log why it failed
+      console.error("Stripe Subscription Response:", JSON.stringify(sub, null, 2));
+
+      // Check for Trial Period issue
+      if (sub.status === 'trialing') {
+         return json({ error: "Price ID has a trial period. No payment is due immediately." }, { status: 400 });
+      }
+
+      return json({ error: "Stripe did not return a client secret. Check logs." }, { status: 500 });
     }
 
     return json({ clientSecret });
   } catch (err: any) {
+    console.error("Create Payment Intent Error:", err);
     return json({ error: err?.message || "Unknown error" }, { status: 500 });
   }
 }
