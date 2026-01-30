@@ -1341,7 +1341,7 @@ const CheckoutForm = ({ onClose, dateString }: { onClose: () => void; dateString
       </button>
       <div className="mb-6">
         <h3 className="text-xl font-extrabold text-white mb-1" style={{ fontFamily: "var(--font-lora)" }}>
-          Secure Checkout. 100% Money-back guarantee.
+          100% Money-Back Guarantee.
         </h3>
         <p className="text-sm text-white/50 font-medium">Total due: $24.99 / month</p>
       </div>
@@ -1776,14 +1776,13 @@ export default function OnboardingWrapper() {
       {/* Main Content Layer - Flex Column */}
       <div className="relative z-10 flex-1 flex flex-col h-full overflow-hidden">
         {/* FIXED HEADER: Progress Bar */}
-        {showTopProgress ? (
-          <div className="shrink-0 h-[60px] pt-safe-top">
-            <ProgressBar step={Math.min(TOTAL_STEPS, screen)} total={TOTAL_STEPS} />
-          </div>
-        ) : (
-          <div className="shrink-0 h-[20px] pt-safe-top" />
-        )}
-
+       {showTopProgress ? (
+  <div className="shrink-0 pt-safe-top">
+    <div className="h-[60px]">
+      <ProgressBar step={Math.min(TOTAL_STEPS, screen)} total={TOTAL_STEPS} />
+    </div>
+  </div>
+) : null}
         {/* SCROLLABLE BODY */}
         <div className="flex-1 relative overflow-hidden flex flex-col">
           <AnimatePresence mode="wait">
@@ -1795,7 +1794,7 @@ export default function OnboardingWrapper() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -22 }}
                 transition={{ duration: 0.38, ease: "easeOut" }}
-                className="flex-1 flex flex-col h-full px-6 pb-6"
+                className="flex-1 flex flex-col h-full px-6 pb-6 pt-safe-top"
               >
                 <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col items-center pt-8">
                   <div className="w-full max-w-md flex flex-col items-center">
@@ -2157,7 +2156,7 @@ export default function OnboardingWrapper() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -22 }}
                 transition={{ duration: 0.38, ease: "easeOut" }}
-                className="flex-1 h-full"
+                className="flex-1 h-full pt-safe-top"
               >
                 <Step12Analysis onDone={() => goTo(13)} />
               </motion.section>
@@ -2171,7 +2170,7 @@ export default function OnboardingWrapper() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -22 }}
                 transition={{ duration: 0.38, ease: "easeOut" }}
-                className="flex-1 flex flex-col h-full"
+                className="flex-1 flex flex-col h-full pt-safe-top"
               >
                 <Step13PlanReveal onBack={() => goTo(12)} onNext={() => goTo(14)} />
               </motion.section>
