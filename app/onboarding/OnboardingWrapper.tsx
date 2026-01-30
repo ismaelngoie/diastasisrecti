@@ -1243,7 +1243,7 @@ function Step13PlanReveal({ onNext, onBack }: { onNext: () => void; onBack: () =
     <div className="w-full max-w-md mx-auto flex flex-col h-full px-6 pt-4 pb-6">
       <div className="mt-2 text-center shrink-0">
         <h1 className="text-white font-extrabold text-[30px] leading-[1.08]" style={{ fontFamily: "var(--font-lora)" }}>
-          {name}, your plan is ready.
+          {name}, your diastasis recti plan is ready.
         </h1>
         <p className="text-white/70 mt-3 text-[14px] leading-relaxed">This is your predicted closure timeline based on your assessment.</p>
       </div>
