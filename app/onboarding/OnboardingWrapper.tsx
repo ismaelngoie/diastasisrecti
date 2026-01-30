@@ -72,7 +72,7 @@ function Logo() {
     <div className="flex flex-col items-center justify-center text-center">
       <img
         src="/logo.png"
-        alt="Fix Diastasis"
+        alt="Fix Diastasis Recti"
         className="w-16 h-16 object-contain drop-shadow mb-3"
         onError={(e) => {
           (e.currentTarget as HTMLImageElement).style.display = "none";
@@ -82,7 +82,7 @@ function Logo() {
         CLINICAL ASSESSMENT
       </div>
       <div className="text-white font-extrabold text-lg tracking-tight leading-none">
-        Fix Diastasis
+        Fix Diastasis Recti
       </div>
     </div>
   );
