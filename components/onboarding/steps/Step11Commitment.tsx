@@ -34,6 +34,10 @@ export default function Step11Commitment({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (stored) setSelected(stored);
+  }, [stored]);
+
   const canContinue = useMemo(() => selected !== null, [selected]);
 
   const pick = (id: Exclude<Commitment, null>) => {
@@ -44,9 +48,7 @@ export default function Step11Commitment({
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1 px-6 pt-8 pb-10">
-      <button onClick={onBack} className="text-white/70 hover:text-white font-semibold w-fit">
-        ← Back
-      </button>
+      {/* Back button removed (prop kept for compatibility) */}
 
       <div className="mt-6">
         <h1 className="text-white font-extrabold text-[30px] leading-[1.08]" style={{ fontFamily: "var(--font-lora)" }}>
@@ -78,14 +80,14 @@ export default function Step11Commitment({
                     <Timer size={16} className="text-white/70" />
                     {o.label}
                   </div>
-                  {o.badge && (
-                    <div className="mt-1 text-[12px] font-extrabold text-[#33B373]">
-                      {o.badge}
-                    </div>
-                  )}
+                  {o.badge && <div className="mt-1 text-[12px] font-extrabold text-[#33B373]">{o.badge}</div>}
                 </div>
 
-                {is ? <CheckCircle2 className="text-[color:var(--pink)] mt-0.5" /> : <div className="w-6 h-6 rounded-full border border-white/15 mt-0.5" />}
+                {is ? (
+                  <CheckCircle2 className="text-[color:var(--pink)] mt-0.5" />
+                ) : (
+                  <div className="w-6 h-6 rounded-full border border-white/15 mt-0.5" />
+                )}
               </div>
             </button>
           );
