@@ -1554,13 +1554,13 @@ function Step14Paywall() {
         >
           <source src="/paywall_video.mp4" type="video/mp4" />
         </video>
-        <div className="absolute inset-0 bg-gradient-to-b from-[#1A1A26]/30 via-transparent to-[#1A1A26]" />
-        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 bg-black/35" />
+<div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-[#1A1A26]" />
       </div>
 
       {/* Scrollable Content */}
       <div
-        className={`z-10 flex-1 flex flex-col overflow-y-auto no-scrollbar pt-14 pb-48 px-6 transition-all duration-700 ${
+        className={`z-10 flex-1 flex flex-col overflow-y-auto no-scrollbar pt-safe-top pb-48 px-6 transition-all duration-700 ${
           showContent ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
         }`}
       >
