@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Ban, LockOpen } from "lucide-react";
+import { Ban, CheckCircle2, LockOpen } from "lucide-react";
 import { useUserStore } from "@/lib/store/useUserStore";
 
 function AICoreView() {
@@ -17,22 +17,20 @@ function AICoreView() {
   );
 }
 
-function Line({ text, danger }: { text: string; danger?: boolean }) {
+function Line({ text, danger, success }: { text: string; danger?: boolean; success?: boolean }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.22 }}
-      className={["text-[13px] font-semibold tracking-wide", danger ? "text-red-300" : "text-white/75"].join(" ")}
+      initial={{ opacity: 0, x: -4 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.25 }}
+      className={[
+        "text-[14px] font-semibold tracking-wide flex items-center gap-2",
+        danger ? "text-red-300" : success ? "text-[#33B373]" : "text-white/80"
+      ].join(" ")}
     >
-      {danger ? (
-        <span className="inline-flex items-center gap-2">
-          <Ban size={16} className="text-red-300" />
-          {text}
-        </span>
-      ) : (
-        text
-      )}
+      {danger && <Ban size={16} className="shrink-0" />}
+      {success && <CheckCircle2 size={16} className="shrink-0" />}
+      {text}
     </motion.div>
   );
 }
@@ -40,78 +38,86 @@ function Line({ text, danger }: { text: string; danger?: boolean }) {
 export default function BridgeProtocol({ onDone }: { onDone: () => void }) {
   const name = useUserStore((s) => s.name) || "Patient";
   const fingerGap = useUserStore((s) => s.fingerGap);
-  const navel = useUserStore((s) => s.navelAssessment);
   const sabotage = useUserStore((s) => s.sabotageExercises);
 
   const harmful = useMemo(() => {
     const list: string[] = [];
     if ((sabotage || []).includes("crunches")) list.push("Crunches");
     if ((sabotage || []).includes("planks")) list.push("Planks");
-    // Always reinforce authority
-    list.push("Sit-ups");
+    list.push("Sit-ups"); // Standard medical exclusion for DR
     return Array.from(new Set(list));
   }, [sabotage]);
 
   const lines = useMemo(() => {
-    const gapText = fingerGap ? (fingerGap === 4 ? "4+ fingers" : `${fingerGap} fingers`) : "unknown";
-    const navelText = navel ? navel : "unreported";
+    const gapText = fingerGap ? (fingerGap === 4 ? "4+ finger" : `${fingerGap} finger`) : "core";
     return [
-      `Importing Assessment for ${name}...`,
-      `Calibration: ${gapText} separation detected...`,
-      `Risk Factor: navel pattern = ${navelText}...`,
-      "Filtering 500+ exercises...",
-      "REMOVING harmful movements:",
+      `Analyzing core tissue for ${name}...`,
+      `Targeting ${gapText} Diastasis Recti...`,
+      `Adapting to specific pressure patterns...`,
+      `Securing your Core Safe-Zone...`,
+      `BANNING dangerous movements:`,
       ...harmful.map((h) => `— ${h}`),
-      "Compiling 16-Day Neural Adaptation Phase...",
-      "Dr. Vancé’s Protocol Generated."
+      `Building your Phase 1 Healing Path...`,
+      `Personal Repair Plan Finalized.`
     ];
-  }, [name, fingerGap, navel, harmful]);
+  }, [name, fingerGap, harmful]);
 
   const [idx, setIdx] = useState(0);
   const done = idx >= lines.length - 1;
 
   useEffect(() => {
-    const t = window.setInterval(() => setIdx((p) => Math.min(lines.length - 1, p + 1)), 550);
+    const t = window.setInterval(() => {
+      setIdx((p) => Math.min(lines.length - 1, p + 1));
+    }, 650);
     return () => window.clearInterval(t);
   }, [lines.length]);
 
   return (
-    <div className="fixed inset-0 z-[200] bg-[color:var(--navy)] clinical-noise flex items-center justify-center px-6">
+    <div className="fixed inset-0 z-[200] bg-[#0A0A0F] clinical-noise flex items-center justify-center px-6">
       <div className="w-full max-w-md">
-        <div className="flex items-center justify-center mb-10">
+        <div className="flex items-center justify-center mb-12">
           <AICoreView />
         </div>
 
-        <div className="rounded-3xl border border-white/12 bg-white/6 backdrop-blur-xl shadow-soft p-6">
-          <div className="text-white/55 text-[11px] font-extrabold tracking-[0.22em] uppercase">
-            Protocol Generator
+        <div className="rounded-[32px] border border-white/10 bg-white/5 backdrop-blur-2xl shadow-2xl p-7">
+          <div className="text-[color:var(--pink)] text-[11px] font-black tracking-[0.25em] uppercase mb-5">
+            Custom Treatment Path
           </div>
 
-          <div className="mt-4 flex flex-col gap-2 min-h-[260px]">
+          <div className="flex flex-col gap-3 min-h-[280px]">
             {lines.slice(0, idx + 1).map((t, i) => {
-              const isDangerBlock = t.startsWith("REMOVING") || t.startsWith("—");
-              const danger = t.startsWith("—") || t.includes("REMOVING");
-              return <Line key={i} text={t} danger={danger && isDangerBlock} />;
+              const isDanger = t.startsWith("BANNING") || t.startsWith("—");
+              const isFinal = t.includes("Finalized");
+              return (
+                <Line 
+                  key={i} 
+                  text={t} 
+                  danger={isDanger} 
+                  success={isFinal} 
+                />
+              );
             })}
           </div>
 
           <AnimatePresence>
             {done && (
               <motion.button
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-4 w-full h-12 rounded-full bg-[color:var(--pink)] text-white font-extrabold shadow-[0_18px_60px_rgba(230,84,115,0.25)] active:scale-[0.985] transition-transform inline-flex items-center justify-center gap-2"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="mt-6 w-full h-14 rounded-full bg-gradient-to-r from-[color:var(--pink)] to-[#C23A5B] text-white font-extrabold text-[17px] shadow-[0_15px_40px_rgba(230,84,115,0.4)] active:scale-[0.98] transition-all inline-flex items-center justify-center gap-3"
                 onClick={onDone}
               >
-                <LockOpen size={18} />
-                Unlock My Dashboard
+                <LockOpen size={20} />
+                Start My Diastasis Recti Repair
               </motion.button>
             )}
           </AnimatePresence>
         </div>
 
-        <div className="mt-4 text-center text-white/40 text-[11px] font-semibold">
-          We prescribe a protocol — we don’t just show videos.
+        <div className="mt-6 text-center px-4">
+          <p className="text-white/40 text-[12px] font-medium leading-relaxed">
+            This is a specialized clinical path to close your gap — not a generic workout library.
+          </p>
         </div>
       </div>
     </div>
