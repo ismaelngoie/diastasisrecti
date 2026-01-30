@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 
-type Particle = {
+type Butterfly = {
   id: number;
   left: number;
   size: number;
@@ -14,24 +14,28 @@ type Particle = {
   isBehind: boolean;
 };
 
-function ParticleSvg() {
-  // Minimal “clinical particle” (soft circle + tiny cross highlight)
+function ButterflySvg() {
+  // Simple butterfly-like mark (no external image needed)
   return (
     <svg viewBox="0 0 64 64" className="w-full h-full" fill="none">
-      <circle cx="32" cy="32" r="18" fill="currentColor" opacity="0.65" />
       <path
-        d="M32 22v20M22 32h20"
+        d="M32 33c-4-8-14-16-22-14C4 21 3 28 7 34c4 6 14 7 20 3-1 6-7 16-4 20 3 4 10 0 13-8 3 8 10 12 13 8 3-4-3-14-4-20 6 4 16 3 20-3 4-6 3-13-3-15-8-2-18 6-22 14Z"
+        fill="currentColor"
+        opacity="0.95"
+      />
+      <path
+        d="M32 22c2 4 2 9 0 14"
         stroke="currentColor"
-        strokeWidth="3"
+        strokeWidth="2"
+        opacity="0.7"
         strokeLinecap="round"
-        opacity="0.45"
       />
     </svg>
   );
 }
 
 export default function ButterflyBackground() {
-  const [items, setItems] = useState<Particle[]>([]);
+  const [items, setItems] = useState<Butterfly[]>([]);
 
   const keyframesCss = useMemo(() => {
     return `
@@ -39,26 +43,26 @@ export default function ButterflyBackground() {
         0%   { transform: translateY(115vh) translateX(0px) rotate(0deg) scale(0.95); opacity: 0; }
         10%  { opacity: 1; }
         90%  { opacity: 1; }
-        100% { transform: translateY(-20vh) translateX(var(--drift)) rotate(14deg) scale(1.05); opacity: 0; }
+        100% { transform: translateY(-20vh) translateX(var(--drift)) rotate(18deg) scale(1.05); opacity: 0; }
       }
     `;
   }, []);
 
   useEffect(() => {
-    const count = 18;
-    const arr: Particle[] = Array.from({ length: count }).map((_, i) => {
-      const duration = 18 + Math.random() * 20; // 18-38s
-      const drift = (Math.random() - 0.5) * 110; // -55..55px
+    const count = 22;
+    const arr: Butterfly[] = Array.from({ length: count }).map((_, i) => {
+      const duration = 16 + Math.random() * 18; // 16-34s
+      const drift = (Math.random() - 0.5) * 120; // -60..60px
       return {
         id: i,
         left: Math.random() * 100,
-        size: 14 + Math.random() * 30,
+        size: 18 + Math.random() * 34,
         duration,
         delay: -(Math.random() * duration),
         drift,
-        rotation: (Math.random() - 0.5) * 30,
-        opacity: 0.10 + Math.random() * 0.18,
-        isBehind: Math.random() > 0.55,
+        rotation: (Math.random() - 0.5) * 50,
+        opacity: 0.18 + Math.random() * 0.25,
+        isBehind: Math.random() > 0.55
       };
     });
     setItems(arr);
@@ -68,26 +72,26 @@ export default function ButterflyBackground() {
     <div className="fixed inset-0 pointer-events-none overflow-hidden">
       <style>{keyframesCss}</style>
 
-      {items.map((p) => (
+      {items.map((b) => (
         <div
-          key={p.id}
+          key={b.id}
           className="absolute"
           style={{
-            left: `${p.left}%`,
-            width: `${p.size}px`,
-            height: `${p.size}px`,
+            left: `${b.left}%`,
+            width: `${b.size}px`,
+            height: `${b.size}px`,
             top: 0,
-            opacity: p.opacity,
-            zIndex: p.isBehind ? 0 : 20,
-            transform: `rotate(${p.rotation}deg)`,
-            animation: `floatUpClean ${p.duration}s linear infinite`,
-            animationDelay: `${p.delay}s`,
-            ["--drift" as any]: `${p.drift}px`,
-            // clinical tint
-            color: "rgba(200, 235, 255, 0.95)",
+            opacity: b.opacity,
+            zIndex: b.isBehind ? 0 : 20,
+            transform: `rotate(${b.rotation}deg)`,
+            animation: `floatUpClean ${b.duration}s linear infinite`,
+            animationDelay: `${b.delay}s`,
+            ["--drift" as any]: `${b.drift}px`,
+            // Clinical tint: cool white/blue (less playful)
+            color: "rgba(210, 235, 255, 0.95)"
           }}
         >
-          <ParticleSvg />
+          <ButterflySvg />
         </div>
       ))}
     </div>
