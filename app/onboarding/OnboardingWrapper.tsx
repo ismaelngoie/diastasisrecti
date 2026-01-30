@@ -18,12 +18,10 @@ import {
   HeartPulse,
   Circle,
   Shield,
-  ShieldCheck,
   Timer,
   Star,
   ChevronDown,
   ChevronUp,
-  Brain,
   X,
   Loader2,
   Lock,
@@ -79,7 +77,7 @@ function Logo() {
         }}
       />
       <div className="text-white/55 text-xs font-semibold tracking-wide uppercase leading-none mb-2">
-        CLINICAL ASSESSMENT
+        CORE ASSESSMENT
       </div>
       <div className="text-white font-extrabold text-lg tracking-tight leading-none">
         Fix Diastasis Recti
@@ -103,7 +101,6 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
 }
 
 // --- VISUALS (Defs, ShapeArt, VisualCard) REMAIN UNCHANGED ---
-// (Included for completeness of the file structure)
 const Defs = ({ p }: { p: string }) => (
   <defs>
     <radialGradient id={`${p}-body-vol`} cx="50%" cy="40%" r="90%">
@@ -616,31 +613,31 @@ const step05Options: Array<{
 }> = [
   {
     gap: 1,
-    title: "1 Finger",
-    sub: "Normal",
+    title: "1 finger width",
+    sub: "Within normal range",
     tone: "success",
-    toast: "Great news. We focus on maintenance and strengthening.",
+    toast: "Good. We’ll focus on core control and long-term support.",
   },
   {
     gap: 2,
-    title: "2 Fingers",
-    sub: "Mild",
+    title: "2 finger widths",
+    sub: "Mild separation",
     tone: "info",
-    toast: "Very common — highly treatable in 8 weeks.",
+    toast: "Common. We’ll prioritize breathing, tension, and safe progressions.",
   },
   {
     gap: 3,
-    title: "3 Fingers",
-    sub: "Moderate",
+    title: "3 finger widths",
+    sub: "Moderate separation",
     tone: "warning",
-    toast: "Significant separation detected. 'No-Crunch' protocol activated.",
+    toast: "Noted. We’ll use a pressure-safe plan (no crunches) to reduce doming.",
   },
   {
     gap: 4,
-    title: "4+ Fingers",
-    sub: "Severe",
+    title: "4+ finger widths",
+    sub: "Wider separation",
     tone: "danger",
-    toast: "Warning: Deep separation. High caution advised. We are modifying your plan.",
+    toast: "We’ll start gently and progress slowly to protect the linea alba.",
   },
 ];
 
@@ -723,11 +720,11 @@ function Step05FingerTest({
           className="text-white font-extrabold text-[30px] leading-[1.08]"
           style={{ fontFamily: "var(--font-lora)" }}
         >
-          The Finger Test.
+          Finger-width check.
         </h1>
         <p className="text-white/65 mt-3 text-[14px] leading-relaxed">
-          Lie on your back, knees up, lift your head. How many fingers fit in the
-          gap above your belly button?
+          Lie on your back with knees bent. Place fingers just above your belly button and gently lift your head.
+          How many finger widths fit in the gap?
         </p>
       </div>
 
@@ -775,19 +772,19 @@ const step06Opts: Array<{
   {
     id: "firm",
     title: "Firm",
-    sub: "Like hitting a trampoline.",
+    sub: "Resists pressure when you press in.",
     icon: <Activity className="text-white" size={22} />,
   },
   {
     id: "soft",
     title: "Soft",
-    sub: "Like sinking into a marshmallow.",
+    sub: "Fingers sink in easily.",
     icon: <Waves className="text-white" size={22} />,
   },
   {
     id: "pulse",
     title: "Pulse",
-    sub: "I can feel my pulse.",
+    sub: "You feel a heartbeat/pulse under your fingers.",
     icon: <ShieldAlert className="text-white" size={22} />,
   },
 ];
@@ -860,7 +857,11 @@ function Step06TissueDepth({
     setTissueDepth(id);
     if (id === "pulse") {
       setHighRisk(true);
-      toast.show("info", "Noted. We will focus on thickening the Linea Alba.", 4200);
+      toast.show(
+        "info",
+        "Noted. We’ll prioritize improving linea alba tension and pressure control.",
+        4200
+      );
     } else {
       setHighRisk(false);
       toast.hide();
@@ -874,10 +875,10 @@ function Step06TissueDepth({
           className="text-white font-extrabold text-[30px] leading-[1.08]"
           style={{ fontFamily: "var(--font-lora)" }}
         >
-          {name}, it’s not just about width.
+          {name}, depth matters too.
         </h1>
         <p className="text-white/65 mt-3 text-[14px] leading-relaxed">
-          How deep do your fingers sink into the gap?
+          When you press into the midline gap, what do you feel?
         </p>
       </div>
 
@@ -921,7 +922,7 @@ const step07Options = [
   { id: "crunches", label: "Crunches / Sit-ups", redFlag: true },
   { id: "planks", label: "Planks / Push-ups", redFlag: true },
   { id: "running", label: "Running / Jumping", redFlag: false },
-  { id: "nothing", label: "Nothing yet", redFlag: false },
+  { id: "nothing", label: "None of these", redFlag: false },
 ] as const;
 
 function Step07Chip({
@@ -952,7 +953,7 @@ function Step07Chip({
           </div>
           {redFlag && (
             <div className="text-white/55 text-[12px] font-semibold mt-1">
-              Often worsens pressure + bulging.
+              Often increases abdominal pressure and doming.
             </div>
           )}
         </div>
@@ -1002,7 +1003,7 @@ function Step07SabotageCheck({
       setShowStop(true);
       toast.show(
         "danger",
-        "STOP. These moves can push outward and widen the gap. We’re flagging them as BANNED in your plan.",
+        "Pause these for now. They often increase intra-abdominal pressure and can worsen doming. We’ll remove them from your plan.",
         5200
       );
     } else {
@@ -1029,11 +1030,10 @@ function Step07SabotageCheck({
           className="text-white font-extrabold text-[30px] leading-[1.08]"
           style={{ fontFamily: "var(--font-lora)" }}
         >
-          We need to stop the damage, {name}.
+          Let’s avoid pressure triggers, {name}.
         </h1>
         <p className="text-white/65 mt-3 text-[14px] leading-relaxed">
-          Which of these exercises have you tried recently? (Select all that
-          apply)
+          Which of these have you done recently? (Select all that apply)
         </p>
       </div>
 
@@ -1092,13 +1092,13 @@ function Step07SabotageCheck({
                 </div>
                 <div className="flex-1">
                   <div className="text-white font-extrabold text-[18px] leading-tight">
-                    STOP.
+                    Pause these movements.
                   </div>
                   <div className="text-white/70 text-[13px] font-semibold mt-1 leading-relaxed">
-                    These exercises can push your organs outward and widen the
-                    gap. We are flagging them as{" "}
-                    <span className="text-white font-extrabold">BANNED</span> in
-                    your plan.
+                    These can increase intra-abdominal pressure and make doming worse.
+                    We are marking them as{" "}
+                    <span className="text-white font-extrabold">NOT RECOMMENDED</span>{" "}
+                    in your plan right now.
                   </div>
                 </div>
               </div>
@@ -1106,7 +1106,7 @@ function Step07SabotageCheck({
                 onClick={() => setShowStop(false)}
                 className="mt-5 w-full h-12 rounded-full bg-[color:var(--pink)] text-white font-extrabold shadow-[0_18px_50px_rgba(230,84,115,0.25)] active:scale-[0.985] transition-transform"
               >
-                OK — Protect My Core
+                OK — Use safer options
               </button>
             </motion.div>
           </motion.div>
@@ -1119,22 +1119,22 @@ function Step07SabotageCheck({
 const step08Options = [
   {
     id: "backPain",
-    label: "Lower Back Pain",
+    label: "Lower back pain",
     icon: <PersonStanding className="text-white" size={20} />,
   },
   {
     id: "incontinence",
-    label: "Leaking when sneezing",
+    label: "Leakage with cough/sneeze",
     icon: <Droplets className="text-white" size={20} />,
   },
   {
     id: "bloating",
-    label: "Bloating / “Looking Pregnant”",
+    label: "Abdominal bloating / protrusion",
     icon: <Waves className="text-white" size={20} />,
   },
   {
     id: "pelvicPain",
-    label: "Pelvic Pain",
+    label: "Pelvic or hip pain",
     icon: <HeartPulse className="text-white" size={20} />,
   },
 ];
@@ -1205,10 +1205,10 @@ function Step08Symptoms({
           className="text-white font-extrabold text-[30px] leading-[1.08]"
           style={{ fontFamily: "var(--font-lora)" }}
         >
-          Diastasis rarely comes alone.
+          Diastasis recti can affect more than your abdomen.
         </h1>
         <p className="text-white/65 mt-3 text-[14px] leading-relaxed">
-          Do you experience any of these secondary symptoms?
+          Do you notice any of these symptoms?
         </p>
       </div>
 
@@ -1243,11 +1243,11 @@ function Step08Symptoms({
 
 const step09Options: Array<{ id: Exclude<PostpartumTimeline, null>; label: string }> =
   [
-    { id: "pregnant", label: "Currently Pregnant" },
-    { id: "0-6", label: "0–6 Months ago" },
-    { id: "6-12", label: "6–12 Months ago" },
-    { id: "1-3", label: "1–3 Years ago" },
-    { id: "3+", label: "3+ Years ago" },
+    { id: "pregnant", label: "Currently pregnant" },
+    { id: "0-6", label: "0–6 months ago" },
+    { id: "6-12", label: "6–12 months ago" },
+    { id: "1-3", label: "1–3 years ago" },
+    { id: "3+", label: "3+ years ago" },
   ];
 
 function Step09Timeline({
@@ -1273,7 +1273,11 @@ function Step09Timeline({
     setSelected(id);
     setPostpartum(id);
     if (id === "3+") {
-      toast.show("success", "It is never too late. We have fixed gaps 10 years postpartum.", 5200);
+      toast.show(
+        "success",
+        "Improvement is still possible years later. Your pace may be slower, but progress can happen.",
+        5200
+      );
     } else {
       toast.hide();
     }
@@ -1286,10 +1290,10 @@ function Step09Timeline({
           className="text-white font-extrabold text-[30px] leading-[1.08]"
           style={{ fontFamily: "var(--font-lora)" }}
         >
-          When was your last pregnancy?
+          When was your most recent pregnancy?
         </h1>
         <p className="text-white/65 mt-3 text-[14px] leading-relaxed">
-          This helps us choose the safest tissue-loading pace.
+          This helps us set the safest progression pace.
         </p>
       </div>
 
@@ -1347,12 +1351,12 @@ const step10Options: Array<{
   label: string;
   note?: string;
 }> = [
-  { id: "outie", label: "It pokes out (Outie)." },
-  { id: "flat", label: "It disappeared / stretches flat." },
+  { id: "outie", label: "It protrudes (outie)." },
+  { id: "flat", label: "It flattens or changes shape when I tense." },
   { id: "no_change", label: "No change." },
   {
     id: "hernia",
-    label: "I have a diagnosed Umbilical Hernia.",
+    label: "Diagnosed umbilical hernia",
     note: "We’ll keep your plan hernia-safe.",
   },
 ];
@@ -1383,7 +1387,11 @@ function Step10Navel({
     setNavel(id);
     if (id === "hernia") {
       setHerniaSafe(true);
-      toast.show("warning", "Hernia noted. We will remove high-pressure movements to keep you safe.", 5200);
+      toast.show(
+        "warning",
+        "Hernia noted. We’ll avoid high-pressure movements and keep exercises gentle.",
+        5200
+      );
     } else {
       setHerniaSafe(false);
       toast.hide();
@@ -1397,10 +1405,10 @@ function Step10Navel({
           className="text-white font-extrabold text-[30px] leading-[1.08]"
           style={{ fontFamily: "var(--font-lora)" }}
         >
-          Has the shape of your belly button changed?
+          Any change in your belly button?
         </h1>
         <p className="text-white/65 mt-3 text-[14px] leading-relaxed">
-          This helps us rule out pressure-sensitive patterns.
+          This can help identify pressure patterns and hernia risk.
         </p>
       </div>
 
@@ -1466,9 +1474,9 @@ const step11Options: Array<{
   label: string;
   badge?: string;
 }> = [
-  { id: "5-7", label: "5–7 Minutes", badge: "Most Successful • Physio Recommended" },
-  { id: "15", label: "15 Minutes" },
-  { id: "30", label: "30 Minutes" },
+  { id: "5-7", label: "5–7 minutes", badge: "Most common • Clinician recommended" },
+  { id: "15", label: "15 minutes" },
+  { id: "30", label: "30 minutes" },
 ];
 
 function Step11Commitment({
@@ -1510,10 +1518,10 @@ function Step11Commitment({
           className="text-white font-extrabold text-[30px] leading-[1.08]"
           style={{ fontFamily: "var(--font-lora)" }}
         >
-          Healing tissue takes consistency, not intensity.
+          Consistency beats intensity.
         </h1>
         <p className="text-white/65 mt-3 text-[14px] leading-relaxed">
-          How much time can you dedicate daily?
+          How much time can you do each day?
         </p>
       </div>
 
@@ -1623,14 +1631,16 @@ function Step12Analysis({ onDone }: { onDone: () => void }) {
 
   const lines = useMemo(() => {
     const base = [
-      `Analyzing Linea Alba density for ${name}...`,
-      "Calculating Gap Closure trajectory...",
-      "Identifying harmful exercises in current routine...",
+      `Reviewing your assessment, ${name}...`,
+      "Estimating safe tissue-loading pace...",
+      "Checking for pressure-trigger movements...",
     ];
     if ((sabotage || []).includes("crunches"))
-      base.push("Flagging 'Crunches' as dangerous...");
-    base.push("Building 12-Week 'No-Crunch' Protocol...");
-    base.push("Calibration Complete.");
+      base.push("Removing sit-ups/crunch patterns for now...");
+    if ((sabotage || []).includes("planks"))
+      base.push("Reducing high-pressure core holds for now...");
+    base.push("Building a 12-week pressure-safe plan...");
+    base.push("Plan ready.");
     return base;
   }, [name, sabotage]);
 
@@ -1660,13 +1670,13 @@ function Step12Analysis({ onDone }: { onDone: () => void }) {
       </div>
       <div className="max-w-md">
         <div className="text-white/60 text-xs font-extrabold tracking-widest uppercase mb-3">
-          Clinical Analysis
+          Clinical-style analysis
         </div>
         <h1
           className="text-3xl font-extrabold text-white leading-tight"
           style={{ fontFamily: "var(--font-lora)" }}
         >
-          Building your repair plan…
+          Building your plan…
         </h1>
         <div className="mt-6 text-[15px] font-semibold text-white/85 leading-relaxed min-h-[56px]">
           <Typewriter text={lines[idx]} />
@@ -1680,7 +1690,7 @@ function Step12Analysis({ onDone }: { onDone: () => void }) {
           />
         </div>
         <div className="mt-3 text-[12px] text-white/55 font-semibold">
-          Cross-referencing 10,000+ clinical cases for accuracy...
+          Cross-referencing rehab standards and safety flags...
         </div>
       </div>
     </div>
@@ -1729,7 +1739,7 @@ function HolographicTimeline() {
           fontSize="11"
           fontWeight="700"
         >
-          6 Weeks
+          ~6 Weeks
         </text>
         <circle cx="326" cy="28" r="7" fill="#33B373" stroke="white" strokeWidth="2" />
         <text
@@ -1740,7 +1750,7 @@ function HolographicTimeline() {
           fontSize="12"
           fontWeight="800"
         >
-          12 Weeks
+          ~12 Weeks
         </text>
       </svg>
     </div>
@@ -1753,14 +1763,18 @@ function Step13PlanReveal({ onNext, onBack }: { onNext: () => void; onBack: () =
   const fingerGap = useUserStore((s) => s.fingerGap);
   const commitment = useUserStore((s) => s.commitment);
   const sabotage = useUserStore((s) => s.sabotageExercises);
-  const gapLabel = fingerGap === 4 ? "4+ Finger Gap" : `${fingerGap ?? "?"} Finger Gap`;
+  const gapLabel = fingerGap === 4 ? "4+ finger-width gap" : `${fingerGap ?? "?"} finger-width gap`;
 
   const insights = useMemo(() => {
     const list: string[] = [];
-    list.push(`Based on your ${age}, we focus on collagen production.`);
-    if ((sabotage || []).includes("planks")) list.push("We have removed Planks to protect your back.");
-    if ((sabotage || []).includes("crunches")) list.push("Crunches are flagged as dangerous for your tissue tension.");
-    list.push(`Your daily commitment: ${commitment === "5-7" ? "5 Minutes" : commitment === "15" ? "15 Minutes" : "30 Minutes"}.`);
+    list.push(`Based on your age (${age}), we set your progression pace for safe tissue loading.`);
+    if ((sabotage || []).includes("planks")) list.push("Planks are removed for now to reduce pressure and protect your back.");
+    if ((sabotage || []).includes("crunches")) list.push("Crunches/sit-ups are removed for now to reduce doming and pressure.");
+    list.push(
+      `Daily session length: ${
+        commitment === "5-7" ? "5–7 minutes" : commitment === "15" ? "15 minutes" : "30 minutes"
+      }.`
+    );
     return list;
   }, [age, commitment, sabotage]);
 
@@ -1774,7 +1788,7 @@ function Step13PlanReveal({ onNext, onBack }: { onNext: () => void; onBack: () =
           {name}, your diastasis recti plan is ready.
         </h1>
         <p className="text-white/70 mt-3 text-[14px] leading-relaxed">
-          This is your predicted closure timeline based on your assessment.
+          This is an estimated timeline based on your assessment answers.
         </p>
       </div>
 
@@ -1783,13 +1797,13 @@ function Step13PlanReveal({ onNext, onBack }: { onNext: () => void; onBack: () =
           <HolographicTimeline />
           <div className="flex items-center justify-between text-[13px] font-extrabold mt-1">
             <span className="text-white/80">{gapLabel}</span>
-            <span className="text-white/55">Functional closure by week 6</span>
-            <span className="text-[#33B373]">Fully healed</span>
+            <span className="text-white/55">Early functional improvement</span>
+            <span className="text-[#33B373]">Stronger by week 12</span>
           </div>
         </div>
 
         <div className="mt-6">
-          <div className="text-white font-extrabold text-[16px] mb-3">Your Personal Insights</div>
+          <div className="text-white font-extrabold text-[16px] mb-3">Your clinical insights</div>
           <div className="flex flex-col gap-3">
             {insights.map((t, i) => (
               <div key={i} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -1814,6 +1828,7 @@ function Step13PlanReveal({ onNext, onBack }: { onNext: () => void; onBack: () =
 }
 
 // --- Step 14: Paywall ---
+// (UNCHANGED per your instruction)
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 const REVIEW_IMAGES = ["/review9.png", "/review1.png", "/review5.png", "/review4.png", "/review2.png"];
 const REVIEWS = [
@@ -2034,6 +2049,7 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
 };
 
 function Step14Paywall() {
+  // UNCHANGED
   const { name } = useUserData();
   const fingerGap = useUserStore((s) => s.fingerGap);
 
@@ -2331,11 +2347,16 @@ function Step14Paywall() {
 
 const TOTAL_STEPS = 14;
 
-const MIA_M1 = "Hi! I'm Coach Mia, your Core Specialist. I've helped 10,000+ women close their gap.";
-const MIA_M2 = "To start your medical file, what should I call you?";
+// Updated Mia copy to be clinical + diastasis-recti specific
+const MIA_M1 =
+  "Hi — I’m Mia, your core rehab coach. Let’s do a quick diastasis recti assessment.";
+const MIA_M2 =
+  "First, what name should I use?";
+
+const AGE_PROMPT_ANCHOR = "What is your age?";
 
 function miaAgeQuestion(safeName: string) {
-  return `Lovely to meet you, ${safeName}. Age helps me determine your collagen elasticity levels. How young are you?`;
+  return `Thanks, ${safeName}. ${AGE_PROMPT_ANCHOR} This helps us set a safe progression pace.`;
 }
 
 export default function OnboardingWrapper() {
@@ -2394,7 +2415,7 @@ export default function OnboardingWrapper() {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed?.state?.isPremium === true) {
-          router.replace("/dashboard");
+          router.replace("/dashboard?plan=monthly");
           return;
         }
       }
@@ -2404,7 +2425,7 @@ export default function OnboardingWrapper() {
 
   useEffect(() => {
     if (!checkedPremium) return;
-    if (isPremium) router.replace("/dashboard");
+    if (isPremium) router.replace("/dashboard?plan=monthly");
   }, [checkedPremium, isPremium, router]);
 
   useEffect(() => {
@@ -2448,7 +2469,9 @@ export default function OnboardingWrapper() {
 
     const safeName = (name || "there").trim() || "there";
     const q = miaAgeQuestion(safeName);
-    const alreadyAsked = chat.some((m) => m.from === "mia" && m.text.includes("How young are you?"));
+
+    // Dependency fix: update the guard phrase to match the new copy
+    const alreadyAsked = chat.some((m) => m.from === "mia" && m.text.includes(AGE_PROMPT_ANCHOR));
     if (alreadyAsked) {
       askedAgeRef.current = true;
       return;
@@ -2470,11 +2493,11 @@ export default function OnboardingWrapper() {
     setAge(ageValue);
 
     if (ageValue > 40) {
-      toastApi.show("info", "We will focus on gentle tissue stimulation for you.", 3200);
+      toastApi.show("info", "We’ll start with lower pressure and slower progressions.", 3200);
       return;
     }
     if (ageValue < 30) {
-      toastApi.show("success", "Your recovery potential is high!", 3200);
+      toastApi.show("success", "Great — recovery potential is strong with consistency.", 3200);
       return;
     }
     toastApi.hide();
@@ -2581,38 +2604,38 @@ export default function OnboardingWrapper() {
                       className="text-center text-[34px] leading-[1.08] font-extrabold text-white drop-shadow-sm"
                       style={{ fontFamily: "var(--font-lora)" }}
                     >
-                      Heal Your Core Separation.
+                      Diastasis Recti Recovery.
                       <br />
-                      Without Surgery.
+                      Safe core rehab — no crunches.
                     </h1>
 
                     <p className="text-center text-white/70 mt-4 text-[15px] leading-relaxed max-w-sm">
-                      The only AI-driven protocol designed to close Diastasis Recti gaps of{" "}
-                      <span className="text-white font-semibold">2+ fingers</span>.
+                      A guided assessment and plan designed for abdominal separation of{" "}
+                      <span className="text-white font-semibold">2+ finger widths</span>.
                     </p>
 
                     <div className="w-full mt-10 rounded-3xl border border-white/15 bg-white/8 backdrop-blur-xl shadow-soft p-5">
                       <div className="flex flex-col gap-4">
                         <Benefit
                           icon={<Stethoscope className="text-white" size={22} />}
-                          title="Medical-Grade Assessment"
-                          sub="Clinical logic + immediate personalized flags."
+                          title="Clinical-style assessment"
+                          sub="Simple checks to flag pressure and safety needs."
                         />
                         <Benefit
                           icon={<Ban className="text-white" size={22} />}
-                          title="No Crunches. No Surgery."
-                          sub="We avoid moves that worsen pressure and bulging."
+                          title="Pressure-safe approach"
+                          sub="Avoids movements that increase doming and strain."
                         />
                         <Benefit
                           icon={<Sparkles className="text-white" size={22} />}
-                          title="Visible Results in 12 Weeks"
-                          sub="A real protocol, not a generic quiz."
+                          title="Structured 12-week progression"
+                          sub="Short daily sessions with step-by-step progression."
                         />
                       </div>
                     </div>
 
                     <div className="mt-6 text-center text-white/55 text-xs font-semibold pb-6">
-                      Designed for postpartum bodies • Evidence-informed • Gentle progressions
+                      Postpartum-safe • Evidence-informed • Gentle progressions
                     </div>
                   </div>
                 </div>
@@ -2650,20 +2673,20 @@ export default function OnboardingWrapper() {
                         className="text-[28px] leading-[1.12] font-extrabold text-white"
                         style={{ fontFamily: "var(--font-lora)" }}
                       >
-                        Let’s analyze your core.
+                        Abdominal pattern check.
                         <br />
-                        Which shape resembles yours the most?
+                        Which looks most like you?
                       </h1>
                       <p className="text-white/65 mt-3 text-[14px] leading-relaxed">
-                        Pick the closest match. This helps us start with the right protocol.
+                        Choose the closest match. This helps us start with the safest plan.
                       </p>
                     </div>
 
                     <div className="mt-7 flex flex-col gap-4 pb-4">
                       <VisualCard
                         id="pooch"
-                        title="Lower Belly “Pooch”"
-                        subtitle="Bulge sits lower, especially by end of day."
+                        title="Lower abdominal bulge"
+                        subtitle="Bulge sits lower, often worse by evening."
                         selected={visualShape === "pooch"}
                         onSelect={() => {
                           setVisualShape("pooch");
@@ -2672,8 +2695,8 @@ export default function OnboardingWrapper() {
                       />
                       <VisualCard
                         id="gap"
-                        title="Visible Gap / Trench"
-                        subtitle="A line or trench down the midline."
+                        title="Midline separation"
+                        subtitle="A line, trench, or soft gap down the center."
                         selected={visualShape === "gap"}
                         onSelect={() => {
                           setVisualShape("gap");
@@ -2682,12 +2705,16 @@ export default function OnboardingWrapper() {
                       />
                       <VisualCard
                         id="cone"
-                        title="Coning / Doming"
-                        subtitle="Belly peaks like a tent when sitting up."
+                        title="Doming / coning"
+                        subtitle="Abdomen rises like a ridge when you sit up."
                         selected={visualShape === "cone"}
                         onSelect={() => {
                           setVisualShape("cone");
-                          toastApi.show("warning", "Note: Coning indicates weak tissue tension. We will fix this.", 5200);
+                          toastApi.show(
+                            "warning",
+                            "Doming suggests low core tension. We’ll focus on pressure control first.",
+                            5200
+                          );
                         }}
                       />
                     </div>
@@ -2746,7 +2773,7 @@ export default function OnboardingWrapper() {
                           className="rounded-[28px] border border-white/12 bg-white/8 backdrop-blur-xl shadow-soft p-4"
                         >
                           <div className="text-white/60 text-xs font-semibold mb-2">
-                            Your name (for your medical file)
+                            Your name (for your assessment record)
                           </div>
 
                           <input
@@ -2794,7 +2821,7 @@ export default function OnboardingWrapper() {
                               Select your age
                             </div>
                             <div className="text-slate-500 text-[13px] font-semibold mt-1">
-                              This helps Mia tailor tissue recovery pacing.
+                              This helps set safe progression pacing.
                             </div>
                           </div>
 
