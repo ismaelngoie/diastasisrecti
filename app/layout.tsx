@@ -19,7 +19,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  viewportFit: "cover", 
+  viewportFit: "cover",
   themeColor: "#1A1A26",
 };
 
@@ -28,24 +28,27 @@ export const metadata: Metadata = {
   description: "AI-driven protocol to close Diastasis Recti gaps of 2+ fingers.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en" className={`${inter.variable} ${lora.variable}`}>
-      {/* 1. BODY IS LOCKED (No Scroll) */}
-      <body className="bg-[color:var(--navy)] text-white fixed inset-0 overflow-hidden">
-        
-        {/* 2. OUTER FRAME (Fills screen exactly) */}
-        <div className="w-full h-[100dvh] flex flex-col relative">
-          
-          {/* 3. INNER SCROLL (The "Moving" Part) 
-              This div handles all scrolling. It sits inside the fixed body.
-              - overflow-y-auto: Enables scrolling
-              - no-scrollbar: Hides the bar visually
-          */}
-          <div className="flex-1 w-full h-full overflow-y-auto no-scrollbar">
+    <html lang="en" className={`${inter.variable} ${lora.variable} h-full`}>
+      <body className="bg-[color:var(--navy)] text-white fixed inset-0 h-full overflow-hidden">
+        <div className="w-full h-dvh flex flex-col min-h-0">
+          <div
+            className="
+              flex-1 min-h-0 w-full
+              overflow-y-auto overscroll-contain
+              [-webkit-overflow-scrolling:touch]
+              no-scrollbar
+              pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]
+              pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]
+            "
+          >
             {children}
           </div>
-
         </div>
       </body>
     </html>
