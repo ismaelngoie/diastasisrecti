@@ -18,7 +18,7 @@ import {
   HeartPulse,
   Circle,
   Shield,
-  ShieldCheck, // Added this missing import
+  ShieldCheck,
   Timer,
   Star,
   ChevronDown,
@@ -39,13 +39,12 @@ import {
 } from "@stripe/react-stripe-js";
 
 // --- External Component & Store Imports ---
-// Assuming these files exist in your project based on the provided code
 import ButterflyBackground from "@/components/ButterflyBackground";
 import { Toast } from "@/components/Toast";
 import {
   USER_STORAGE_KEY,
   useUserStore,
-  useUserData, // Used in Step 14
+  useUserData,
   VisualShape,
   FingerGap,
   TissueDepth,
@@ -55,7 +54,7 @@ import {
 } from "@/lib/store/useUserStore";
 
 // ==========================================
-// SHARED TYPES (Originally from Step 5)
+// SHARED TYPES
 // ==========================================
 export type ToastTone = "success" | "info" | "warning" | "danger";
 export type ToastAPI = {
@@ -159,7 +158,6 @@ function Step05FingerTest({
 
   const [selected, setSelected] = useState<FingerGap>(fingerGap);
 
-  // keep state in sync if store updates externally
   useEffect(() => {
     setSelected(fingerGap);
   }, [fingerGap]);
@@ -175,10 +173,8 @@ function Step05FingerTest({
   };
 
   return (
-    <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1 px-6 pt-8 pb-10">
-      {/* Back button removed (prop kept for compatibility) */}
-
-      <div className="mt-6">
+    <div className="w-full max-w-md mx-auto flex flex-col h-full px-6 pt-4 pb-6">
+      <div className="mt-2 shrink-0">
         <h1 className="text-white font-extrabold text-[30px] leading-[1.08]" style={{ fontFamily: "var(--font-lora)" }}>
           The Finger Test.
         </h1>
@@ -187,19 +183,21 @@ function Step05FingerTest({
         </p>
       </div>
 
-      <div className="mt-7 grid grid-cols-1 gap-4">
-        {step05Options.map((o) => (
-          <Step05Card
-            key={o.gap}
-            selected={selected === o.gap}
-            onClick={() => pick(o.gap)}
-            title={o.title}
-            sub={o.sub}
-          />
-        ))}
+      <div className="mt-6 flex-1 overflow-y-auto no-scrollbar">
+        <div className="grid grid-cols-1 gap-4 pb-4">
+          {step05Options.map((o) => (
+            <Step05Card
+              key={o.gap}
+              selected={selected === o.gap}
+              onClick={() => pick(o.gap)}
+              title={o.title}
+              sub={o.sub}
+            />
+          ))}
+        </div>
       </div>
 
-      <div className="mt-auto pt-8">
+      <div className="mt-auto pt-4 shrink-0">
         <button
           disabled={!canContinue}
           onClick={() => {
@@ -308,10 +306,8 @@ function Step06TissueDepth({
   };
 
   return (
-    <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1 px-6 pt-8 pb-10">
-      {/* Back button removed (prop kept for compatibility) */}
-
-      <div className="mt-6">
+    <div className="w-full max-w-md mx-auto flex flex-col h-full px-6 pt-4 pb-6">
+      <div className="mt-2 shrink-0">
         <h1 className="text-white font-extrabold text-[30px] leading-[1.08]" style={{ fontFamily: "var(--font-lora)" }}>
           {name}, it’s not just about width.
         </h1>
@@ -320,20 +316,22 @@ function Step06TissueDepth({
         </p>
       </div>
 
-      <div className="mt-7 flex flex-col gap-4">
-        {step06Opts.map((o) => (
-          <Step06Card
-            key={o.id}
-            selected={selected === o.id}
-            onClick={() => pick(o.id)}
-            title={o.title}
-            sub={o.sub}
-            icon={o.icon}
-          />
-        ))}
+      <div className="mt-6 flex-1 overflow-y-auto no-scrollbar">
+        <div className="flex flex-col gap-4 pb-4">
+          {step06Opts.map((o) => (
+            <Step06Card
+              key={o.id}
+              selected={selected === o.id}
+              onClick={() => pick(o.id)}
+              title={o.title}
+              sub={o.sub}
+              icon={o.icon}
+            />
+          ))}
+        </div>
       </div>
 
-      <div className="mt-auto pt-8">
+      <div className="mt-auto pt-4 shrink-0">
         <button
           disabled={!canContinue}
           onClick={() => {
@@ -446,7 +444,7 @@ function Step07SabotageCheck({
   };
 
   return (
-    <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1 px-6 pt-8 pb-10 relative">
+    <div className="w-full max-w-md mx-auto flex flex-col h-full px-6 pt-4 pb-6 relative">
       <AnimatePresence>
         {flash && (
           <motion.div
@@ -459,9 +457,7 @@ function Step07SabotageCheck({
         )}
       </AnimatePresence>
 
-      {/* Back button removed (prop kept for compatibility) */}
-
-      <div className="mt-6">
+      <div className="mt-2 shrink-0">
         <h1 className="text-white font-extrabold text-[30px] leading-[1.08]" style={{ fontFamily: "var(--font-lora)" }}>
           We need to stop the damage, {name}.
         </h1>
@@ -470,19 +466,21 @@ function Step07SabotageCheck({
         </p>
       </div>
 
-      <div className="mt-7 grid grid-cols-1 gap-3">
-        {step07Options.map((o) => (
-          <Step07Chip
-            key={o.id}
-            selected={selected.includes(o.id)}
-            onClick={() => toggle(o.id)}
-            label={o.label}
-            redFlag={o.redFlag}
-          />
-        ))}
+      <div className="mt-6 flex-1 overflow-y-auto no-scrollbar">
+        <div className="grid grid-cols-1 gap-3 pb-4">
+          {step07Options.map((o) => (
+            <Step07Chip
+              key={o.id}
+              selected={selected.includes(o.id)}
+              onClick={() => toggle(o.id)}
+              label={o.label}
+              redFlag={o.redFlag}
+            />
+          ))}
+        </div>
       </div>
 
-      <div className="mt-auto pt-8">
+      <div className="mt-auto pt-4 shrink-0">
         <button
           disabled={!canContinue}
           onClick={() => {
@@ -625,10 +623,8 @@ function Step08Symptoms({
   };
 
   return (
-    <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1 px-6 pt-8 pb-10">
-      {/* Back button removed (prop kept for compatibility) */}
-
-      <div className="mt-6">
+    <div className="w-full max-w-md mx-auto flex flex-col h-full px-6 pt-4 pb-6">
+      <div className="mt-2 shrink-0">
         <h1 className="text-white font-extrabold text-[30px] leading-[1.08]" style={{ fontFamily: "var(--font-lora)" }}>
           Diastasis rarely comes alone.
         </h1>
@@ -637,19 +633,21 @@ function Step08Symptoms({
         </p>
       </div>
 
-      <div className="mt-7 flex flex-col gap-3">
-        {step08Options.map((o) => (
-          <Step08Row
-            key={o.id}
-            selected={selected.includes(o.id)}
-            onClick={() => toggle(o.id)}
-            label={o.label}
-            icon={o.icon}
-          />
-        ))}
+      <div className="mt-6 flex-1 overflow-y-auto no-scrollbar">
+        <div className="flex flex-col gap-3 pb-4">
+          {step08Options.map((o) => (
+            <Step08Row
+              key={o.id}
+              selected={selected.includes(o.id)}
+              onClick={() => toggle(o.id)}
+              label={o.label}
+              icon={o.icon}
+            />
+          ))}
+        </div>
       </div>
 
-      <div className="mt-auto pt-8">
+      <div className="mt-auto pt-4 shrink-0">
         <button
           onClick={() => {
             toast.hide();
@@ -708,10 +706,8 @@ function Step09Timeline({
   };
 
   return (
-    <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1 px-6 pt-8 pb-10">
-      {/* Back button removed (prop kept for compatibility) */}
-
-      <div className="mt-6">
+    <div className="w-full max-w-md mx-auto flex flex-col h-full px-6 pt-4 pb-6">
+      <div className="mt-2 shrink-0">
         <h1 className="text-white font-extrabold text-[30px] leading-[1.08]" style={{ fontFamily: "var(--font-lora)" }}>
           When was your last pregnancy?
         </h1>
@@ -720,31 +716,33 @@ function Step09Timeline({
         </p>
       </div>
 
-      <div className="mt-7 flex flex-col gap-3">
-        {step09Options.map((o) => {
-          const is = selected === o.id;
-          return (
-            <button
-              key={o.id}
-              onClick={() => pick(o.id)}
-              className={[
-                "w-full rounded-2xl border px-5 py-4 text-left transition-all duration-300 active:scale-[0.99]",
-                "min-h-[56px]",
-                is
-                  ? "border-[color:var(--pink)] bg-white/12 shadow-[0_0_0_5px_rgba(230,84,115,0.10)]"
-                  : "border-white/12 bg-white/8 hover:border-white/20",
-              ].join(" ")}
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-white font-extrabold text-[15px]">{o.label}</div>
-                {is ? <CheckCircle2 className="text-[color:var(--pink)]" /> : <div className="w-6 h-6 rounded-full border border-white/15" />}
-              </div>
-            </button>
-          );
-        })}
+      <div className="mt-6 flex-1 overflow-y-auto no-scrollbar">
+        <div className="flex flex-col gap-3 pb-4">
+          {step09Options.map((o) => {
+            const is = selected === o.id;
+            return (
+              <button
+                key={o.id}
+                onClick={() => pick(o.id)}
+                className={[
+                  "w-full rounded-2xl border px-5 py-4 text-left transition-all duration-300 active:scale-[0.99]",
+                  "min-h-[56px]",
+                  is
+                    ? "border-[color:var(--pink)] bg-white/12 shadow-[0_0_0_5px_rgba(230,84,115,0.10)]"
+                    : "border-white/12 bg-white/8 hover:border-white/20",
+                ].join(" ")}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-white font-extrabold text-[15px]">{o.label}</div>
+                  {is ? <CheckCircle2 className="text-[color:var(--pink)]" /> : <div className="w-6 h-6 rounded-full border border-white/15" />}
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      <div className="mt-auto pt-8">
+      <div className="mt-auto pt-4 shrink-0">
         <button
           disabled={!canContinue}
           onClick={() => {
@@ -811,10 +809,8 @@ function Step10Navel({
   };
 
   return (
-    <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1 px-6 pt-8 pb-10">
-      {/* Back button removed (prop kept for compatibility) */}
-
-      <div className="mt-6">
+    <div className="w-full max-w-md mx-auto flex flex-col h-full px-6 pt-4 pb-6">
+      <div className="mt-2 shrink-0">
         <h1 className="text-white font-extrabold text-[30px] leading-[1.08]" style={{ fontFamily: "var(--font-lora)" }}>
           Has the shape of your belly button changed?
         </h1>
@@ -823,43 +819,45 @@ function Step10Navel({
         </p>
       </div>
 
-      <div className="mt-7 flex flex-col gap-3">
-        {step10Options.map((o) => {
-          const is = selected === o.id;
-          return (
-            <button
-              key={o.id}
-              onClick={() => pick(o.id)}
-              className={[
-                "w-full rounded-2xl border px-5 py-4 text-left transition-all duration-300 active:scale-[0.99]",
-                "min-h-[56px]",
-                is
-                  ? "border-[color:var(--pink)] bg-white/12 shadow-[0_0_0_5px_rgba(230,84,115,0.10)]"
-                  : "border-white/12 bg-white/8 hover:border-white/20",
-              ].join(" ")}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="text-white font-extrabold text-[15px]">{o.label}</div>
-                  {o.note && (
-                    <div className="mt-1 text-white/60 text-[12px] font-semibold flex items-center gap-2">
-                      <Shield size={14} className="text-white/60" />
-                      {o.note}
-                    </div>
+      <div className="mt-6 flex-1 overflow-y-auto no-scrollbar">
+        <div className="flex flex-col gap-3 pb-4">
+          {step10Options.map((o) => {
+            const is = selected === o.id;
+            return (
+              <button
+                key={o.id}
+                onClick={() => pick(o.id)}
+                className={[
+                  "w-full rounded-2xl border px-5 py-4 text-left transition-all duration-300 active:scale-[0.99]",
+                  "min-h-[56px]",
+                  is
+                    ? "border-[color:var(--pink)] bg-white/12 shadow-[0_0_0_5px_rgba(230,84,115,0.10)]"
+                    : "border-white/12 bg-white/8 hover:border-white/20",
+                ].join(" ")}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-white font-extrabold text-[15px]">{o.label}</div>
+                    {o.note && (
+                      <div className="mt-1 text-white/60 text-[12px] font-semibold flex items-center gap-2">
+                        <Shield size={14} className="text-white/60" />
+                        {o.note}
+                      </div>
+                    )}
+                  </div>
+                  {is ? (
+                    <CheckCircle2 className="text-[color:var(--pink)] mt-0.5" />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full border border-white/15 mt-0.5" />
                   )}
                 </div>
-                {is ? (
-                  <CheckCircle2 className="text-[color:var(--pink)] mt-0.5" />
-                ) : (
-                  <div className="w-6 h-6 rounded-full border border-white/15 mt-0.5" />
-                )}
-              </div>
-            </button>
-          );
-        })}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      <div className="mt-auto pt-8">
+      <div className="mt-auto pt-4 shrink-0">
         <button
           disabled={!canContinue}
           onClick={() => {
@@ -926,10 +924,8 @@ function Step11Commitment({
   };
 
   return (
-    <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1 px-6 pt-8 pb-10">
-      {/* Back button removed (prop kept for compatibility) */}
-
-      <div className="mt-6">
+    <div className="w-full max-w-md mx-auto flex flex-col h-full px-6 pt-4 pb-6">
+      <div className="mt-2 shrink-0">
         <h1 className="text-white font-extrabold text-[30px] leading-[1.08]" style={{ fontFamily: "var(--font-lora)" }}>
           Healing tissue takes consistency, not intensity.
         </h1>
@@ -938,42 +934,44 @@ function Step11Commitment({
         </p>
       </div>
 
-      <div className="mt-7 flex flex-col gap-3">
-        {step11Options.map((o) => {
-          const is = selected === o.id;
-          return (
-            <button
-              key={o.id}
-              onClick={() => pick(o.id)}
-              className={[
-                "w-full rounded-2xl border px-5 py-4 text-left transition-all duration-300 active:scale-[0.99]",
-                "min-h-[56px]",
-                is
-                  ? "border-[color:var(--pink)] bg-white/12 shadow-[0_0_0_5px_rgba(230,84,115,0.10)]"
-                  : "border-white/12 bg-white/8 hover:border-white/20",
-              ].join(" ")}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="text-white font-extrabold text-[15px] flex items-center gap-2">
-                    <Timer size={16} className="text-white/70" />
-                    {o.label}
+      <div className="mt-6 flex-1 overflow-y-auto no-scrollbar">
+        <div className="flex flex-col gap-3 pb-4">
+          {step11Options.map((o) => {
+            const is = selected === o.id;
+            return (
+              <button
+                key={o.id}
+                onClick={() => pick(o.id)}
+                className={[
+                  "w-full rounded-2xl border px-5 py-4 text-left transition-all duration-300 active:scale-[0.99]",
+                  "min-h-[56px]",
+                  is
+                    ? "border-[color:var(--pink)] bg-white/12 shadow-[0_0_0_5px_rgba(230,84,115,0.10)]"
+                    : "border-white/12 bg-white/8 hover:border-white/20",
+                ].join(" ")}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-white font-extrabold text-[15px] flex items-center gap-2">
+                      <Timer size={16} className="text-white/70" />
+                      {o.label}
+                    </div>
+                    {o.badge && <div className="mt-1 text-[12px] font-extrabold text-[#33B373]">{o.badge}</div>}
                   </div>
-                  {o.badge && <div className="mt-1 text-[12px] font-extrabold text-[#33B373]">{o.badge}</div>}
-                </div>
 
-                {is ? (
-                  <CheckCircle2 className="text-[color:var(--pink)] mt-0.5" />
-                ) : (
-                  <div className="w-6 h-6 rounded-full border border-white/15 mt-0.5" />
-                )}
-              </div>
-            </button>
-          );
-        })}
+                  {is ? (
+                    <CheckCircle2 className="text-[color:var(--pink)] mt-0.5" />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full border border-white/15 mt-0.5" />
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      <div className="mt-auto pt-8">
+      <div className="mt-auto pt-4 shrink-0">
         <button
           disabled={!canContinue}
           onClick={() => {
@@ -1081,7 +1079,7 @@ function Step12Analysis({ onDone }: { onDone: () => void }) {
   }, [lines.length, onDone]);
 
   return (
-    <div className="w-full min-h-screen flex flex-col items-center justify-center px-8 text-center">
+    <div className="w-full h-full flex flex-col items-center justify-center px-8 text-center">
       <div className="mb-10">
         <AICoreView />
       </div>
@@ -1185,10 +1183,8 @@ function Step13PlanReveal({ onNext, onBack }: { onNext: () => void; onBack: () =
   }, [age, commitment, sabotage]);
 
   return (
-    <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1 px-6 pt-8 pb-10">
-      {/* Back button removed (prop kept for compatibility) */}
-
-      <div className="mt-6 text-center">
+    <div className="w-full max-w-md mx-auto flex flex-col h-full px-6 pt-4 pb-6">
+      <div className="mt-2 text-center shrink-0">
         <h1 className="text-white font-extrabold text-[30px] leading-[1.08]" style={{ fontFamily: "var(--font-lora)" }}>
           {name}, your plan is ready.
         </h1>
@@ -1197,29 +1193,31 @@ function Step13PlanReveal({ onNext, onBack }: { onNext: () => void; onBack: () =
         </p>
       </div>
 
-      <div className="mt-4 rounded-3xl border border-white/12 bg-white/8 backdrop-blur-xl shadow-soft p-5">
-        <HolographicTimeline />
+      <div className="mt-4 flex-1 overflow-y-auto no-scrollbar">
+        <div className="rounded-3xl border border-white/12 bg-white/8 backdrop-blur-xl shadow-soft p-5">
+          <HolographicTimeline />
 
-        <div className="flex items-center justify-between text-[13px] font-extrabold mt-1">
-          <span className="text-white/80">{gapLabel}</span>
-          <span className="text-white/55">Functional closure by week 6</span>
-          <span className="text-[#33B373]">Fully healed</span>
+          <div className="flex items-center justify-between text-[13px] font-extrabold mt-1">
+            <span className="text-white/80">{gapLabel}</span>
+            <span className="text-white/55">Functional closure by week 6</span>
+            <span className="text-[#33B373]">Fully healed</span>
+          </div>
+        </div>
+
+        <div className="mt-6">
+          <div className="text-white font-extrabold text-[16px] mb-3">Your Personal Insights</div>
+          <div className="flex flex-col gap-3">
+            {insights.map((t, i) => (
+              <div key={i} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+                <Sparkles className="text-[color:var(--pink)] shrink-0 mt-0.5" size={18} />
+                <div className="text-white/85 text-[13px] font-semibold leading-relaxed">{t}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="mt-6">
-        <div className="text-white font-extrabold text-[16px] mb-3">Your Personal Insights</div>
-        <div className="flex flex-col gap-3">
-          {insights.map((t, i) => (
-            <div key={i} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
-              <Sparkles className="text-[color:var(--pink)] shrink-0 mt-0.5" size={18} />
-              <div className="text-white/85 text-[13px] font-semibold leading-relaxed">{t}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-auto pt-8">
+      <div className="mt-auto pt-4 shrink-0">
         <button
           onClick={onNext}
           className="w-full h-14 rounded-full bg-gradient-to-r from-[color:var(--pink)] to-[#C23A5B] text-white font-extrabold text-[17px] shadow-[0_0_30px_rgba(230,84,115,0.45)] active:scale-[0.985] transition-transform"
@@ -1872,320 +1870,99 @@ function Logo() {
 function ProgressBar({ step }: { step: number }) {
   const pct = Math.max(0, Math.min(100, (step / TOTAL_STEPS) * 100));
   return (
-    <div className="px-6 pt-6">
-      <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+    <div className="px-6 h-full flex items-center">
+      <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
         <div className="h-full bg-white/70" style={{ width: `${pct}%` }} />
       </div>
     </div>
   );
 }
 
-// --- HIGH-END 3D DEFINITIONS (Glow, Texture, Hologram) ---
-const Defs = ({ p }: { p: string }) => (
-  <defs>
-    {/* Background */}
-    <radialGradient id={`${p}-bg`} cx="35%" cy="20%" r="85%">
-      <stop offset="0%" stopColor="#1b1a2a" stopOpacity="1" />
-      <stop offset="55%" stopColor="#0f1020" stopOpacity="1" />
-      <stop offset="100%" stopColor="#070814" stopOpacity="1" />
-    </radialGradient>
+function ShapeArt({ id }: { id: Exclude<VisualShape, null> }) {
+  if (id === "pooch") {
+    return (
+      <svg viewBox="0 0 320 140" className="w-full h-full">
+        <defs>
+          <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="rgba(255,255,255,0.10)" />
+            <stop offset="1" stopColor="rgba(230,84,115,0.18)" />
+          </linearGradient>
+        </defs>
+        <rect x="10" y="10" width="300" height="120" rx="22" fill="url(#g1)" />
+        <path
+          d="M70 95c30-40 70-55 120-50 40 4 70 22 85 48"
+          fill="none"
+          stroke="rgba(255,255,255,0.65)"
+          strokeWidth="10"
+          strokeLinecap="round"
+        />
+        <path
+          d="M92 98c28-22 58-30 90-26 28 3 50 14 66 28"
+          fill="none"
+          stroke="rgba(210,235,255,0.55)"
+          strokeWidth="6"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
 
-    {/* Subtle tech dots pattern */}
-    <pattern id={`${p}-dots`} width="10" height="10" patternUnits="userSpaceOnUse">
-      <circle cx="1.5" cy="1.5" r="0.8" fill="#fff" opacity="0.06" />
-    </pattern>
-
-    {/* Bodysuit / figure material */}
-    <linearGradient id={`${p}-figure`} x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stopColor="#ffffff" stopOpacity="0.12" />
-      <stop offset="35%" stopColor="#c9ccff" stopOpacity="0.08" />
-      <stop offset="70%" stopColor="#ffffff" stopOpacity="0.05" />
-      <stop offset="100%" stopColor="#000000" stopOpacity="0.16" />
-    </linearGradient>
-
-    {/* Rim light */}
-    <linearGradient id={`${p}-rim`} x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stopColor="#ffffff" stopOpacity="0.55" />
-      <stop offset="55%" stopColor="#ffffff" stopOpacity="0.18" />
-      <stop offset="100%" stopColor="#ffffff" stopOpacity="0.10" />
-    </linearGradient>
-
-    {/* Sheen band */}
-    <linearGradient id={`${p}-sheen`} x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
-      <stop offset="28%" stopColor="#ffffff" stopOpacity="0.10" />
-      <stop offset="42%" stopColor="#ffffff" stopOpacity="0.22" />
-      <stop offset="58%" stopColor="#ffffff" stopOpacity="0.08" />
-      <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-    </linearGradient>
-
-    {/* Ambient occlusion */}
-    <radialGradient id={`${p}-ao`} cx="50%" cy="55%" r="75%">
-      <stop offset="0%" stopColor="#000000" stopOpacity="0" />
-      <stop offset="70%" stopColor="#000000" stopOpacity="0.10" />
-      <stop offset="100%" stopColor="#000000" stopOpacity="0.22" />
-    </radialGradient>
-
-    {/* Highlight pink (The "Hot" Zone) */}
-    <radialGradient id={`${p}-hot`} cx="40%" cy="35%" r="70%">
-      <stop offset="0%" stopColor="#ff9bb0" stopOpacity="0.65" />
-      <stop offset="45%" stopColor="#e65473" stopOpacity="0.25" />
-      <stop offset="100%" stopColor="#e65473" stopOpacity="0" />
-    </radialGradient>
-
-    {/* Specular highlight */}
-    <radialGradient id={`${p}-spec`} cx="35%" cy="30%" r="40%">
-      <stop offset="0%" stopColor="#ffffff" stopOpacity="0.35" />
-      <stop offset="55%" stopColor="#ffffff" stopOpacity="0.08" />
-      <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-    </radialGradient>
-
-    {/* Gap depth (The Trench) */}
-    <linearGradient id={`${p}-gap`} x1="0" x2="1" y1="0" y2="0">
-      <stop offset="0%" stopColor="#ffffff" stopOpacity="0.10" />
-      <stop offset="45%" stopColor="#070814" stopOpacity="0.92" />
-      <stop offset="55%" stopColor="#070814" stopOpacity="0.92" />
-      <stop offset="100%" stopColor="#ffffff" stopOpacity="0.10" />
-    </linearGradient>
-
-    {/* Laser stroke */}
-    <linearGradient id={`${p}-laser`} x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stopColor="#ffffff" stopOpacity="0.20" />
-      <stop offset="35%" stopColor="#ff7e9a" stopOpacity="0.85" />
-      <stop offset="70%" stopColor="#e65473" stopOpacity="0.95" />
-      <stop offset="100%" stopColor="#ffffff" stopOpacity="0.20" />
-    </linearGradient>
-
-    {/* Premium bloom filter */}
-    <filter id={`${p}-bloom`} x="-60%" y="-60%" width="220%" height="220%">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="1.8" result="b1" />
-      <feColorMatrix
-        in="b1"
-        type="matrix"
-        values="
-          1 0 0 0 0
-          0 1 0 0 0
-          0 0 1 0 0
-          0 0 0 0.65 0"
-        result="b2"
-      />
-      <feMerge>
-        <feMergeNode in="b2" />
-        <feMergeNode in="SourceGraphic" />
-      </feMerge>
-    </filter>
-
-    {/* Soft shadow */}
-    <filter id={`${p}-shadow`} x="-50%" y="-50%" width="200%" height="200%">
-      <feDropShadow dx="0" dy="7" stdDeviation="7" floodColor="#000000" floodOpacity="0.35" />
-    </filter>
-
-    {/* Inner shadow */}
-    <filter id={`${p}-inner`} x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blur" />
-      <feOffset dx="0" dy="2" result="off" />
-      <feComposite in="off" in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="inner" />
-      <feColorMatrix
-        in="inner"
-        type="matrix"
-        values="
-          0 0 0 0 0
-          0 0 0 0 0
-          0 0 0 0 0
-          0 0 0 0.55 0"
-        result="shade"
-      />
-      <feComposite in="shade" in2="SourceGraphic" operator="over" />
-    </filter>
-
-    {/* Micro grain texture */}
-    <filter id={`${p}-grain`} x="-20%" y="-20%" width="140%" height="140%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" result="n" />
-      <feColorMatrix
-        in="n"
-        type="matrix"
-        values="
-          0 0 0 0 1
-          0 0 0 0 1
-          0 0 0 0 1
-          0 0 0 0.06 0"
-        result="g"
-      />
-      <feBlend in="SourceGraphic" in2="g" mode="overlay" />
-    </filter>
-  </defs>
-);
-
-function ShapeArt({
-  id,
-  showLabels = true,
-}: {
-  id: Exclude<VisualShape, null>;
-  showLabels?: boolean;
-}) {
-  const uid = React.useId();
-  const p = `s-${uid.replace(/:/g, "")}`; // Ensure ID is safe for SVG
-
-  // A recognizable female torso silhouette (clothed bodysuit feel; non-explicit)
-  const figurePath =
-    "M72 56 Q100 38 128 56 Q140 68 134 84 Q125 104 128 126 Q133 158 112 176 Q100 186 88 176 Q67 158 72 126 Q75 104 66 84 Q60 68 72 56 Z";
-
-  const neckPath = "M92 50 Q100 56 108 50 L108 60 Q100 66 92 60 Z";
-
-  // Callout anchor points
-  const callouts = {
-    pooch: { x: 128, y: 138, label: "Lower belly", lx: 150, ly: 130 },
-    gap: { x: 100, y: 112, label: "Midline / separation", lx: 148, ly: 102 },
-    cone: { x: 100, y: 90, label: "Upper abdomen", lx: 148, ly: 78 },
-  } as const;
-
-  const c = callouts[id];
+  if (id === "gap") {
+    return (
+      <svg viewBox="0 0 320 140" className="w-full h-full">
+        <defs>
+          <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="rgba(255,255,255,0.10)" />
+            <stop offset="1" stopColor="rgba(120,200,255,0.12)" />
+          </linearGradient>
+        </defs>
+        <rect x="10" y="10" width="300" height="120" rx="22" fill="url(#g2)" />
+        <path
+          d="M85 40c22-12 46-16 75-14 30 2 55 9 75 24"
+          fill="none"
+          stroke="rgba(255,255,255,0.65)"
+          strokeWidth="10"
+          strokeLinecap="round"
+        />
+        <path
+          d="M160 34v84"
+          stroke="rgba(230,84,115,0.70)"
+          strokeWidth="8"
+          strokeLinecap="round"
+        />
+        <path
+          d="M160 34v84"
+          stroke="rgba(255,255,255,0.25)"
+          strokeWidth="14"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
 
   return (
-    <svg viewBox="0 0 200 200" className="w-full h-full" fill="none" shapeRendering="geometricPrecision">
-      <Defs p={p} />
-
-      {/* Premium card-like background */}
-      <rect x="10" y="10" width="180" height="180" rx="26" fill={`url(#${p}-bg)`} />
-      <rect x="10" y="10" width="180" height="180" rx="26" fill={`url(#${p}-dots)`} />
-      <rect x="10" y="10" width="180" height="180" rx="26" fill="#000" opacity="0.18" />
-
-      {/* Figure clip */}
+    <svg viewBox="0 0 320 140" className="w-full h-full">
       <defs>
-        <clipPath id={`${p}-clip`}>
-          <path d={figurePath} />
-        </clipPath>
+        <linearGradient id="g3" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="rgba(255,255,255,0.10)" />
+          <stop offset="1" stopColor="rgba(245,158,11,0.14)" />
+        </linearGradient>
       </defs>
-
-      {/* Woman figure */}
-      <g filter={`url(#${p}-shadow)`}>
-        {/* Head */}
-        <circle cx="100" cy="34" r="14" fill={`url(#${p}-figure)`} stroke={`url(#${p}-rim)`} strokeWidth="1.4" />
-        {/* Neck */}
-        <path d={neckPath} fill={`url(#${p}-figure)`} stroke={`url(#${p}-rim)`} strokeWidth="1.2" />
-
-        {/* Torso */}
-        <path
-          d={figurePath}
-          fill={`url(#${p}-figure)`}
-          stroke={`url(#${p}-rim)`}
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-          opacity="0.98"
-        />
-
-        {/* Inner depth + AO + sheen */}
-        <path d={figurePath} fill="transparent" filter={`url(#${p}-inner)`} />
-        <path
-          d={figurePath}
-          fill={`url(#${p}-ao)`}
-          opacity="0.95"
-          style={{ mixBlendMode: "multiply" as any }}
-        />
-        <path
-          d={figurePath}
-          fill={`url(#${p}-sheen)`}
-          opacity="0.9"
-          style={{ mixBlendMode: "screen" as any }}
-        />
-
-        {/* Grain only on torso */}
-        <g clipPath={`url(#${p}-clip)`} filter={`url(#${p}-grain)`} opacity="0.9">
-          <rect x="0" y="0" width="200" height="200" fill="transparent" />
-        </g>
-
-        {/* Subtle “bodysuit seams” */}
-        <path d="M80 74 Q100 88 120 74" stroke="#fff" opacity="0.14" strokeWidth="1.2" />
-        <path d="M86 156 Q100 166 114 156" stroke="#fff" opacity="0.12" strokeWidth="1.2" />
-      </g>
-
-      {/* Focus overlays (Clipped to body) */}
-      <g clipPath={`url(#${p}-clip)`}>
-        {/* --- POOCH --- */}
-        {id === "pooch" && (
-          <>
-            <ellipse cx="100" cy="142" rx="30" ry="20" fill="#000" opacity="0.22" style={{ mixBlendMode: "multiply" as any }} />
-            <path
-              d="M74 132 C 82 120, 118 120, 126 132 C 134 146, 118 162, 100 162 C 82 162, 66 146, 74 132 Z"
-              fill={`url(#${p}-hot)`}
-              filter={`url(#${p}-bloom)`}
-            />
-            <path
-              d="M82 136 C 90 128, 110 128, 120 136 C 112 146, 92 148, 82 136 Z"
-              fill={`url(#${p}-spec)`}
-              opacity="0.95"
-              style={{ mixBlendMode: "screen" as any }}
-            />
-            <path d="M78 132 Q100 144 122 132" stroke="#fff" strokeWidth="1.8" opacity="0.75" strokeLinecap="round" />
-          </>
-        )}
-
-        {/* --- GAP --- */}
-        {id === "gap" && (
-          <>
-            <path
-              d="M95 74 Q95 112 95 150 L105 150 Q105 112 105 74 Z"
-              fill={`url(#${p}-gap)`}
-              filter={`url(#${p}-inner)`}
-            />
-            <path d="M95 74 Q92 112 95 150" stroke="#fff" opacity="0.35" strokeWidth="1.4" />
-            <path d="M105 74 Q108 112 105 150" stroke="#fff" opacity="0.35" strokeWidth="1.4" />
-
-            <g filter={`url(#${p}-bloom)`} opacity="0.95">
-              <path d="M68 104 L88 104" stroke="#fff" strokeWidth="1" strokeDasharray="3 4" opacity="0.35" />
-              <path d="M88 104 L112 104" stroke={`url(#${p}-laser)`} strokeWidth="1.8" />
-              <path d="M112 104 L132 104" stroke="#fff" strokeWidth="1" strokeDasharray="3 4" opacity="0.35" />
-
-              <path d="M68 120 L88 120" stroke="#fff" strokeWidth="1" strokeDasharray="3 4" opacity="0.35" />
-              <path d="M88 120 L112 120" stroke={`url(#${p}-laser)`} strokeWidth="1.8" />
-              <path d="M112 120 L132 120" stroke="#fff" strokeWidth="1" strokeDasharray="3 4" opacity="0.35" />
-            </g>
-
-            <path d="M88 101 L93 104 L88 107" fill="#fff" opacity="0.85" />
-            <path d="M112 101 L107 104 L112 107" fill="#fff" opacity="0.85" />
-          </>
-        )}
-
-        {/* --- CONE --- */}
-        {id === "cone" && (
-          <>
-            <path
-              d="M84 132 L100 76 L116 132"
-              fill={`url(#${p}-hot)`}
-              opacity="0.8"
-              filter={`url(#${p}-bloom)`}
-            />
-            <path
-              d="M100 76 L100 132"
-              stroke="#e65473"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              filter={`url(#${p}-bloom)`}
-            />
-            <path d="M100 92 L76 98" stroke="#fff" strokeWidth="1" opacity="0.16" />
-            <path d="M100 110 L74 116" stroke="#fff" strokeWidth="1" opacity="0.22" />
-            <path d="M100 92 L124 98" stroke="#fff" strokeWidth="1" opacity="0.16" />
-            <path d="M100 110 L126 116" stroke="#fff" strokeWidth="1" opacity="0.22" />
-          </>
-        )}
-      </g>
-
-      {/* Callout label */}
-      {showLabels && (
-        <g opacity="0.95">
-          <path
-            d={`M${c.x} ${c.y} L${c.lx - 8} ${c.ly}`}
-            stroke="#fff"
-            strokeWidth="1.2"
-            opacity="0.55"
-          />
-          <circle cx={c.x} cy={c.y} r="2.2" fill="#fff" opacity="0.85" />
-          <rect x={c.lx - 4} y={c.ly - 10} width="44" height="16" rx="8" fill="#000" opacity="0.35" />
-          <text x={c.lx + 2} y={c.ly + 2} fontSize="8.5" fill="#fff" opacity="0.9" fontFamily="ui-sans-serif, system-ui">
-            {c.label}
-          </text>
-        </g>
-      )}
+      <rect x="10" y="10" width="300" height="120" rx="22" fill="url(#g3)" />
+      <path
+        d="M70 102c36-58 70-78 90-78s54 20 90 78"
+        fill="none"
+        stroke="rgba(255,255,255,0.65)"
+        strokeWidth="10"
+        strokeLinecap="round"
+      />
+      <path
+        d="M140 70c10-16 18-24 20-24s10 8 20 24"
+        fill="none"
+        stroke="rgba(245,158,11,0.65)"
+        strokeWidth="7"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -2594,13 +2371,17 @@ export default function OnboardingWrapper() {
   const showTopProgress = screen >= 2 && screen <= 11;
 
   return (
-    <main className="min-h-screen clinical-noise relative overflow-hidden bg-[color:var(--navy)]">
-      {showButterfliesStrong && <ButterflyBackground />}
-      {showButterfliesSoft && (
-        <div className="absolute inset-0 pointer-events-none opacity-[0.22] blur-[0.6px]">
-          <ButterflyBackground />
-        </div>
-      )}
+    <main className="fixed inset-0 w-full h-[100dvh] flex flex-col bg-[color:var(--navy)] overflow-hidden">
+      {/* Background Layer */}
+      <div className="absolute inset-0 z-0">
+        <div className="clinical-noise absolute inset-0 opacity-100 mix-blend-overlay" />
+        {showButterfliesStrong && <ButterflyBackground />}
+        {showButterfliesSoft && (
+          <div className="absolute inset-0 pointer-events-none opacity-[0.22] blur-[0.6px]">
+            <ButterflyBackground />
+          </div>
+        )}
+      </div>
 
       <Toast
         show={toastState.show}
@@ -2609,141 +2390,158 @@ export default function OnboardingWrapper() {
         onClose={() => toastApi.hide()}
       />
 
-      <div className="relative z-10 min-h-screen flex flex-col">
-        {showTopProgress && <ProgressBar step={Math.min(TOTAL_STEPS, screen)} />}
+      {/* Main Content Layer - Flex Column */}
+      <div className="relative z-10 flex-1 flex flex-col h-full overflow-hidden">
+        {/* FIXED HEADER: Progress Bar */}
+        {showTopProgress ? (
+          <div className="shrink-0 h-[60px] pt-safe-top">
+            <ProgressBar step={Math.min(TOTAL_STEPS, screen)} />
+          </div>
+        ) : (
+          <div className="shrink-0 h-[20px] pt-safe-top" />
+        )}
 
-        <AnimatePresence mode="wait">
-          {/* Screen 1 */}
-          {screen === 1 && (
-            <motion.section
-              key="welcome"
-              initial={{ opacity: 0, x: 22 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -22 }}
-              transition={{ duration: 0.38, ease: "easeOut" }}
-              className="flex-1 flex flex-col items-center justify-between px-6 pt-10 pb-10"
-            >
-              <div className="w-full max-w-md flex flex-col items-center">
-                <div className="mb-10">
-                  <Logo />
-                </div>
+        {/* SCROLLABLE BODY */}
+        <div className="flex-1 relative overflow-hidden flex flex-col">
+          <AnimatePresence mode="wait">
+            {/* Screen 1 */}
+            {screen === 1 && (
+              <motion.section
+                key="welcome"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 flex flex-col h-full px-6 pb-6"
+              >
+                <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col items-center pt-8">
+                  <div className="w-full max-w-md flex flex-col items-center">
+                    <div className="mb-10">
+                      <Logo />
+                    </div>
 
-                <h1
-                  className="text-center text-[34px] leading-[1.08] font-extrabold text-white drop-shadow-sm"
-                  style={{ fontFamily: "var(--font-lora)" }}
-                >
-                  Heal Your Core Separation.
-                  <br />
-                  Without Surgery.
-                </h1>
+                    <h1
+                      className="text-center text-[34px] leading-[1.08] font-extrabold text-white drop-shadow-sm"
+                      style={{ fontFamily: "var(--font-lora)" }}
+                    >
+                      Heal Your Core Separation.
+                      <br />
+                      Without Surgery.
+                    </h1>
 
-                <p className="text-center text-white/70 mt-4 text-[15px] leading-relaxed max-w-sm">
-                  The only AI-driven protocol designed to close Diastasis Recti gaps of{" "}
-                  <span className="text-white font-semibold">2+ fingers</span>.
-                </p>
+                    <p className="text-center text-white/70 mt-4 text-[15px] leading-relaxed max-w-sm">
+                      The only AI-driven protocol designed to close Diastasis Recti gaps of{" "}
+                      <span className="text-white font-semibold">2+ fingers</span>.
+                    </p>
 
-                <div className="w-full mt-10 rounded-3xl border border-white/15 bg-white/8 backdrop-blur-xl shadow-soft p-5">
-                  <div className="flex flex-col gap-4">
-                    <Benefit
-                      icon={<Stethoscope className="text-white" size={22} />}
-                      title="Medical-Grade Assessment"
-                      sub="Clinical logic + immediate personalized flags."
-                    />
-                    <Benefit
-                      icon={<Ban className="text-white" size={22} />}
-                      title="No Crunches. No Surgery."
-                      sub="We avoid moves that worsen pressure and bulging."
-                    />
-                    <Benefit
-                      icon={<Sparkles className="text-white" size={22} />}
-                      title="Visible Results in 12 Weeks"
-                      sub="A real protocol, not a generic quiz."
-                    />
+                    <div className="w-full mt-10 rounded-3xl border border-white/15 bg-white/8 backdrop-blur-xl shadow-soft p-5">
+                      <div className="flex flex-col gap-4">
+                        <Benefit
+                          icon={<Stethoscope className="text-white" size={22} />}
+                          title="Medical-Grade Assessment"
+                          sub="Clinical logic + immediate personalized flags."
+                        />
+                        <Benefit
+                          icon={<Ban className="text-white" size={22} />}
+                          title="No Crunches. No Surgery."
+                          sub="We avoid moves that worsen pressure and bulging."
+                        />
+                        <Benefit
+                          icon={<Sparkles className="text-white" size={22} />}
+                          title="Visible Results in 12 Weeks"
+                          sub="A real protocol, not a generic quiz."
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-6 text-center text-white/55 text-xs font-semibold pb-6">
+                      Designed for postpartum bodies • Evidence-informed • Gentle progressions
+                    </div>
                   </div>
                 </div>
 
-                <div className="mt-6 text-center text-white/55 text-xs font-semibold">
-                  Designed for postpartum bodies • Evidence-informed • Gentle progressions
-                </div>
-              </div>
-
-              <div className="w-full max-w-md">
-                <button
-                  onClick={() => goTo(2)}
-                  className={[
-                    "w-full h-14 rounded-full font-extrabold text-[17px]",
-                    "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)]",
-                    "active:scale-[0.985] transition-transform",
-                    "animate-breathe",
-                  ].join(" ")}
-                >
-                  Start My Assessment
-                </button>
-              </div>
-            </motion.section>
-          )}
-
-          {/* Screen 2 */}
-          {screen === 2 && (
-            <motion.section
-              key="visual"
-              initial={{ opacity: 0, x: 22 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -22 }}
-              transition={{ duration: 0.38, ease: "easeOut" }}
-              className="flex-1 flex flex-col px-6 pt-8 pb-10"
-            >
-              <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1">
-                {/* Back button removed */}
-
-                <div className="mt-6">
-                  <h1
-                    className="text-[28px] leading-[1.12] font-extrabold text-white"
-                    style={{ fontFamily: "var(--font-lora)" }}
+                <div className="mt-auto shrink-0 pt-4 w-full max-w-md mx-auto">
+                  <button
+                    onClick={() => goTo(2)}
+                    className={[
+                      "w-full h-14 rounded-full font-extrabold text-[17px]",
+                      "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)]",
+                      "active:scale-[0.985] transition-transform",
+                      "animate-breathe",
+                    ].join(" ")}
                   >
-                    Let’s analyze your core.
-                    <br />
-                    Which shape resembles yours the most?
-                  </h1>
-                  <p className="text-white/65 mt-3 text-[14px] leading-relaxed">
-                    Pick the closest match. This helps us start with the right protocol.
-                  </p>
+                    Start My Assessment
+                  </button>
+                </div>
+              </motion.section>
+            )}
+
+            {/* Screen 2 */}
+            {screen === 2 && (
+              <motion.section
+                key="visual"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 flex flex-col h-full px-6 pb-6"
+              >
+                <div className="flex-1 overflow-y-auto no-scrollbar">
+                  <div className="w-full max-w-md mx-auto flex flex-col pt-4">
+                    <div className="mt-2">
+                      <h1
+                        className="text-[28px] leading-[1.12] font-extrabold text-white"
+                        style={{ fontFamily: "var(--font-lora)" }}
+                      >
+                        Let’s analyze your core.
+                        <br />
+                        Which shape resembles yours the most?
+                      </h1>
+                      <p className="text-white/65 mt-3 text-[14px] leading-relaxed">
+                        Pick the closest match. This helps us start with the right protocol.
+                      </p>
+                    </div>
+
+                    <div className="mt-7 flex flex-col gap-4 pb-4">
+                      <VisualCard
+                        id="pooch"
+                        title="Lower Belly “Pooch”"
+                        subtitle="Bulge sits lower, especially by end of day."
+                        selected={visualShape === "pooch"}
+                        onSelect={() => {
+                          setVisualShape("pooch");
+                          toastApi.hide();
+                        }}
+                      />
+                      <VisualCard
+                        id="gap"
+                        title="Visible Gap / Trench"
+                        subtitle="A line or trench down the midline."
+                        selected={visualShape === "gap"}
+                        onSelect={() => {
+                          setVisualShape("gap");
+                          toastApi.hide();
+                        }}
+                      />
+                      <VisualCard
+                        id="cone"
+                        title="Coning / Doming"
+                        subtitle="Belly peaks like a tent when sitting up."
+                        selected={visualShape === "cone"}
+                        onSelect={() => {
+                          setVisualShape("cone");
+                          toastApi.show(
+                            "warning",
+                            "Note: Coning indicates weak tissue tension. We will fix this.",
+                            5200
+                          );
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div className="mt-7 flex flex-col gap-4">
-                  <VisualCard
-                    id="pooch"
-                    title="Lower Belly “Pooch”"
-                    subtitle="Bulge sits lower, especially by end of day."
-                    selected={visualShape === "pooch"}
-                    onSelect={() => {
-                      setVisualShape("pooch");
-                      toastApi.hide();
-                    }}
-                  />
-                  <VisualCard
-                    id="gap"
-                    title="Visible Gap / Trench"
-                    subtitle="A line or trench down the midline."
-                    selected={visualShape === "gap"}
-                    onSelect={() => {
-                      setVisualShape("gap");
-                      toastApi.hide();
-                    }}
-                  />
-                  <VisualCard
-                    id="cone"
-                    title="Coning / Doming"
-                    subtitle="Belly peaks like a tent when sitting up."
-                    selected={visualShape === "cone"}
-                    onSelect={() => {
-                      setVisualShape("cone");
-                      toastApi.show("warning", "Note: Coning indicates weak tissue tension. We will fix this.", 5200);
-                    }}
-                  />
-                </div>
-
-                <div className="mt-auto pt-8">
+                <div className="mt-auto shrink-0 pt-4 w-full max-w-md mx-auto">
                   <button
                     onClick={() => goTo(3)}
                     disabled={!visualShape}
@@ -2757,193 +2555,259 @@ export default function OnboardingWrapper() {
                     Continue
                   </button>
                 </div>
-              </div>
-            </motion.section>
-          )}
+              </motion.section>
+            )}
 
-          {/* Screens 3–4 (ONE continuous chat screen) */}
-          {(screen === 3 || screen === 4) && (
-            <motion.section
-              key="chat"
-              initial={{ opacity: 0, x: 22 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -22 }}
-              transition={{ duration: 0.38, ease: "easeOut" }}
-              className="flex-1 flex flex-col px-5 pt-6"
-              style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-            >
-              <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1">
-                {/* Back button removed */}
+            {/* Screens 3–4 (ONE continuous chat screen) */}
+            {(screen === 3 || screen === 4) && (
+              <motion.section
+                key="chat"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 flex flex-col h-full px-5"
+              >
+                <div className="w-full max-w-md mx-auto flex flex-col h-full">
+                  {/* Messages Area - Flex Grow & Scrollable */}
+                  <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar pr-1 flex flex-col justify-end pb-4 pt-4">
+                    <div>
+                      {chat.map((m, idx) => (
+                        <ChatBubble key={idx} from={m.from}>
+                          {m.text}
+                        </ChatBubble>
+                      ))}
+                      {miaTyping && <ChatBubble from="mia" typing />}
+                      <div ref={chatBottomRef} className="h-1" />
+                    </div>
+                  </div>
 
-                <div className="flex-1 min-h-0 mt-5 overflow-y-auto no-scrollbar pr-1">
-                  {chat.map((m, idx) => (
-                    <ChatBubble key={idx} from={m.from}>
-                      {m.text}
-                    </ChatBubble>
-                  ))}
-                  {miaTyping && <ChatBubble from="mia" typing />}
-                  <div ref={chatBottomRef} className="h-2" />
+                  {/* Input Area - Pinned to Bottom (shrink-0) */}
+                  <div className="shrink-0 pb-safe-bottom mb-4">
+                    <AnimatePresence mode="wait">
+                      {/* Name input (screen 3) */}
+                      {screen === 3 && (
+                        <motion.div
+                          key="nameBox"
+                          initial={{ opacity: 0, y: 14 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 14 }}
+                          transition={{ duration: 0.24 }}
+                          className="rounded-[28px] border border-white/12 bg-white/8 backdrop-blur-xl shadow-soft p-4"
+                        >
+                          <div className="text-white/60 text-xs font-semibold mb-2">
+                            Your name (for your medical file)
+                          </div>
+
+                          <input
+                            value={inputName}
+                            onChange={(e) => setInputName(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && submitName()}
+                            placeholder="Type your name..."
+                            className={[
+                              "w-full h-14 rounded-2xl px-4",
+                              "bg-black/20 border border-white/10",
+                              "text-white text-[18px] font-extrabold",
+                              "placeholder:text-white/30",
+                              "focus:outline-none focus:border-[color:var(--pink)]",
+                            ].join(" ")}
+                            autoFocus
+                          />
+
+                          <button
+                            onClick={submitName}
+                            disabled={inputName.trim().length < 2}
+                            className={[
+                              "mt-3 w-full rounded-full font-extrabold text-[16px] transition-all",
+                              inputName.trim().length >= 2
+                                ? "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)] active:scale-[0.985]"
+                                : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed",
+                            ].join(" ")}
+                            style={{ height: 52 }}
+                          >
+                            Continue
+                          </button>
+                        </motion.div>
+                      )}
+
+                      {/* Age picker (screen 4) */}
+                      {screen === 4 && (
+                        <motion.div
+                          key="ageBox"
+                          initial={{ opacity: 0, y: 14 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 14 }}
+                          transition={{ duration: 0.24 }}
+                          className="bg-white rounded-t-[34px] rounded-b-[24px] shadow-[0_-16px_60px_rgba(0,0,0,0.35)] p-5 pb-6"
+                        >
+                          <div className="text-center">
+                            <div className="text-slate-900 font-extrabold text-[18px]">Select your age</div>
+                            <div className="text-slate-500 text-[13px] font-semibold mt-1">
+                              This helps Mia tailor tissue recovery pacing.
+                            </div>
+                          </div>
+
+                          <WheelPicker min={18} max={70} value={ageValue} onChange={setAgeValue} />
+
+                          <button
+                            onClick={submitAge}
+                            className="mt-4 w-full h-14 rounded-full bg-[color:var(--pink)] text-white font-extrabold text-[17px] shadow-[0_18px_50px_rgba(230,84,115,0.30)] active:scale-[0.985] transition-transform"
+                          >
+                            Next
+                          </button>
+
+                          <div className="mt-3 text-center text-slate-400 text-[11px] font-semibold">
+                            Saved instantly • You can leave and resume anytime
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </div>
+              </motion.section>
+            )}
 
-                <AnimatePresence mode="wait">
-                  {/* Name input (screen 3) */}
-                  {screen === 3 && (
-                    <motion.div
-                      key="nameBox"
-                      initial={{ opacity: 0, y: 14 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 14 }}
-                      transition={{ duration: 0.24 }}
-                      className="mt-4 rounded-[28px] border border-white/12 bg-white/8 backdrop-blur-xl shadow-soft p-4"
-                      style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
-                    >
-                      <div className="text-white/60 text-xs font-semibold mb-2">Your name (for your medical file)</div>
+            {/* Screen 5 */}
+            {screen === 5 && (
+              <motion.section
+                key="s5"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 flex flex-col h-full"
+              >
+                <Step05FingerTest onBack={() => goTo(4)} onNext={() => goTo(6)} toast={toastApi} />
+              </motion.section>
+            )}
 
-                      <input
-                        value={inputName}
-                        onChange={(e) => setInputName(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && submitName()}
-                        placeholder="Type your name..."
-                        className={[
-                          "w-full h-14 rounded-2xl px-4",
-                          "bg-black/20 border border-white/10",
-                          "text-white text-[18px] font-extrabold",
-                          "placeholder:text-white/30",
-                          "focus:outline-none focus:border-[color:var(--pink)]",
-                        ].join(" ")}
-                        autoFocus
-                      />
+            {/* Screen 6 */}
+            {screen === 6 && (
+              <motion.section
+                key="s6"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 flex flex-col h-full"
+              >
+                <Step06TissueDepth onBack={() => goTo(5)} onNext={() => goTo(7)} toast={toastApi} />
+              </motion.section>
+            )}
 
-                      <button
-                        onClick={submitName}
-                        disabled={inputName.trim().length < 2}
-                        className={[
-                          "mt-3 w-full rounded-full font-extrabold text-[16px] transition-all",
-                          inputName.trim().length >= 2
-                            ? "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)] active:scale-[0.985]"
-                            : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed",
-                        ].join(" ")}
-                        style={{ height: 52 }}
-                      >
-                        Continue
-                      </button>
-                    </motion.div>
-                  )}
+            {/* Screen 7 */}
+            {screen === 7 && (
+              <motion.section
+                key="s7"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 flex flex-col h-full"
+              >
+                <Step07SabotageCheck onBack={() => goTo(6)} onNext={() => goTo(8)} toast={toastApi} />
+              </motion.section>
+            )}
 
-                  {/* Age picker (screen 4) */}
-                  {screen === 4 && (
-                    <motion.div
-                      key="ageBox"
-                      initial={{ opacity: 0, y: 14 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 14 }}
-                      transition={{ duration: 0.24 }}
-                      className="mt-4 bg-white rounded-t-[34px] shadow-[0_-16px_60px_rgba(0,0,0,0.35)] p-5 pb-6"
-                      style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 18px)" }}
-                    >
-                      <div className="text-center">
-                        <div className="text-slate-900 font-extrabold text-[18px]">Select your age</div>
-                        <div className="text-slate-500 text-[13px] font-semibold mt-1">
-                          This helps Mia tailor tissue recovery pacing.
-                        </div>
-                      </div>
+            {/* Screen 8 */}
+            {screen === 8 && (
+              <motion.section
+                key="s8"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 flex flex-col h-full"
+              >
+                <Step08Symptoms onBack={() => goTo(7)} onNext={() => goTo(9)} toast={toastApi} />
+              </motion.section>
+            )}
 
-                      <WheelPicker min={18} max={70} value={ageValue} onChange={setAgeValue} />
+            {/* Screen 9 */}
+            {screen === 9 && (
+              <motion.section
+                key="s9"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 flex flex-col h-full"
+              >
+                <Step09Timeline onBack={() => goTo(8)} onNext={() => goTo(10)} toast={toastApi} />
+              </motion.section>
+            )}
 
-                      <button
-                        onClick={submitAge}
-                        className="mt-4 w-full h-14 rounded-full bg-[color:var(--pink)] text-white font-extrabold text-[17px] shadow-[0_18px_50px_rgba(230,84,115,0.30)] active:scale-[0.985] transition-transform"
-                      >
-                        Next
-                      </button>
+            {/* Screen 10 */}
+            {screen === 10 && (
+              <motion.section
+                key="s10"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 flex flex-col h-full"
+              >
+                <Step10Navel onBack={() => goTo(9)} onNext={() => goTo(11)} toast={toastApi} />
+              </motion.section>
+            )}
 
-                      <div className="mt-3 text-center text-slate-400 text-[11px] font-semibold">
-                        Saved instantly • You can leave and resume anytime
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </motion.section>
-          )}
+            {/* Screen 11 */}
+            {screen === 11 && (
+              <motion.section
+                key="s11"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 flex flex-col h-full"
+              >
+                <Step11Commitment onBack={() => goTo(10)} onNext={() => goTo(12)} toast={toastApi} />
+              </motion.section>
+            )}
 
-          {/* Screen 5 */}
-          {screen === 5 && (
-            <motion.section key="s5" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
-              <Step05FingerTest onBack={() => goTo(4)} onNext={() => goTo(6)} toast={toastApi} />
-            </motion.section>
-          )}
+            {/* Screen 12 */}
+            {screen === 12 && (
+              <motion.section
+                key="s12"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 h-full"
+              >
+                <Step12Analysis onDone={() => goTo(13)} />
+              </motion.section>
+            )}
 
-          {/* Screen 6 */}
-          {screen === 6 && (
-            <motion.section key="s6" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
-              <Step06TissueDepth onBack={() => goTo(5)} onNext={() => goTo(7)} toast={toastApi} />
-            </motion.section>
-          )}
+            {/* Screen 13 */}
+            {screen === 13 && (
+              <motion.section
+                key="s13"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 flex flex-col h-full"
+              >
+                <Step13PlanReveal onBack={() => goTo(12)} onNext={() => goTo(14)} />
+              </motion.section>
+            )}
 
-          {/* Screen 7 */}
-          {screen === 7 && (
-            <motion.section key="s7" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
-              <Step07SabotageCheck onBack={() => goTo(6)} onNext={() => goTo(8)} toast={toastApi} />
-            </motion.section>
-          )}
-
-          {/* Screen 8 */}
-          {screen === 8 && (
-            <motion.section key="s8" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
-              <Step08Symptoms onBack={() => goTo(7)} onNext={() => goTo(9)} toast={toastApi} />
-            </motion.section>
-          )}
-
-          {/* Screen 9 */}
-          {screen === 9 && (
-            <motion.section key="s9" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
-              <Step09Timeline onBack={() => goTo(8)} onNext={() => goTo(10)} toast={toastApi} />
-            </motion.section>
-          )}
-
-          {/* Screen 10 */}
-          {screen === 10 && (
-            <motion.section key="s10" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
-              <Step10Navel onBack={() => goTo(9)} onNext={() => goTo(11)} toast={toastApi} />
-            </motion.section>
-          )}
-
-          {/* Screen 11 */}
-          {screen === 11 && (
-            <motion.section key="s11" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
-              <Step11Commitment onBack={() => goTo(10)} onNext={() => goTo(12)} toast={toastApi} />
-            </motion.section>
-          )}
-
-          {/* Screen 12 */}
-          {screen === 12 && (
-            <motion.section
-              key="s12"
-              initial={{ opacity: 0, x: 22 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -22 }}
-              transition={{ duration: 0.38, ease: "easeOut" }}
-              className="flex-1"
-            >
-              <Step12Analysis onDone={() => goTo(13)} />
-            </motion.section>
-          )}
-
-          {/* Screen 13 */}
-          {screen === 13 && (
-            <motion.section key="s13" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
-              <Step13PlanReveal onBack={() => goTo(12)} onNext={() => goTo(14)} />
-            </motion.section>
-          )}
-
-          {/* Screen 14 */}
-          {screen === 14 && (
-            <motion.section key="s14" initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -22 }} transition={{ duration: 0.38, ease: "easeOut" }} className="flex-1">
-              <Step14Paywall />
-            </motion.section>
-          )}
-        </AnimatePresence>
+            {/* Screen 14 */}
+            {screen === 14 && (
+              <motion.section
+                key="s14"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 h-full"
+              >
+                <Step14Paywall />
+              </motion.section>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </main>
   );
