@@ -105,50 +105,191 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
   );
 }
 
-function ShapeArt({ id }: { id: Exclude<VisualShape, null> }) {
-  if (id === "pooch") {
-    return (
-      <svg viewBox="0 0 320 140" className="w-full h-full">
-        <defs>
-          <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="rgba(255,255,255,0.10)" />
-            <stop offset="1" stopColor="rgba(230,84,115,0.18)" />
-          </linearGradient>
-        </defs>
-        <rect x="10" y="10" width="300" height="120" rx="22" fill="url(#g1)" />
-        <path d="M70 95c30-40 70-55 120-50 40 4 70 22 85 48" fill="none" stroke="rgba(255,255,255,0.65)" strokeWidth="10" strokeLinecap="round" />
-        <path d="M92 98c28-22 58-30 90-26 28 3 50 14 66 28" fill="none" stroke="rgba(210,235,255,0.55)" strokeWidth="6" strokeLinecap="round" />
-      </svg>
-    );
-  }
-  if (id === "gap") {
-    return (
-      <svg viewBox="0 0 320 140" className="w-full h-full">
-        <defs>
-          <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="rgba(255,255,255,0.10)" />
-            <stop offset="1" stopColor="rgba(120,200,255,0.12)" />
-          </linearGradient>
-        </defs>
-        <rect x="10" y="10" width="300" height="120" rx="22" fill="url(#g2)" />
-        <path d="M85 40c22-12 46-16 75-14 30 2 55 9 75 24" fill="none" stroke="rgba(255,255,255,0.65)" strokeWidth="10" strokeLinecap="round" />
-        <path d="M160 34v84" stroke="rgba(230,84,115,0.70)" strokeWidth="8" strokeLinecap="round" />
-        <path d="M160 34v84" stroke="rgba(255,255,255,0.25)" strokeWidth="14" strokeLinecap="round" />
-      </svg>
-    );
-  }
+// --- HIGH-VISIBILITY NAVY SHADERS ---
+const Defs = ({ p }: { p: string }) => (
+  <defs>
+    {/* 1. Background: Deep Navy instead of Black */}
+    <radialGradient id={`${p}-body-vol`} cx="50%" cy="40%" r="90%">
+      <stop offset="0%" stopColor="#334155" stopOpacity="1" /> {/* Lighter Slate */}
+      <stop offset="40%" stopColor="#1e293b" stopOpacity="1" /> {/* Dark Slate */}
+      <stop offset="100%" stopColor="#0f172a" stopOpacity="1" /> {/* Navy Base */}
+    </radialGradient>
+
+    {/* 2. Warmer, Brighter Core Glow */}
+    <radialGradient id={`${p}-warmth`} cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stopColor="#f472b6" stopOpacity="0.25" /> {/* Brighter Pink */}
+      <stop offset="100%" stopColor="#f472b6" stopOpacity="0" />
+    </radialGradient>
+
+    {/* 3. Skin Sheen - Higher Opacity for Visibility */}
+    <linearGradient id={`${p}-skin-sheen`} x1="0" y1="0" x2="1" y2="0.5">
+      <stop offset="0%" stopColor="#fff" stopOpacity="0.15" />
+      <stop offset="50%" stopColor="#fff" stopOpacity="0" />
+      <stop offset="100%" stopColor="#fff" stopOpacity="0.05" />
+    </linearGradient>
+
+    {/* 4. Navel Shadow - Adapted to Navy */}
+    <radialGradient id={`${p}-navel-shadow`} cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stopColor="#0f172a" stopOpacity="0.8" />
+      <stop offset="100%" stopColor="#0f172a" stopOpacity="0" />
+    </radialGradient>
+
+    {/* 5. Brighter Topology Lines */}
+    <linearGradient id={`${p}-topo`} x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stopColor="#818cf8" stopOpacity="0" />
+      <stop offset="50%" stopColor="#c7d2fe" stopOpacity="0.5" /> {/* Very bright Indigo */}
+      <stop offset="100%" stopColor="#818cf8" stopOpacity="0" />
+    </linearGradient>
+
+    {/* 6. Stronger Glow Filter */}
+    <filter id={`${p}-glow`} x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+      <feMerge>
+        <feMergeNode in="coloredBlur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    {/* 7. Texture - Lighter grain */}
+    <filter id={`${p}-tissue`} x="0%" y="0%" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" result="noise" />
+      <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.08 0" in="noise" result="coloredNoise" />
+      <feComposite operator="in" in="coloredNoise" in2="SourceGraphic" result="composite" />
+      <feBlend mode="overlay" in="composite" in2="SourceGraphic" />
+    </filter>
+  </defs>
+);
+
+function ShapeArt({
+  id,
+  showLabels = true,
+}: {
+  id: Exclude<VisualShape, null>;
+  showLabels?: boolean;
+}) {
+  const uid = React.useId();
+  const p = `md-${uid.replace(/:/g, "")}`;
+
+  const torsoPath = `
+    M 70 60 
+    C 70 60, 80 50, 100 50 
+    C 120 50, 130 60, 130 60 
+    C 138 75, 132 90, 128 100 
+    C 124 110, 134 130, 142 145 
+    C 146 155, 140 170, 130 180 
+    C 120 190, 80 190, 70 180 
+    C 60 170, 54 155, 58 145 
+    C 66 130, 76 110, 72 100 
+    C 68 90, 62 75, 70 60 Z
+  `;
+
+  const topoLines = [
+    "M 74 80 Q 100 95 126 80",
+    "M 72 100 Q 100 115 128 100",
+    "M 64 130 Q 100 155 136 130",
+    "M 70 160 Q 100 175 130 160",
+  ];
+
+  const navelX = 100;
+  const navelY = 120;
+
+  const callouts = {
+    pooch: { x: 100, y: 145, label: "Lower Abdomen", lx: 155, ly: 145 },
+    gap: { x: 100, y: 100, label: "Linea Alba", lx: 155, ly: 100 },
+    cone: { x: 100, y: 80, label: "Upper Core", lx: 155, ly: 70 },
+  };
+  
+  const c = id ? callouts[id] : null;
+
   return (
-    <svg viewBox="0 0 320 140" className="w-full h-full">
-      <defs>
-        <linearGradient id="g3" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="rgba(255,255,255,0.10)" />
-          <stop offset="1" stopColor="rgba(245,158,11,0.14)" />
-        </linearGradient>
-      </defs>
-      <rect x="10" y="10" width="300" height="120" rx="22" fill="url(#g3)" />
-      <path d="M70 102c36-58 70-78 90-78s54 20 90 78" fill="none" stroke="rgba(255,255,255,0.65)" strokeWidth="10" strokeLinecap="round" />
-      <path d="M140 70c10-16 18-24 20-24s10 8 20 24" fill="none" stroke="rgba(245,158,11,0.65)" strokeWidth="7" strokeLinecap="round" />
-    </svg>
+    // UPDATED CONTAINER: Navy Blue #1A1A26 (Matches app theme)
+    <div className="w-full h-full bg-[#1A1A26] relative overflow-hidden">
+      
+      {/* ZOOMED IN: Changed viewBox from "0 0 200 200" to "40 40 120 160" to crop out empty space */}
+      <svg viewBox="40 40 120 160" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
+        <Defs p={p} />
+
+        {/* --- BACKGROUND GLOW --- */}
+        <circle cx="100" cy="50" r="120" fill={`url(#${p}-warmth)`} opacity="0.15" />
+
+        {/* --- MAIN FIGURE --- */}
+        <g>
+            {/* 1. Base Volume (Brighter Navy) */}
+            <path d={torsoPath} fill={`url(#${p}-body-vol)`} />
+
+            {/* 2. Subsurface Warmth */}
+            <path d={torsoPath} fill={`url(#${p}-warmth)`} style={{ mixBlendMode: 'screen'}} />
+
+            {/* 3. Tissue Texture */}
+            <path d={torsoPath} fill="transparent" filter={`url(#${p}-tissue)`} opacity="0.8" />
+
+            {/* 4. Topology Lines (Thicker & Brighter) */}
+            <g opacity="0.3" stroke={`url(#${p}-topo)`} strokeWidth="1" fill="none">
+                {topoLines.map((d, i) => (
+                    <path key={i} d={d} strokeLinecap="round" />
+                ))}
+                <path d="M 100 60 Q 98 100 100 120 Q 102 140 100 175" /> 
+            </g>
+
+            {/* 5. Navel */}
+            <g opacity="0.7">
+                <ellipse cx={navelX} cy={navelY} rx="3" ry="1.5" fill={`url(#${p}-navel-shadow)`} />
+                <path d={`M ${navelX-2} ${navelY+0.5} Q ${navelX} ${navelY+2} ${navelX+2} ${navelY+0.5}`} stroke="#fff" strokeWidth="0.8" opacity="0.5" fill="none" />
+            </g>
+
+            {/* 6. Rim Light (Thicker) */}
+            <path d={torsoPath} stroke="white" strokeWidth="1" fill="none" opacity="0.2" />
+            <path d={torsoPath} fill="none" stroke={`url(#${p}-skin-sheen)`} strokeWidth="2.5" opacity="0.6" style={{ mixBlendMode: 'overlay'}} />
+        </g>
+
+        {/* --- ACTIVE ZONES (Thicker strokes + Brighter Colors) --- */}
+        
+        {id === "pooch" && (
+            <g filter={`url(#${p}-glow)`}>
+                <path d="M 75 135 Q 100 165 125 135 L 120 155 Q 100 175 80 155 Z" fill="#ff4d7d" opacity="0.3" style={{ mixBlendMode: 'screen'}}/>
+                <path d="M 75 135 Q 100 165 125 135" stroke="#ff4d7d" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.9" />
+                
+                <circle cx="100" cy="150" r="2" fill="#fff" />
+                <circle cx="100" cy="150" r="10" stroke="#fff" strokeWidth="0.8" strokeDasharray="2 2" opacity="0.7" />
+            </g>
+        )}
+
+        {id === "gap" && (
+             <g filter={`url(#${p}-glow)`}>
+                <path d="M 96 80 Q 94 100 96 115" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+                <path d="M 104 80 Q 106 100 104 115" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+                <rect x="98" y="80" width="4" height="35" fill="#6366f1" opacity="0.25" />
+                
+                <path d="M 90 95 L 96 95" stroke="#fff" strokeWidth="1.2" />
+                <path d="M 104 95 L 110 95" stroke="#fff" strokeWidth="1.2" />
+            </g>
+        )}
+
+        {id === "cone" && (
+             <g filter={`url(#${p}-glow)`}>
+                <path d="M 100 120 L 80 70 L 120 70 Z" fill={`url(#${p}-topo)`} opacity="0.5" style={{ mixBlendMode: 'screen'}} />
+                <path d="M 80 70 L 120 70" stroke="#fff" strokeWidth="1.2" opacity="0.7" />
+                <path d="M 100 120 L 80 70" stroke="#fff" strokeWidth="0.8" strokeDasharray="3 3" opacity="0.5" />
+                <path d="M 100 120 L 120 70" stroke="#fff" strokeWidth="0.8" strokeDasharray="3 3" opacity="0.5" />
+            </g>
+        )}
+
+        {/* --- UI OVERLAY --- */}
+        {c && showLabels && (
+          <g>
+            <line x1={c.x} y1={c.y} x2={c.lx - 5} y2={c.ly} stroke="white" strokeWidth="1.2" opacity="0.6" />
+            <circle cx={c.x} cy={c.y} r="2.5" fill="white" />
+            <g transform={`translate(${c.lx}, ${c.ly - 7})`}>
+                <rect width="80" height="16" rx="4" fill="#0f172a" fillOpacity="0.8" stroke="white" strokeOpacity="0.3" strokeWidth="0.8" />
+                <text x="40" y="11" textAnchor="middle" fontSize="9" fill="white" fontFamily="monospace" letterSpacing="0.5" fontWeight="bold">
+                    {c.label.toUpperCase()}
+                </text>
+            </g>
+          </g>
+        )}
+
+      </svg>
+    </div>
   );
 }
 
