@@ -61,15 +61,17 @@ export default function Step13PlanReveal({ onNext, onBack }: { onNext: () => voi
     list.push(`Based on your ${age}, we focus on collagen production.`);
     if ((sabotage || []).includes("planks")) list.push("We have removed Planks to protect your back.");
     if ((sabotage || []).includes("crunches")) list.push("Crunches are flagged as dangerous for your tissue tension.");
-    list.push(`Your daily commitment: ${commitment === "5-7" ? "5 Minutes" : commitment === "15" ? "15 Minutes" : "30 Minutes"}.`);
+    list.push(
+      `Your daily commitment: ${
+        commitment === "5-7" ? "5 Minutes" : commitment === "15" ? "15 Minutes" : "30 Minutes"
+      }.`
+    );
     return list;
   }, [age, commitment, sabotage]);
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col min-h-0 flex-1 px-6 pt-8 pb-10">
-      <button onClick={onBack} className="text-white/70 hover:text-white font-semibold w-fit">
-        ← Back
-      </button>
+      {/* Back button removed (prop kept for compatibility) */}
 
       <div className="mt-6 text-center">
         <h1 className="text-white font-extrabold text-[30px] leading-[1.08]" style={{ fontFamily: "var(--font-lora)" }}>
