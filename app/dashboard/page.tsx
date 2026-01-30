@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ChevronDown,
@@ -184,6 +185,26 @@ function PrimaryButton({
 }
 
 export default function DashboardTodayPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // ✅ If user lands on /dashboard?plan=monthly after payment,
+  // wait 5 seconds then remove ONLY the `plan` query param.
+  useEffect(() => {
+    const plan = searchParams.get("plan");
+    if (!plan) return;
+
+    const t = window.setTimeout(() => {
+      const next = new URLSearchParams(searchParams.toString());
+      next.delete("plan");
+
+      const qs = next.toString();
+      router.replace(qs ? `/dashboard?${qs}` : "/dashboard");
+    }, 5000);
+
+    return () => window.clearTimeout(t);
+  }, [router, searchParams]);
+
   const user = useUserStore();
   const [showWhy, setShowWhy] = useState(false);
 
@@ -220,8 +241,14 @@ export default function DashboardTodayPage() {
 
   const habitItems = useMemo(
     () => [
-      { id: "log_roll" as const, text: "Log roll out of bed (avoid a straight sit-up)." },
-      { id: "exhale_before_lift" as const, text: "Exhale before lifting (baby, laundry, groceries)." },
+      {
+        id: "log_roll" as const,
+        text: "Log roll out of bed (avoid a straight sit-up).",
+      },
+      {
+        id: "exhale_before_lift" as const,
+        text: "Exhale before lifting (baby, laundry, groceries).",
+      },
     ],
     []
   );
@@ -253,6 +280,7 @@ export default function DashboardTodayPage() {
   return (
     <main className="w-full max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div className="absolute inset-0 -z-10 bg-[color:var(--navy)]" />
+      {/* ✅ Butterfly background */}
       <div className="absolute inset-0 -z-10 pointer-events-none opacity-[0.22] blur-[0.6px]">
         <ButterflyBackground />
       </div>
@@ -345,8 +373,15 @@ export default function DashboardTodayPage() {
 
               <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2">
                 <StatTile label="Minutes" value={String(p.minutes)} sub="min" />
-                <StatTile label="Exercises" value={exerciseCountText} sub="moves" />
-                <StatTile label="Pressure" value={shortPressure(p.pressureLabel)} />
+                <StatTile
+                  label="Exercises"
+                  value={exerciseCountText}
+                  sub="moves"
+                />
+                <StatTile
+                  label="Pressure"
+                  value={shortPressure(p.pressureLabel)}
+                />
               </div>
             </div>
 
@@ -361,7 +396,11 @@ export default function DashboardTodayPage() {
               ].join(" ")}
               aria-label="Play first exercise"
             >
-              <Play className="text-[color:var(--pink)]" fill="currentColor" size={20} />
+              <Play
+                className="text-[color:var(--pink)]"
+                fill="currentColor"
+                size={20}
+              />
             </button>
           </div>
 
@@ -446,7 +485,9 @@ export default function DashboardTodayPage() {
         <Card className="p-5">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <div className="text-white font-extrabold text-[16px]">Daily Habits</div>
+              <div className="text-white font-extrabold text-[16px]">
+                Daily Habits
+              </div>
               <div className="text-white/55 text-[12px] font-semibold mt-1">
                 Small rules that protect your midline while it heals.
               </div>
@@ -484,7 +525,9 @@ export default function DashboardTodayPage() {
                   <input
                     type="checkbox"
                     checked={done}
-                    onChange={(e) => setHabitDone(p.dateISO, h.id, e.target.checked)}
+                    onChange={(e) =>
+                      setHabitDone(p.dateISO, h.id, e.target.checked)
+                    }
                     className="sr-only"
                   />
 
@@ -497,7 +540,10 @@ export default function DashboardTodayPage() {
                     ].join(" ")}
                   >
                     {done ? (
-                      <CheckCircle2 size={16} className="text-[color:var(--pink)]" />
+                      <CheckCircle2
+                        size={16}
+                        className="text-[color:var(--pink)]"
+                      />
                     ) : (
                       <div className="w-2 h-2 rounded-full bg-white/20" />
                     )}
@@ -525,10 +571,13 @@ export default function DashboardTodayPage() {
         {todaysCompletion?.completedAtISO && (
           <div className="text-center text-white/40 text-[11px] font-semibold">
             Completed at{" "}
-            {new Date(todaysCompletion.completedAtISO).toLocaleTimeString("en-US", {
-              hour: "numeric",
-              minute: "2-digit",
-            })}
+            {new Date(todaysCompletion.completedAtISO).toLocaleTimeString(
+              "en-US",
+              {
+                hour: "numeric",
+                minute: "2-digit",
+              }
+            )}
           </div>
         )}
       </div>
@@ -570,7 +619,9 @@ export default function DashboardTodayPage() {
               }}
             >
               <BadgeCheck size={18} />
-              {isComplete ? `Day ${p.dayNumber} Complete ✅` : "Mark Session Complete"}
+              {isComplete
+                ? `Day ${p.dayNumber} Complete ✅`
+                : "Mark Session Complete"}
             </PrimaryButton>
           </div>
         </div>
