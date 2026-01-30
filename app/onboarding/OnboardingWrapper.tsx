@@ -28,6 +28,7 @@ import {
   Loader2,
   Lock,
   Mail,
+  ArrowRight,
 } from "lucide-react";
 import { loadStripe, StripePaymentElementOptions } from "@stripe/stripe-js";
 import {
@@ -39,7 +40,6 @@ import {
 } from "@stripe/react-stripe-js";
 
 // --- External Component & Store Imports ---
-// Ensure these paths match your project structure
 import ButterflyBackground from "@/components/ButterflyBackground";
 import { Toast } from "@/components/Toast";
 import {
@@ -73,26 +73,21 @@ function Logo() {
       <img
         src="/logo.png"
         alt="Fix Diastasis"
-        className="w-16 h-16 object-contain drop-shadow"
+        className="w-16 h-16 object-contain drop-shadow mb-3"
         onError={(e) => {
           (e.currentTarget as HTMLImageElement).style.display = "none";
         }}
       />
-      <div className="mt-3 flex flex-col items-center justify-center">
-        <div className="text-white/70 text-xs font-extrabold tracking-[0.22em] uppercase leading-none mb-2">
-          CLINICAL ASSESSMENT
-        </div>
-        <div className="text-white font-extrabold text-xl tracking-tight leading-none">
-          Fix Diastasis
-        </div>
+      <div className="text-white/55 text-xs font-semibold tracking-wide uppercase leading-none mb-2">
+        CLINICAL ASSESSMENT
+      </div>
+      <div className="text-white font-extrabold text-lg tracking-tight leading-none">
+        Fix Diastasis
       </div>
     </div>
   );
 }
 
-/**
- * Progress bar attached to the top header.
- */
 function ProgressBar({ step, total }: { step: number; total: number }) {
   const pct = Math.max(0, Math.min(100, (step / total) * 100));
   return (
@@ -107,43 +102,33 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
   );
 }
 
-// --- HIGH-VISIBILITY NAVY SHADERS (WITH ORIGINAL BRAND COLORS) ---
+// --- VISUALS (Defs, ShapeArt, VisualCard) REMAIN UNCHANGED ---
+// (Included for completeness of the file structure)
 const Defs = ({ p }: { p: string }) => (
   <defs>
-    {/* 1. Background: Deep Navy Base */}
     <radialGradient id={`${p}-body-vol`} cx="50%" cy="40%" r="90%">
       <stop offset="0%" stopColor="#334155" stopOpacity="1" />
       <stop offset="40%" stopColor="#1e293b" stopOpacity="1" />
       <stop offset="100%" stopColor="#0f172a" stopOpacity="1" />
     </radialGradient>
-
-    {/* 2. Warmer Core Glow */}
     <radialGradient id={`${p}-warmth`} cx="50%" cy="50%" r="60%">
-      <stop offset="0%" stopColor="#E65473" stopOpacity="0.15" /> {/* Original Pink Tint */}
+      <stop offset="0%" stopColor="#E65473" stopOpacity="0.15" />
       <stop offset="100%" stopColor="#E65473" stopOpacity="0" />
     </radialGradient>
-
-    {/* 3. Skin Sheen */}
     <linearGradient id={`${p}-skin-sheen`} x1="0" y1="0" x2="1" y2="0.5">
       <stop offset="0%" stopColor="#fff" stopOpacity="0.15" />
       <stop offset="50%" stopColor="#fff" stopOpacity="0" />
       <stop offset="100%" stopColor="#fff" stopOpacity="0.05" />
     </linearGradient>
-
-    {/* 4. Navel Shadow */}
     <radialGradient id={`${p}-navel-shadow`} cx="50%" cy="50%" r="50%">
       <stop offset="0%" stopColor="#0f172a" stopOpacity="0.8" />
       <stop offset="100%" stopColor="#0f172a" stopOpacity="0" />
     </radialGradient>
-
-    {/* 5. Topology Lines Gradient */}
     <linearGradient id={`${p}-topo`} x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stopColor="#78C8FF" stopOpacity="0" />
-      <stop offset="50%" stopColor="#78C8FF" stopOpacity="0.4" /> {/* Original Blue Tint */}
+      <stop offset="50%" stopColor="#78C8FF" stopOpacity="0.4" />
       <stop offset="100%" stopColor="#78C8FF" stopOpacity="0" />
     </linearGradient>
-
-    {/* 6. Glow Filter */}
     <filter id={`${p}-glow`} x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="2" result="coloredBlur" />
       <feMerge>
@@ -151,8 +136,6 @@ const Defs = ({ p }: { p: string }) => (
         <feMergeNode in="SourceGraphic" />
       </feMerge>
     </filter>
-
-    {/* 7. Texture */}
     <filter id={`${p}-tissue`} x="0%" y="0%" width="100%" height="100%">
       <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" result="noise" />
       <feColorMatrix
@@ -164,22 +147,14 @@ const Defs = ({ p }: { p: string }) => (
       <feComposite operator="in" in="coloredNoise" in2="SourceGraphic" result="composite" />
       <feBlend mode="overlay" in="composite" in2="SourceGraphic" />
     </filter>
-
-    {/* 8. Active Zone Gradients (From Original Code) */}
-
-    {/* Pooch Gradient (Pink #E65473) */}
     <linearGradient id={`${p}-pooch-grad`} x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stopColor="rgba(255,255,255,0.10)" />
       <stop offset="1" stopColor="rgba(230,84,115,0.4)" />
     </linearGradient>
-
-    {/* Gap Gradient (Blue #78C8FF) */}
     <linearGradient id={`${p}-gap-grad`} x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stopColor="rgba(255,255,255,0.10)" />
       <stop offset="1" stopColor="rgba(120,200,255,0.4)" />
     </linearGradient>
-
-    {/* Cone Gradient (Amber #F59E0B) */}
     <linearGradient id={`${p}-cone-grad`} x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stopColor="rgba(255,255,255,0.10)" />
       <stop offset="1" stopColor="rgba(245,158,11,0.4)" />
@@ -196,66 +171,37 @@ function ShapeArt({
 }) {
   const uid = React.useId();
   const p = `md-${uid.replace(/:/g, "")}`;
-
-  const torsoPath = `
-    M 70 60 
-    C 70 60, 80 50, 100 50 
-    C 120 50, 130 60, 130 60 
-    C 138 75, 132 90, 128 100 
-    C 124 110, 134 130, 142 145 
-    C 146 155, 140 170, 130 180 
-    C 120 190, 80 190, 70 180 
-    C 60 170, 54 155, 58 145 
-    C 66 130, 76 110, 72 100 
-    C 68 90, 62 75, 70 60 Z
-  `;
-
+  const torsoPath = `M 70 60 C 70 60, 80 50, 100 50 C 120 50, 130 60, 130 60 C 138 75, 132 90, 128 100 C 124 110, 134 130, 142 145 C 146 155, 140 170, 130 180 C 120 190, 80 190, 70 180 C 60 170, 54 155, 58 145 C 66 130, 76 110, 72 100 C 68 90, 62 75, 70 60 Z`;
   const topoLines = [
     "M 74 80 Q 100 95 126 80",
     "M 72 100 Q 100 115 128 100",
     "M 64 130 Q 100 155 136 130",
     "M 70 160 Q 100 175 130 160",
   ];
-
   const navelX = 100;
   const navelY = 120;
-
   const callouts = {
     pooch: { x: 100, y: 145, label: "Lower Abdomen", lx: 155, ly: 145 },
     gap: { x: 100, y: 100, label: "Linea Alba", lx: 155, ly: 100 },
     cone: { x: 100, y: 80, label: "Upper Core", lx: 155, ly: 70 },
   };
-
   const c = id ? callouts[id] : null;
 
   return (
     <div className="w-full h-full bg-[#1A1A26] relative overflow-hidden">
       <svg viewBox="40 40 120 160" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
         <Defs p={p} />
-
-        {/* --- BACKGROUND GLOW --- */}
         <circle cx="100" cy="50" r="120" fill={`url(#${p}-warmth)`} opacity="0.15" />
-
-        {/* --- MAIN FIGURE --- */}
         <g>
-          {/* 1. Base Volume */}
           <path d={torsoPath} fill={`url(#${p}-body-vol)`} />
-
-          {/* 2. Subsurface Warmth */}
           <path d={torsoPath} fill={`url(#${p}-warmth)`} style={{ mixBlendMode: "screen" }} />
-
-          {/* 3. Tissue Texture */}
           <path d={torsoPath} fill="transparent" filter={`url(#${p}-tissue)`} opacity="0.8" />
-
-          {/* 4. Topology Lines (Thicker & Brighter) */}
           <g opacity="0.3" stroke={`url(#${p}-topo)`} strokeWidth="1" fill="none">
             {topoLines.map((d, i) => (
               <path key={i} d={d} strokeLinecap="round" />
             ))}
             <path d="M 100 60 Q 98 100 100 120 Q 102 140 100 175" />
           </g>
-
-          {/* 5. Navel */}
           <g opacity="0.7">
             <ellipse cx={navelX} cy={navelY} rx="3" ry="1.5" fill={`url(#${p}-navel-shadow)`} />
             <path
@@ -266,8 +212,6 @@ function ShapeArt({
               fill="none"
             />
           </g>
-
-          {/* 6. Rim Light */}
           <path d={torsoPath} stroke="white" strokeWidth="1" fill="none" opacity="0.2" />
           <path
             d={torsoPath}
@@ -278,19 +222,13 @@ function ShapeArt({
             style={{ mixBlendMode: "overlay" }}
           />
         </g>
-
-        {/* --- ACTIVE ZONES (Using Original Colors) --- */}
-
-        {/* POOCH: Pink #E65473 */}
         {id === "pooch" && (
           <g filter={`url(#${p}-glow)`}>
-            {/* Volume Fill with Gradient */}
             <path
               d="M 75 135 Q 100 165 125 135 L 120 155 Q 100 175 80 155 Z"
               fill={`url(#${p}-pooch-grad)`}
               style={{ mixBlendMode: "screen" }}
             />
-            {/* Stroke */}
             <path
               d="M 75 135 Q 100 165 125 135"
               stroke="#E65473"
@@ -299,40 +237,27 @@ function ShapeArt({
               strokeLinecap="round"
               opacity="1"
             />
-
             <circle cx="100" cy="150" r="2" fill="#fff" />
             <circle cx="100" cy="150" r="10" stroke="#E65473" strokeWidth="0.8" strokeDasharray="2 2" opacity="0.7" />
           </g>
         )}
-
-        {/* GAP: Blue #78C8FF */}
         {id === "gap" && (
           <g filter={`url(#${p}-glow)`}>
-            {/* Highlight Lines */}
             <path d="M 96 80 Q 94 100 96 115" stroke="#78C8FF" strokeWidth="2" strokeLinecap="round" opacity="1" />
             <path d="M 104 80 Q 106 100 104 115" stroke="#78C8FF" strokeWidth="2" strokeLinecap="round" opacity="1" />
-
-            {/* Center Fill Gradient */}
             <rect x="98" y="80" width="4" height="35" fill={`url(#${p}-gap-grad)`} opacity="0.6" />
-
             <path d="M 90 95 L 96 95" stroke="#fff" strokeWidth="1.2" />
             <path d="M 104 95 L 110 95" stroke="#fff" strokeWidth="1.2" />
           </g>
         )}
-
-        {/* CONE: Amber #F59E0B */}
         {id === "cone" && (
           <g filter={`url(#${p}-glow)`}>
-            {/* Cone Fill Gradient */}
             <path d="M 100 120 L 80 70 L 120 70 Z" fill={`url(#${p}-cone-grad)`} style={{ mixBlendMode: "screen" }} />
-            {/* Stroke */}
             <path d="M 80 70 L 120 70" stroke="#F59E0B" strokeWidth="1.5" opacity="1" />
             <path d="M 100 120 L 80 70" stroke="#F59E0B" strokeWidth="1" strokeDasharray="3 3" opacity="0.7" />
             <path d="M 100 120 L 120 70" stroke="#F59E0B" strokeWidth="1" strokeDasharray="3 3" opacity="0.7" />
           </g>
         )}
-
-        {/* --- UI OVERLAY --- */}
         {c && showLabels && (
           <g>
             <line x1={c.x} y1={c.y} x2={c.lx - 5} y2={c.ly} stroke="white" strokeWidth="1.2" opacity="0.6" />
@@ -521,12 +446,16 @@ function Benefit({ icon, title, sub }: { icon: React.ReactNode; title: string; s
   );
 }
 
-// ==========================================
-// STEPS 5-13 COMPONENTS
-// ==========================================
+// --- Steps 5-13 COMPONENTS UNCHANGED UNTIL Step14Paywall ---
+// (Re-using standard inputs for Steps 5-13 to maintain context)
 
-// --- Step 5: Finger Test ---
-const step05Options: Array<{ gap: Exclude<FingerGap, null>; title: string; sub: string; tone: ToastTone; toast: string }> = [
+const step05Options: Array<{
+  gap: Exclude<FingerGap, null>;
+  title: string;
+  sub: string;
+  tone: ToastTone;
+  toast: string;
+}> = [
   { gap: 1, title: "1 Finger", sub: "Normal", tone: "success", toast: "Great news. We focus on maintenance and strengthening." },
   { gap: 2, title: "2 Fingers", sub: "Mild", tone: "info", toast: "Very common. Highly treatable in 8 weeks." },
   { gap: 3, title: "3 Fingers", sub: "Moderate", tone: "warning", toast: "Significant separation detected. 'No-Crunch' protocol activated." },
@@ -610,7 +539,6 @@ function Step05FingerTest({ onNext, onBack, toast }: { onNext: () => void; onBac
   );
 }
 
-// --- Step 6: Tissue Depth ---
 const step06Opts: Array<{ id: Exclude<TissueDepth, null>; title: string; sub: string; icon: React.ReactNode }> = [
   { id: "firm", title: "Firm", sub: "Like hitting a trampoline.", icon: <Activity className="text-white" size={22} /> },
   { id: "soft", title: "Soft", sub: "Like sinking into a marshmallow.", icon: <Waves className="text-white" size={22} /> },
@@ -709,7 +637,6 @@ function Step06TissueDepth({ onNext, onBack, toast }: { onNext: () => void; onBa
   );
 }
 
-// --- Step 7: Sabotage Check ---
 const step07Options = [
   { id: "crunches", label: "Crunches / Sit-ups", redFlag: true },
   { id: "planks", label: "Planks / Push-ups", redFlag: true },
@@ -733,7 +660,9 @@ function Step07Chip({
       onClick={onClick}
       className={[
         "w-full rounded-2xl border px-4 py-4 text-left transition-all duration-300 active:scale-[0.99] min-h-[56px]",
-        selected ? "border-[color:var(--pink)] bg-white/12 shadow-[0_0_0_5px_rgba(230,84,115,0.10)]" : "border-white/12 bg-white/8 hover:border-white/20",
+        selected
+          ? "border-[color:var(--pink)] bg-white/12 shadow-[0_0_0_5px_rgba(230,84,115,0.10)]"
+          : "border-white/12 bg-white/8 hover:border-white/20",
       ].join(" ")}
     >
       <div className="flex items-center justify-between gap-3">
@@ -860,7 +789,6 @@ function Step07SabotageCheck({ onNext, onBack, toast }: { onNext: () => void; on
   );
 }
 
-// --- Step 8: Symptoms ---
 const step08Options = [
   { id: "backPain", label: "Lower Back Pain", icon: <PersonStanding className="text-white" size={20} /> },
   { id: "incontinence", label: "Leaking when sneezing", icon: <Droplets className="text-white" size={20} /> },
@@ -868,13 +796,25 @@ const step08Options = [
   { id: "pelvicPain", label: "Pelvic Pain", icon: <HeartPulse className="text-white" size={20} /> },
 ];
 
-function Step08Row({ selected, onClick, label, icon }: { selected: boolean; onClick: () => void; label: string; icon: React.ReactNode }) {
+function Step08Row({
+  selected,
+  onClick,
+  label,
+  icon,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  label: string;
+  icon: React.ReactNode;
+}) {
   return (
     <button
       onClick={onClick}
       className={[
         "w-full rounded-2xl border px-4 py-4 text-left transition-all duration-300 active:scale-[0.99] min-h-[56px]",
-        selected ? "border-[color:var(--pink)] bg-white/12 shadow-[0_0_0_5px_rgba(230,84,115,0.10)]" : "border-white/12 bg-white/8 hover:border-white/20",
+        selected
+          ? "border-[color:var(--pink)] bg-white/12 shadow-[0_0_0_5px_rgba(230,84,115,0.10)]"
+          : "border-white/12 bg-white/8 hover:border-white/20",
       ].join(" ")}
     >
       <div className="flex items-center gap-3">
@@ -925,7 +865,6 @@ function Step08Symptoms({ onNext, onBack, toast }: { onNext: () => void; onBack:
   );
 }
 
-// --- Step 9: Timeline ---
 const step09Options: Array<{ id: Exclude<PostpartumTimeline, null>; label: string }> = [
   { id: "pregnant", label: "Currently Pregnant" },
   { id: "0-6", label: "0–6 Months ago" },
@@ -999,7 +938,6 @@ function Step09Timeline({ onNext, onBack, toast }: { onNext: () => void; onBack:
   );
 }
 
-// --- Step 10: Navel ---
 const step10Options: Array<{ id: Exclude<NavelAssessment, null>; label: string; note?: string }> = [
   { id: "outie", label: "It pokes out (Outie)." },
   { id: "flat", label: "It disappeared / stretches flat." },
@@ -1083,7 +1021,6 @@ function Step10Navel({ onNext, onBack, toast }: { onNext: () => void; onBack: ()
   );
 }
 
-// --- Step 11: Commitment ---
 const step11Options: Array<{ id: Exclude<Commitment, null>; label: string; badge?: string }> = [
   { id: "5-7", label: "5–7 Minutes", badge: "Most Successful • Physio Recommended" },
   { id: "15", label: "15 Minutes" },
@@ -1163,7 +1100,6 @@ function Step11Commitment({ onNext, onBack, toast }: { onNext: () => void; onBac
   );
 }
 
-// --- Step 12: Analysis ---
 function AICoreView() {
   return (
     <div className="relative w-44 h-44 flex items-center justify-center">
@@ -1208,7 +1144,11 @@ function Step12Analysis({ onDone }: { onDone: () => void }) {
   const name = useUserStore((s) => s.name) || "there";
   const sabotage = useUserStore((s) => s.sabotageExercises);
   const lines = useMemo(() => {
-    const base = [`Analyzing Linea Alba density for ${name}...`, "Calculating Gap Closure trajectory...", "Identifying harmful exercises in current routine..."];
+    const base = [
+      `Analyzing Linea Alba density for ${name}...`,
+      "Calculating Gap Closure trajectory...",
+      "Identifying harmful exercises in current routine...",
+    ];
     if ((sabotage || []).includes("crunches")) base.push("Flagging 'Crunches' as dangerous...");
     base.push("Building 12-Week 'No-Crunch' Protocol...");
     base.push("Calibration Complete.");
@@ -1252,7 +1192,6 @@ function Step12Analysis({ onDone }: { onDone: () => void }) {
   );
 }
 
-// --- Step 13: Plan Reveal ---
 function HolographicTimeline() {
   return (
     <div className="w-full h-40 relative my-4">
@@ -1267,15 +1206,7 @@ function HolographicTimeline() {
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
         </defs>
-        <path
-          d="M 14,118 C 92,132 192,44 326,28"
-          fill="none"
-          stroke="url(#lineGradient)"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          filter="url(#glow)"
-        />
+        <path d="M 14,118 C 92,132 192,44 326,28" fill="none" stroke="url(#lineGradient)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" filter="url(#glow)" />
         <circle cx="14" cy="118" r="5" fill="#ffefef" />
         <text x="14" y="140" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="11">
           Today
@@ -1404,11 +1335,7 @@ const CheckoutForm = ({ onClose }: { onClose: () => void }) => {
       onSubmit={handleSubmit}
       className="w-full max-w-md bg-[#1A1A26] p-6 rounded-[32px] border border-white/10 shadow-[0_50px_120px_rgba(0,0,0,0.7)] animate-in slide-in-from-bottom-10 fade-in duration-500 relative my-auto mx-4"
     >
-      <button
-        type="button"
-        onClick={onClose}
-        className="absolute top-5 right-5 p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors z-10"
-      >
+      <button type="button" onClick={onClose} className="absolute top-5 right-5 p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors z-10">
         <X size={20} className="text-white/70" />
       </button>
       <div className="mb-6">
@@ -1429,7 +1356,7 @@ const CheckoutForm = ({ onClose }: { onClose: () => void }) => {
         id="submit"
         className="mt-6 w-full h-14 rounded-full bg-gradient-to-r from-[color:var(--pink)] to-[#C23A5B] text-white font-extrabold text-[17px] shadow-[0_10px_40px_rgba(230,84,115,0.4)] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
       >
-        {isLoading ? <Loader2 className="animate-spin" /> : "Unlock My Protocol ($24.99)"}
+        {isLoading ? <Loader2 className="animate-spin" /> : "Start My Healing ($24.99)"}
       </button>
       <div className="flex items-center justify-center gap-2 mt-4 text-white/30 text-[11px] font-semibold">
         <Lock size={12} /> 256-bit SSL Secure Payment
@@ -1521,7 +1448,9 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
 
 function Step14Paywall() {
   const { name } = useUserData();
-  const [activeFeatureIndex, setActiveFeatureIndex] = useState(0);
+  // Get the finger gap to personalize the copy
+  const fingerGap = useUserStore((s) => s.fingerGap);
+
   const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
   const [userCount, setUserCount] = useState(10150);
   const [showContent, setShowContent] = useState(false);
@@ -1533,6 +1462,8 @@ function Step14Paywall() {
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const [dateString, setDateString] = useState("");
   const displayReview = useMemo(() => REVIEWS[currentReviewIndex], [currentReviewIndex]);
+
+  const safeName = (name || "").trim();
 
   useEffect(() => {
     setShowContent(true);
@@ -1603,15 +1534,14 @@ function Step14Paywall() {
       borderRadius: "16px",
     },
   };
-
   const getCtaSubtext = () => {
     if (!dateString) return "";
-    return `Feel real progress by ${dateString}. If not, one tap full $24.99 refund.`;
+    return `See visual results by ${dateString}.`;
   };
 
   return (
     <div className="relative w-full h-full flex flex-col bg-[#1A1A26] overflow-hidden">
-      {/* Video Background (FULL SCREEN) */}
+      {/* Video Background */}
       <div className="absolute inset-0 z-0">
         <video
           autoPlay
@@ -1630,39 +1560,39 @@ function Step14Paywall() {
 
       {/* Scrollable Content */}
       <div
-        className={`z-10 flex-1 flex flex-col overflow-y-auto no-scrollbar px-6 transition-all duration-700 ${
+        className={`z-10 flex-1 flex flex-col overflow-y-auto no-scrollbar pt-14 pb-48 px-6 transition-all duration-700 ${
           showContent ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
         }`}
-        style={{
-          paddingTop: "calc(env(safe-area-inset-top) + 56px)",
-          paddingBottom: "160px",
-        }}
       >
+        {/* Urgent Badge */}
         <div className="flex justify-center mb-6">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/10 backdrop-blur-md shadow-lg">
-            <Lock size={14} className="text-white/90" />
-            <span className="text-[11px] font-extrabold text-white tracking-widest uppercase">Clinical Protocol Locked</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[color:var(--pink)]/30 bg-[color:var(--pink)]/10 backdrop-blur-md shadow-lg">
+            <Activity size={14} className="text-[color:var(--pink)] animate-pulse" />
+            <span className="text-[11px] font-extrabold text-white tracking-widest uppercase">Analysis Complete • High Priority</span>
           </div>
         </div>
 
-        <h1 className="text-[34px] font-extrabold text-white text-center mb-4 leading-[1.1] drop-shadow-xl" style={{ fontFamily: "var(--font-lora)" }}>
-          <span className="text-white/90">{name}, your repair</span>
+        {/* HIGH CONVERSION HEADLINE CHANGE */}
+        <h1
+          className="text-[36px] font-extrabold text-white text-center mb-4 leading-[1.05] drop-shadow-xl"
+          style={{ fontFamily: "var(--font-lora)" }}
+        >
+          <span className="text-white/90">{safeName ? `${safeName}, ` : ""}Heal your separation.</span>
           <br />
-          <span className="text-[color:var(--pink)]">protocol is ready.</span>
+          <span className="text-[color:var(--pink)]">Avoid surgery.</span>
         </h1>
 
-        <p className="text-center text-white/70 text-[15px] font-medium leading-relaxed mb-8 max-w-xs mx-auto">
-          Join <span className="text-white font-bold">{userCount.toLocaleString()}+ women</span> who closed their gap without surgery.
+        {/* PAIN-AGITATING SUBHEAD */}
+        <p className="text-center text-white/80 text-[16px] font-medium leading-relaxed mb-8 max-w-xs mx-auto">
+          Your customized 12-week plan to close your{" "}
+          <span className="text-white font-extrabold border-b border-white/30">{fingerGap ?? "2+"} finger gap</span> and flatten your stomach.
         </p>
 
+        {/* Reviews Section */}
         <div className="w-full bg-black/20 backdrop-blur-md border border-white/10 rounded-[28px] p-5 flex flex-col items-center gap-4 mb-8">
           <div className="flex items-center gap-1.5">
             <span className="text-[20px] font-bold text-white">4.9</span>
-            <div className="flex text-yellow-400 gap-0.5">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} size={16} fill="currentColor" />
-              ))}
-            </div>
+            <div className="flex text-yellow-400 gap-0.5">{[...Array(5)].map((_, i) => (<Star key={i} size={16} fill="currentColor" />))}</div>
             <span className="text-[11px] font-bold text-white/50 uppercase ml-1 tracking-wide">Doctor Approved</span>
           </div>
 
