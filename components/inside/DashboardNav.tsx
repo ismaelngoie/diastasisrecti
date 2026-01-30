@@ -7,9 +7,9 @@ import { CalendarDays, Home, Library, MessageCircle, Activity } from "lucide-rea
 const tabs = [
   { href: "/dashboard", label: "Today", icon: Home },
   { href: "/dashboard/plan", label: "Plan", icon: CalendarDays },
-  { href: "/dashboard/gap", label: "Gap Lab", icon: Activity },
-  { href: "/dashboard/library", label: "Library", icon: Library },
-  { href: "/dashboard/coach", label: "Coach", icon: MessageCircle }
+  { href: "/dashboard/gap", label: "Check-in", icon: Activity },
+  { href: "/dashboard/library", label: "Exercises", icon: Library },
+  { href: "/dashboard/coach", label: "Coach", icon: MessageCircle },
 ];
 
 export default function DashboardNav() {
@@ -29,7 +29,7 @@ export default function DashboardNav() {
               href={t.href}
               className={[
                 "flex flex-col items-center justify-center gap-1 w-[64px] py-2 rounded-2xl transition-all",
-                active ? "bg-white/8" : "opacity-70 hover:opacity-100"
+                active ? "bg-white/8" : "opacity-70 hover:opacity-100",
               ].join(" ")}
             >
               <Icon size={18} className={active ? "text-[color:var(--pink)]" : "text-white"} />
