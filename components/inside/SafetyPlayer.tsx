@@ -7,7 +7,6 @@ import { pelvicReleaseVideos, toVideoItems } from "@/lib/videoCatalog";
 import { useUserStore } from "@/lib/store/useUserStore";
 
 function BreathingPacer() {
-  // inhale 4s, exhale 6s
   return (
     <div className="absolute top-4 left-4 z-20">
       <div className="text-white/60 text-[10px] font-extrabold tracking-widest uppercase mb-2">
@@ -19,8 +18,8 @@ function BreathingPacer() {
         <style>{`
           @keyframes pacer {
             0% { transform: scale(0.72); opacity: 0.65; }
-            40% { transform: scale(1.05); opacity: 0.9; } /* inhale */
-            100% { transform: scale(0.72); opacity: 0.65; } /* exhale */
+            40% { transform: scale(1.05); opacity: 0.9; }
+            100% { transform: scale(0.72); opacity: 0.65; }
           }
         `}</style>
       </div>
@@ -32,11 +31,9 @@ function FormGuardToast() {
   return (
     <div className="absolute top-4 right-4 z-20 max-w-[220px]">
       <div className="rounded-2xl border border-white/12 bg-black/45 backdrop-blur-xl px-3 py-2 shadow-soft">
-        <div className="text-white text-[12px] font-extrabold">
-          ⚠️ Watch for Coning
-        </div>
+        <div className="text-white text-[12px] font-extrabold">⚠️ Watch for Coning</div>
         <div className="text-white/70 text-[11px] font-semibold mt-1 leading-snug">
-          If belly pops out, stop. Reduce load.
+          If your belly domes, stop. Reduce the load.
         </div>
       </div>
     </div>
@@ -46,7 +43,7 @@ function FormGuardToast() {
 export default function SafetyPlayer({
   initialUrl,
   title,
-  onClose
+  onClose,
 }: {
   initialUrl: string;
   title: string;
@@ -58,11 +55,11 @@ export default function SafetyPlayer({
 
   const addPainLog = useUserStore((s) => s.addPainLog);
 
-  const releasePool = useMemo(() => toVideoItems(pelvicReleaseVideos), []);
-  const pickRelease = () => {
-    if (!releasePool.length) return initialUrl;
-    const idx = Math.floor(Math.random() * releasePool.length);
-    return releasePool[idx].url;
+  const decompressionPool = useMemo(() => toVideoItems(pelvicReleaseVideos), []);
+  const pickDecompression = () => {
+    if (!decompressionPool.length) return initialUrl;
+    const idx = Math.floor(Math.random() * decompressionPool.length);
+    return decompressionPool[idx].url;
   };
 
   const dateISO = new Date().toISOString().slice(0, 10);
@@ -77,13 +74,13 @@ export default function SafetyPlayer({
   };
 
   const doSwap = () => {
-    const next = pickRelease();
+    const next = pickDecompression();
     addPainLog({
       ts: new Date().toISOString(),
       dateISO,
       currentVideoUrl: url,
       swappedToUrl: next,
-      note: "User reported pain/pressure. Switched to Pelvic Release."
+      note: "User reported pain/pulling. Switched to lower-pressure decompression movement.",
     });
     setUrl(next);
     setShowPainModal(false);
@@ -95,7 +92,10 @@ export default function SafetyPlayer({
       <div className="w-full max-w-md rounded-3xl overflow-hidden border border-white/12 bg-[#0F0F17] shadow-[0_40px_140px_rgba(0,0,0,0.7)]">
         <div className="p-4 flex items-center justify-between border-b border-white/10">
           <div className="text-white font-extrabold text-[14px] truncate">{title}</div>
-          <button onClick={onClose} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center">
+          <button
+            onClick={onClose}
+            className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center"
+          >
             <X className="text-white" size={18} />
           </button>
         </div>
@@ -104,13 +104,7 @@ export default function SafetyPlayer({
           <BreathingPacer />
           <FormGuardToast />
 
-          <video
-            ref={videoRef}
-            src={url}
-            controls
-            playsInline
-            className="w-full aspect-video bg-black"
-          />
+          <video ref={videoRef} src={url} controls playsInline className="w-full aspect-video bg-black" />
 
           <div className="p-4">
             <button
@@ -118,11 +112,11 @@ export default function SafetyPlayer({
               className="w-full h-12 rounded-full border border-red-500/25 bg-red-500/10 text-red-100 font-extrabold inline-flex items-center justify-center gap-2 active:scale-[0.985] transition-transform"
             >
               <AlertTriangle size={18} />
-              I feel pain / pressure
+              I feel pain / pulling
             </button>
 
             <div className="mt-3 text-white/50 text-[11px] font-semibold leading-relaxed">
-              Pain is data. We stop and switch to safer tissue-loading immediately.
+              Pain is data. We stop and switch to a lower-pressure option immediately.
             </div>
           </div>
         </div>
@@ -147,8 +141,8 @@ export default function SafetyPlayer({
             >
               <div className="text-white font-extrabold text-[18px]">Let’s stop.</div>
               <div className="text-white/70 text-[13px] font-semibold mt-2 leading-relaxed">
-                Your tissue isn’t ready for this load. Switching to{" "}
-                <span className="text-white font-extrabold">Pelvic Release</span>.
+                Your tissue isn’t ready for this load. Switching to a{" "}
+                <span className="text-white font-extrabold">Decompression</span> move.
               </div>
 
               <button
