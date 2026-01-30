@@ -2604,22 +2604,22 @@ export default function OnboardingWrapper() {
                       className="text-center text-[34px] leading-[1.08] font-extrabold text-white drop-shadow-sm"
                       style={{ fontFamily: "var(--font-lora)" }}
                     >
-                      Diastasis Recti Recovery.
+                      Heal Your Core Separation.
                       <br />
-                      Safe core rehab — no crunches.
+                      Without Surgery.
                     </h1>
 
                     <p className="text-center text-white/70 mt-4 text-[15px] leading-relaxed max-w-sm">
-                      A guided assessment and plan designed for abdominal separation of{" "}
-                      <span className="text-white font-semibold">2+ finger widths</span>.
+                      The only AI-driven protocol designed to close Diastasis Recti gaps of{" "}
+                      <span className="text-white font-semibold">2+ fingers</span>.
                     </p>
 
                     <div className="w-full mt-10 rounded-3xl border border-white/15 bg-white/8 backdrop-blur-xl shadow-soft p-5">
                       <div className="flex flex-col gap-4">
                         <Benefit
                           icon={<Stethoscope className="text-white" size={22} />}
-                          title="Clinical-style assessment"
-                          sub="Simple checks to flag pressure and safety needs."
+                          title="Medical-Grade Assessment"
+                          sub="Clinical logic + immediate personalized flags."
                         />
                         <Benefit
                           icon={<Ban className="text-white" size={22} />}
@@ -2628,14 +2628,14 @@ export default function OnboardingWrapper() {
                         />
                         <Benefit
                           icon={<Sparkles className="text-white" size={22} />}
-                          title="Structured 12-week progression"
+                          title="Visible Results in 12 Weeks"
                           sub="Short daily sessions with step-by-step progression."
                         />
                       </div>
                     </div>
 
                     <div className="mt-6 text-center text-white/55 text-xs font-semibold pb-6">
-                      Postpartum-safe • Evidence-informed • Gentle progressions
+                      Designed for postpartum bodies • Evidence-informed • Gentle progressions
                     </div>
                   </div>
                 </div>
