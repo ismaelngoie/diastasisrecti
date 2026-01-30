@@ -104,6 +104,13 @@ const CheckoutForm = ({ onClose }: { onClose: () => void }) => {
       setPremium(true);
       setJoinDate(new Date().toISOString());
 
+      // keep name stable (also avoids unused lint)
+      const currentName = (useUserData.getState().name || "").toString();
+      if (currentName) setName(currentName);
+
+      // ✅ MARK ONBOARDING DONE so /dashboard doesn't redirect back to onboarding
+      useUserData.getState().setOnboardingStep(14);
+
       // ✅ AUTO-START DRY SEAL IF USER HAS LEAKS
       const symptoms = useUserData.getState().symptoms || [];
       if (symptoms.includes("incontinence")) {
@@ -212,6 +219,9 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
         setJoinDate(new Date().toISOString());
         if (data.customerName) setName(data.customerName);
 
+        // ✅ MARK ONBOARDING DONE so /dashboard doesn't redirect back to onboarding
+        useUserData.getState().setOnboardingStep(14);
+
         // ✅ AUTO-START DRY SEAL IF USER HAS LEAKS
         const symptoms = useUserData.getState().symptoms || [];
         if (symptoms.includes("incontinence")) {
@@ -278,6 +288,7 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
 };
 
 export default function Step14Paywall() {
+  const router = useRouter();
   const { name } = useUserData();
 
   const [activeFeatureIndex, setActiveFeatureIndex] = useState(0);
@@ -292,17 +303,43 @@ export default function Step14Paywall() {
   const [showRestoreModal, setShowRestoreModal] = useState(false);
   const [isButtonLoading, setIsButtonLoading] = useState(false);
 
+  const [dateString, setDateString] = useState("");
+  const [isCompact, setIsCompact] = useState(false);
+
   const displayReview = useMemo(() => REVIEWS[currentReviewIndex], [currentReviewIndex]);
+
+  // Redirect if already premium
+  useEffect(() => {
+    try {
+      if (useUserData.getState().isPremium) router.replace(DASHBOARD_PATH);
+    } catch {}
+  }, [router]);
 
   useEffect(() => {
     setShowContent(true);
+
+    // 12 weeks from now
+    const d = new Date();
+    d.setDate(d.getDate() + 84);
+    setDateString(
+      d.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      })
+    );
+
+    // compact mode for short screens to keep everything visible without scroll
+    const calc = () => {
+      if (typeof window === "undefined") return;
+      setIsCompact(window.innerHeight < 760);
+    };
+    calc();
+    window.addEventListener("resize", calc);
+    return () => window.removeEventListener("resize", calc);
   }, []);
 
   useEffect(() => {
-    const featureTimer = setInterval(
-      () => setActiveFeatureIndex((p) => (p + 1) % MEDICAL_FEATURES.length),
-      3000
-    );
+    const featureTimer = setInterval(() => setActiveFeatureIndex((p) => (p + 1) % MEDICAL_FEATURES.length), 3000);
     const reviewTimer = setInterval(() => setCurrentReviewIndex((p) => (p + 1) % REVIEWS.length), 5000);
     return () => {
       clearInterval(featureTimer);
@@ -376,7 +413,7 @@ export default function Step14Paywall() {
   };
 
   return (
-    <div className="relative w-full h-full flex flex-col bg-[#1A1A26] overflow-hidden">
+    <div className="relative w-full min-h-[100dvh] flex flex-col bg-[#1A1A26] overflow-hidden">
       {/* Video Background */}
       <div className="absolute inset-0 z-0">
         <video
@@ -386,9 +423,7 @@ export default function Step14Paywall() {
           playsInline
           preload="auto"
           onLoadedData={() => setVideoLoaded(true)}
-          className={`w-full h-full object-cover transition-opacity duration-1000 ${
-            videoLoaded ? "opacity-60" : "opacity-0"
-          }`}
+          className={`w-full h-full object-cover transition-opacity duration-1000 ${videoLoaded ? "opacity-60" : "opacity-0"}`}
         >
           <source src="/paywall_video.mp4" type="video/mp4" />
         </video>
@@ -396,13 +431,18 @@ export default function Step14Paywall() {
         <div className="absolute inset-0 bg-black/40" />
       </div>
 
-      {/* Scrollable Content */}
+      {/* No-scroll Layout (scaled on short screens) */}
       <div
-        className={`z-10 flex-1 flex flex-col overflow-y-auto no-scrollbar pt-14 pb-40 px-6 transition-all duration-700 ${
+        className={`relative z-10 flex-1 flex flex-col px-6 pt-10 pb-8 transition-all duration-700 ${
           showContent ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
         }`}
+        style={{
+          transform: isCompact ? "scale(0.92)" : undefined,
+          transformOrigin: "top center",
+        }}
       >
-        <div className="flex justify-center mb-6">
+        {/* Header Badge */}
+        <div className="flex justify-center mb-5">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/10 backdrop-blur-md shadow-lg">
             <Lock size={14} className="text-white/90" />
             <span className="text-[11px] font-extrabold text-white tracking-widest uppercase">
@@ -411,8 +451,11 @@ export default function Step14Paywall() {
           </div>
         </div>
 
+        {/* Headline */}
         <h1
-          className="text-[34px] font-extrabold text-white text-center mb-4 leading-[1.1] drop-shadow-xl"
+          className={`font-extrabold text-white text-center leading-[1.1] drop-shadow-xl ${
+            isCompact ? "text-[30px] mb-3" : "text-[34px] mb-4"
+          }`}
           style={{ fontFamily: "var(--font-lora)" }}
         >
           <span className="text-white/90">{name}, your repair</span>
@@ -420,12 +463,17 @@ export default function Step14Paywall() {
           <span className="text-[color:var(--pink)]">protocol is ready.</span>
         </h1>
 
-        <p className="text-center text-white/70 text-[15px] font-medium leading-relaxed mb-8 max-w-xs mx-auto">
+        <p
+          className={`text-center text-white/70 font-medium leading-relaxed max-w-xs mx-auto ${
+            isCompact ? "text-[14px] mb-5" : "text-[15px] mb-6"
+          }`}
+        >
           Join <span className="text-white font-bold">{userCount.toLocaleString()}+ women</span> who closed their gap
           without surgery.
         </p>
 
-        <div className="w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 mb-6 shadow-2xl relative overflow-hidden">
+        {/* Medical Features Carousel */}
+        <div className={`w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 shadow-2xl relative overflow-hidden ${isCompact ? "mb-4" : "mb-5"}`}>
           <div className="absolute top-0 left-0 w-full h-1 bg-white/10">
             <motion.div
               className="h-full bg-[color:var(--pink)]"
@@ -465,7 +513,8 @@ export default function Step14Paywall() {
           </div>
         </div>
 
-        <div className="w-full bg-black/20 backdrop-blur-md border border-white/10 rounded-[28px] p-5 flex flex-col items-center gap-4 mb-8">
+        {/* Reviews */}
+        <div className={`w-full bg-black/20 backdrop-blur-md border border-white/10 rounded-[28px] p-5 flex flex-col items-center gap-4 shadow-xl ${isCompact ? "mb-4" : "mb-5"}`}>
           <div className="flex items-center gap-1.5">
             <span className="text-[20px] font-bold text-white">4.9</span>
             <div className="flex text-yellow-400 gap-0.5">
@@ -476,7 +525,7 @@ export default function Step14Paywall() {
             <span className="text-[11px] font-bold text-white/50 uppercase ml-1 tracking-wide">Doctor Approved</span>
           </div>
 
-          <div className="relative w-full h-[100px] flex items-center justify-center">
+          <div className="relative w-full h-[92px] flex items-center justify-center">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentReviewIndex}
@@ -489,9 +538,9 @@ export default function Step14Paywall() {
                 <img
                   src={displayReview.image}
                   alt={displayReview.name}
-                  className="w-12 h-12 rounded-full border-2 border-white/20 object-cover shadow-md mb-3"
+                  className="w-12 h-12 rounded-full border-2 border-white/20 object-cover shadow-md mb-2"
                 />
-                <p className="text-[15px] italic text-white text-center font-medium leading-snug px-4">
+                <p className="text-[14px] italic text-white text-center font-medium leading-snug px-4">
                   "{displayReview.text}"
                 </p>
                 <p className="text-[11px] font-bold text-white/40 mt-2 uppercase tracking-wide">{displayReview.name}</p>
@@ -500,67 +549,63 @@ export default function Step14Paywall() {
           </div>
         </div>
 
+        {/* FAQ Accordion */}
         <div
           onClick={() => setIsFaqOpen(!isFaqOpen)}
-          className="w-full bg-white/5 rounded-2xl p-4 border border-white/5 backdrop-blur-sm cursor-pointer active:scale-[0.99] transition-transform mb-6"
+          className={`w-full bg-white/5 rounded-2xl p-4 border border-white/5 backdrop-blur-sm cursor-pointer active:scale-[0.99] transition-transform ${isCompact ? "mb-4" : "mb-5"}`}
         >
           <div className="flex items-center justify-center gap-2 text-white/80">
             <span className="text-[13px] font-bold">100% Money-Back Guarantee?</span>
             {isFaqOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </div>
-          <div
-            className={`overflow-hidden transition-all duration-300 ${
-              isFaqOpen ? "max-h-20 opacity-100 mt-2" : "max-h-0 opacity-0"
-            }`}
-          >
+          <div className={`overflow-hidden transition-all duration-300 ${isFaqOpen ? "max-h-20 opacity-100 mt-2" : "max-h-0 opacity-0"}`}>
             <p className="text-[13px] text-white/50 text-center leading-relaxed px-2">
               Yes. If you don't see results in your gap or symptoms, request a full refund in the app settings. No questions asked.
             </p>
           </div>
         </div>
 
+        {/* Footer Links (updated labels) */}
         <div className="flex justify-center items-center gap-4 text-[11px] font-bold text-white/30 tracking-wide uppercase">
           <button onClick={() => setShowRestoreModal(true)} className="hover:text-white transition-colors">
             Restore Purchase
           </button>
           <span>•</span>
-          <span>Encrypted</span>
+          <span>Physiotherapist</span>
           <span>•</span>
-          <span>Secure</span>
+          <span>Doctor Approved</span>
         </div>
-      </div>
 
-      {/* Sticky Footer CTA */}
-      <div
-        className={`absolute bottom-0 left-0 w-full z-30 px-5 pb-8 pt-8 bg-gradient-to-t from-[#1A1A26] via-[#1A1A26]/95 to-transparent transition-all duration-700 delay-200 ${
-          showContent ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
-        }`}
-      >
-        <button
-          onClick={handleStartPlan}
-          disabled={isButtonLoading}
-          className="w-full h-[60px] rounded-full shadow-[0_0_40px_rgba(225,29,72,0.4)] flex items-center justify-center gap-3 animate-breathe active:scale-[0.98] transition-transform relative overflow-hidden group bg-gradient-to-r from-[color:var(--pink)] to-[#C23A5B]"
-        >
-          <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-          {isButtonLoading ? (
-            <Loader2 className="animate-spin text-white" />
-          ) : (
-            <>
-              <span className="text-[18px] font-extrabold text-white">Unlock My Repair Protocol</span>
-              <ChevronDown className="-rotate-90 text-white/80" size={20} />
-            </>
-          )}
-        </button>
+        {/* CTA at bottom (no scroll / no absolute) */}
+        <div className="mt-auto pt-6">
+          <button
+            onClick={handleStartPlan}
+            disabled={isButtonLoading}
+            className="w-full h-[60px] rounded-full shadow-[0_0_40px_rgba(225,29,72,0.4)] flex items-center justify-center gap-3 animate-breathe active:scale-[0.98] transition-transform relative overflow-hidden group bg-gradient-to-r from-[color:var(--pink)] to-[#C23A5B]"
+          >
+            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+            {isButtonLoading ? (
+              <Loader2 className="animate-spin text-white" />
+            ) : (
+              <>
+                <span className="text-[18px] font-extrabold text-white">Unlock My Repair Protocol</span>
+                <ChevronDown className="-rotate-90 text-white/80" size={20} />
+              </>
+            )}
+          </button>
 
-        <div className="flex flex-col items-center justify-center mt-4 gap-1">
-          <p className="text-white font-bold text-[14px]">$24.99 / month</p>
-          <p className="text-white/50 text-[11px] font-medium">Cancel anytime in settings.</p>
+          <p className="text-center text-white/70 text-[12px] font-medium mt-3 leading-snug px-4 drop-shadow-sm">
+            Feel real progress by {dateString || "soon"}. If not, one tap full $24.99 refund.
+          </p>
         </div>
       </div>
 
       {/* Stripe Modal */}
       {showCheckoutModal && clientSecret && (
-        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md overflow-y-auto" onClick={() => setShowCheckoutModal(false)}>
+        <div
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md overflow-y-auto"
+          onClick={() => setShowCheckoutModal(false)}
+        >
           <div className="min-h-full flex items-center justify-center p-4">
             <Elements options={{ clientSecret, appearance: stripeAppearance }} stripe={stripePromise}>
               <CheckoutForm onClose={() => setShowCheckoutModal(false)} />
