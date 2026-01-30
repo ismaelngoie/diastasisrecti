@@ -2,7 +2,7 @@ import Stripe from 'stripe';
 
 export async function onRequestPost(context: any) {
   try {
-    // 1. Initialize Stripe with the key from your environment variables
+    // 1. Initialize Stripe
     if (!context.env.STRIPE_SECRET_KEY) {
       return new Response(JSON.stringify({ error: "Missing STRIPE_SECRET_KEY" }), { status: 500 });
     }
@@ -14,11 +14,10 @@ export async function onRequestPost(context: any) {
       return new Response(JSON.stringify({ error: "Missing STRIPE_PRICE_ID" }), { status: 500 });
     }
 
-    // 2. Create a Customer
+    // 2. Create Customer
     const customer = await stripe.customers.create();
 
-    // 3. Create the Subscription
-    // We automatically expand the latest_invoice.payment_intent to get the client_secret
+    // 3. Create Subscription
     const subscription = await stripe.subscriptions.create({
       customer: customer.id,
       items: [{
@@ -29,7 +28,7 @@ export async function onRequestPost(context: any) {
       expand: ['latest_invoice.payment_intent'],
     });
 
-    // 4. Return the Client Secret to the frontend
+    // 4. Extract Client Secret
     // @ts-ignore
     const clientSecret = subscription.latest_invoice?.payment_intent?.client_secret;
 
@@ -40,7 +39,11 @@ export async function onRequestPost(context: any) {
       });
     }
 
-    return new Response(JSON.stringify({ clientSecret }), {
+    // 5. Return BOTH fields (Fixes your error)
+    return new Response(JSON.stringify({ 
+      clientSecret: clientSecret,
+      intentType: "payment" // <--- This was missing!
+    }), {
       headers: { "Content-Type": "application/json" },
     });
 
