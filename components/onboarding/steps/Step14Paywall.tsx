@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useUserData } from "@/lib/store/useUserStore";
 import {
@@ -14,10 +14,11 @@ import {
   Loader2,
   Lock,
   Mail,
+  CheckCircle2,
   Stethoscope,
 } from "lucide-react";
-
 import { loadStripe } from "@stripe/stripe-js";
+import type { StripePaymentElementOptions } from "@stripe/stripe-js";
 import {
   Elements,
   PaymentElement,
@@ -25,14 +26,13 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-
 import { AnimatePresence, motion } from "framer-motion";
 
 // --- STRIPE SETUP ---
 // Ensure this key is in your .env.local
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
-// --- ASSETS ---
+// --- ASSETS (Reusing Pelvi Assets for Consistency) ---
 const REVIEW_IMAGES = ["/review9.png", "/review1.png", "/review5.png", "/review4.png", "/review2.png"];
 
 // --- MEDICAL FEATURES ---
@@ -59,7 +59,7 @@ const MEDICAL_FEATURES = [
   },
 ];
 
-// --- REVIEWS ---
+// --- DIASTASIS SPECIFIC REVIEWS ---
 const REVIEWS = [
   { name: "Sarah W.", text: "I closed my 3-finger gap in 9 weeks. No surgery.", image: "/review9.png" },
   { name: "Michelle T.", text: "The 'coning' stopped after 12 days. Finally safe.", image: "/review1.png" },
@@ -68,16 +68,15 @@ const REVIEWS = [
   { name: "Jess P.", text: "I can lift my baby without fear now.", image: "/review2.png" },
 ];
 
-// --------------------
-// Checkout Form
-// --------------------
+// --- COMPONENTS ---
+
 const CheckoutForm = ({ onClose }: { onClose: () => void }) => {
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
 
-  // ✅ useUserData is the Zustand hook (alias)
-  const { setPremium, setJoinDate, setName, startDrySeal, symptoms } = useUserData();
+  // ✅ this is your zustand hook alias/export
+  const { setPremium, setJoinDate, setName } = useUserData();
 
   const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -102,35 +101,31 @@ const CheckoutForm = ({ onClose }: { onClose: () => void }) => {
     if (error) {
       setMessage(error.message || "Payment failed");
       setIsLoading(false);
-      return;
-    }
-
-    if (paymentIntent && paymentIntent.status === "succeeded") {
-      // ✅ Success Logic
+    } else if (paymentIntent && paymentIntent.status === "succeeded") {
+      // Success Logic
       setPremium(true);
       setJoinDate(new Date().toISOString());
 
-      // ✅ Auto-start Dry Seal if user said they leak
-      const s = symptoms || [];
-      if (s.includes("incontinence")) {
-        startDrySeal();
+      // ✅ AUTO-START DRY SEAL IF USER HAS LEAKS
+      const symptoms = useUserData.getState().symptoms || [];
+      if (symptoms.includes("incontinence")) {
+        useUserData.getState().startDrySeal();
       }
 
-      // Optional: if Stripe Link gave email you want to store as "name" (not really name)
-      // Leaving setName alone here unless you have a real name source.
-
       router.push("/dashboard");
-      return;
+    } else {
+      setMessage("An unexpected error occurred.");
+      setIsLoading(false);
     }
-
-    setMessage("An unexpected error occurred.");
-    setIsLoading(false);
   };
 
-  const paymentElementOptions = {
-    layout: "tabs" as const,
+  // ✅ FIXED TYPES: PaymentElement expects billingDetails under fields
+  const paymentElementOptions: StripePaymentElementOptions = {
+    layout: "tabs",
     fields: {
-      phone: "never" as const,
+      billingDetails: {
+        phone: "never",
+      },
     },
   };
 
@@ -162,6 +157,7 @@ const CheckoutForm = ({ onClose }: { onClose: () => void }) => {
             onChange={(e: any) => setEmail(e.value.email)}
           />
         </div>
+
         <PaymentElement id="payment-element" options={paymentElementOptions} />
       </div>
 
@@ -187,15 +183,13 @@ const CheckoutForm = ({ onClose }: { onClose: () => void }) => {
   );
 };
 
-// --------------------
-// Restore Modal
-// --------------------
+// --- RESTORE MODAL ---
 const RestoreModal = ({ onClose }: { onClose: () => void }) => {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const { setPremium, setJoinDate, setName, startDrySeal, symptoms } = useUserData();
+  const { setPremium, setJoinDate, setName } = useUserData();
 
   const handleRestoreSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -207,10 +201,11 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
     setIsLoading(true);
 
     try {
+      // Mock API call - replace with real endpoint
       const res = await fetch("/api/restore-purchase", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: email }),
       });
 
       const data = await res.json();
@@ -220,18 +215,17 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
         setJoinDate(new Date().toISOString());
         if (data.customerName) setName(data.customerName);
 
-        // ✅ Also apply auto-start rule on restore
-        const s = symptoms || [];
-        if (s.includes("incontinence")) {
-          startDrySeal();
+        // ✅ ALSO APPLY AUTO-START ON RESTORE
+        const symptoms = useUserData.getState().symptoms || [];
+        if (symptoms.includes("incontinence")) {
+          useUserData.getState().startDrySeal();
         }
 
         router.push("/dashboard");
-        return;
+      } else {
+        alert("We found your email, but no active subscription was detected.");
+        setIsLoading(false);
       }
-
-      alert("We found your email, but no active subscription was detected.");
-      setIsLoading(false);
     } catch (err) {
       console.error(err);
       alert("Unable to verify purchase. Please check your internet connection.");
@@ -286,14 +280,10 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
   );
 };
 
-// --------------------
-// Main Screen
-// --------------------
+// --- MAIN SCREEN ---
 export default function Step14Paywall() {
   const router = useRouter();
-
-  // ✅ useUserData (not useUserStore)
-  const { name } = useUserData();
+  const { name, setPremium, setJoinDate } = useUserData();
 
   // State
   const [activeFeatureIndex, setActiveFeatureIndex] = useState(0);
@@ -309,8 +299,9 @@ export default function Step14Paywall() {
   const [showRestoreModal, setShowRestoreModal] = useState(false);
   const [isButtonLoading, setIsButtonLoading] = useState(false);
 
-  const displayReview = REVIEWS[currentReviewIndex];
+  const displayReview = useMemo(() => REVIEWS[currentReviewIndex], [currentReviewIndex]);
 
+  // Effects
   useEffect(() => {
     setShowContent(true);
   }, []);
@@ -340,6 +331,16 @@ export default function Step14Paywall() {
     return () => clearInterval(timer);
   }, [showContent]);
 
+  // Optional preload (keeps your constant actually used)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    REVIEW_IMAGES.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, []);
+
+  // Actions
   const handleStartPlan = async () => {
     setIsButtonLoading(true);
 
@@ -379,7 +380,7 @@ export default function Step14Paywall() {
 
   return (
     <div className="relative w-full h-full flex flex-col bg-[#1A1A26] overflow-hidden">
-      {/* Video Background */}
+      {/* 1. Video Background */}
       <div className="absolute inset-0 z-0">
         <video
           autoPlay
@@ -398,7 +399,7 @@ export default function Step14Paywall() {
         <div className="absolute inset-0 bg-black/40" />
       </div>
 
-      {/* Scrollable Content */}
+      {/* 2. Scrollable Content */}
       <div
         className={`z-10 flex-1 flex flex-col overflow-y-auto no-scrollbar pt-14 pb-40 px-6 transition-all duration-700 ${
           showContent ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
@@ -506,7 +507,7 @@ export default function Step14Paywall() {
           </div>
         </div>
 
-        {/* FAQ */}
+        {/* FAQ Accordion */}
         <div
           onClick={() => setIsFaqOpen(!isFaqOpen)}
           className="w-full bg-white/5 rounded-2xl p-4 border border-white/5 backdrop-blur-sm cursor-pointer active:scale-[0.99] transition-transform mb-6"
@@ -534,7 +535,7 @@ export default function Step14Paywall() {
         </div>
       </div>
 
-      {/* Sticky Footer CTA */}
+      {/* 3. Sticky Footer CTA */}
       <div
         className={`absolute bottom-0 left-0 w-full z-30 px-5 pb-8 pt-8 bg-gradient-to-t from-[#1A1A26] via-[#1A1A26]/95 to-transparent transition-all duration-700 delay-200 ${
           showContent ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
@@ -562,7 +563,7 @@ export default function Step14Paywall() {
         </div>
       </div>
 
-      {/* Stripe Overlay */}
+      {/* 4. STRIPE OVERLAY MODAL */}
       {showCheckoutModal && clientSecret && (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md overflow-y-auto" onClick={() => setShowCheckoutModal(false)}>
           <div className="min-h-full flex items-center justify-center p-4">
@@ -573,7 +574,7 @@ export default function Step14Paywall() {
         </div>
       )}
 
-      {/* Restore Overlay */}
+      {/* 5. RESTORE OVERLAY MODAL */}
       {showRestoreModal && <RestoreModal onClose={() => setShowRestoreModal(false)} />}
     </div>
   );
