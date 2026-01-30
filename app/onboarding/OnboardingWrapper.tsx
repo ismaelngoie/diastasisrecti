@@ -1341,7 +1341,7 @@ const CheckoutForm = ({ onClose, dateString }: { onClose: () => void; dateString
       </button>
       <div className="mb-6">
         <h3 className="text-xl font-extrabold text-white mb-1" style={{ fontFamily: "var(--font-lora)" }}>
-          Secure Checkout
+          Secure Checkout. 100% Money-back guarantee.
         </h3>
         <p className="text-sm text-white/50 font-medium">Total due: $24.99 / month</p>
       </div>
@@ -1351,18 +1351,17 @@ const CheckoutForm = ({ onClose, dateString }: { onClose: () => void; dateString
         </div>
         <PaymentElement id="payment-element" options={paymentElementOptions} />
       </div>
-      {message && <div className="text-red-300 text-sm mt-4 bg-red-500/10 p-3 rounded-xl border border-red-500/20 font-semibold">{message}</div>}
       <button
         disabled={isLoading || !stripe || !elements}
         id="submit"
         className="mt-6 w-full h-14 rounded-full bg-gradient-to-r from-[color:var(--pink)] to-[#C23A5B] text-white font-extrabold text-[17px] shadow-[0_10px_40px_rgba(230,84,115,0.4)] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
       >
-        {isLoading ? <Loader2 className="animate-spin" /> : "Start My Healing ($24.99)"}
+        {isLoading ? <Loader2 className="animate-spin" /> : "Start My Healing"}
       </button>
       <div className="flex items-center justify-center gap-2 mt-4 text-white/30 text-[11px] font-semibold">
         <p className="text-center text-white/70 text-[12px] font-semibold mt-3 leading-snug px-4 drop-shadow-sm">{getStripeSubtext()}</p>
       </div>
-      <p className="text-center text-white/30 text-[11px] font-semibold mt-3"><Lock size={12} /> 100% secure payment.</p>
+      <p className="text-center text-white/30 text-[11px] font-semibold mt-3"><Lock size={12} />100% secure payment.</p>
     </form>
   );
 };
