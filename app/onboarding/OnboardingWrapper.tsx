@@ -1972,7 +1972,7 @@ function VisualCard({
   title,
   subtitle,
   selected,
-  onSelect,
+  onSelect
 }: {
   id: Exclude<VisualShape, null>;
   title: string;
@@ -1984,38 +1984,49 @@ function VisualCard({
     <button
       onClick={onSelect}
       className={[
-        "w-full text-left rounded-3xl border transition-all duration-300",
+        "w-full text-left rounded-[32px] border transition-all duration-300",
         "bg-white/8 backdrop-blur-xl shadow-soft",
         "active:scale-[0.99]",
         selected
           ? "border-[rgba(230,84,115,0.75)] shadow-[0_0_0_6px_rgba(230,84,115,0.12),0_28px_70px_rgba(0,0,0,0.35)]"
-          : "border-white/12 hover:border-white/20",
+          : "border-white/12 hover:border-white/20"
       ].join(" ")}
-      style={{ minHeight: 120 }}
     >
-      <div className="p-5 flex gap-4 items-center">
+      {/* Changed padding to p-4 to give more room for the image.
+         Flex layout aligns image and text nicely.
+      */}
+      <div className="p-4 flex gap-5 items-center">
+        
+        {/* UPDATED SIZE: 
+           w-36 h-36 (144px square) - significantly bigger.
+           Added shrink-0 so it doesn't squish on small screens.
+        */}
         <div
           className={[
-            "w-28 h-[72px] rounded-2xl overflow-hidden border",
-            selected ? "border-white/20" : "border-white/10",
+            "w-36 h-36 rounded-2xl overflow-hidden border shrink-0 bg-black/20", 
+            selected ? "border-white/20" : "border-white/10"
           ].join(" ")}
         >
           <ShapeArt id={id} />
         </div>
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <div
-              className={[
-                "text-[16px] font-extrabold leading-snug",
-                selected ? "text-white" : "text-white/90",
-              ].join(" ")}
-            >
-              {title}
+        <div className="flex-1 min-w-0 py-2">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <div
+                className={[
+                  "text-[18px] font-extrabold leading-tight", // Increased font size slightly
+                  selected ? "text-white" : "text-white/90"
+                ].join(" ")}
+              >
+                {title}
+              </div>
+              {selected && <CheckCircle2 size={20} className="text-[color:var(--pink)] shrink-0" />}
             </div>
-            {selected && <CheckCircle2 size={18} className="text-[color:var(--pink)]" />}
+            <div className="text-[14px] text-white/60 leading-snug font-medium">
+              {subtitle}
+            </div>
           </div>
-          <div className="text-[13px] text-white/60 leading-snug mt-1">{subtitle}</div>
         </div>
       </div>
     </button>
