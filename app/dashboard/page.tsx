@@ -276,7 +276,7 @@ export default function DashboardTodayPage() {
             <div className="mt-3 flex flex-wrap gap-2">
               <Pill tone="pink">
                 <Sparkles size={14} className="text-[color:var(--pink)]" />
-                {safeName}&apos;s Core Rehab Plan
+                {safeName}&apos;s Recovery Lab
               </Pill>
 
               <div
