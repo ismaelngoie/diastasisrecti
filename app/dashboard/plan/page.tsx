@@ -6,20 +6,46 @@ import { Lock, CheckCircle2, AlertTriangle } from "lucide-react";
 import { useUserStore } from "@/lib/store/useUserStore";
 import { getTodaysPrescription } from "@/lib/protocolEngine";
 
+const DAYS_IN_PHASE = 16;
+const MILESTONES = [7, 14] as const;
+
 export default function PlanPage() {
   const user = useUserStore();
   const p = useMemo(() => getTodaysPrescription(user), [user]);
 
-  const checkins = useUserStore((s) => s.checkins);
-  const cycleKey = p.cycleKey;
+  // ✅ Safely read checkins (don’t assume store shape is always initialized)
+  const checkins = useUserStore(
+    (s) => (s.checkins ?? {}) as Record<string, boolean | undefined>
+  );
 
-  const day7Done = !!checkins[`${cycleKey}:7`];
-  const day14Done = !!checkins[`${cycleKey}:14`];
+  // ✅ Guard against missing cycleKey
+  const cycleKey = useMemo(() => {
+    const raw = (p as any)?.cycleKey;
+    return raw ? String(raw) : "cycle";
+  }, [p]);
 
-  const currentDay = p.track === "healer" ? p.dayNumber : 1;
+  const checkinKey = (day: number) => `${cycleKey}:${day}`;
 
-  const lockedAfter7 = currentDay > 7 && !day7Done;
-  const lockedAfter14 = currentDay > 14 && !day14Done;
+  const day7Done = !!checkins[checkinKey(7)];
+  const day14Done = !!checkins[checkinKey(14)];
+
+  // ✅ Fix current day logic: use dayNumber safely
+  const rawDayNumber =
+    typeof (p as any)?.dayNumber === "number" && Number.isFinite((p as any).dayNumber)
+      ? ((p as any).dayNumber as number)
+      : 1;
+
+  // Clamp for display within Phase 1 list, but keep raw for lock rules
+  const currentDay = Math.min(DAYS_IN_PHASE, Math.max(1, rawDayNumber));
+
+  // ✅ Lock warning banner logic uses raw day (if user is past milestone and didn’t check in)
+  const lockedAfter7 = rawDayNumber > 7 && !day7Done;
+  const lockedAfter14 = rawDayNumber > 14 && !day14Done;
+
+  const days = useMemo(
+    () => Array.from({ length: DAYS_IN_PHASE }, (_, i) => i + 1),
+    []
+  );
 
   return (
     <main className="flex flex-col gap-5">
@@ -27,12 +53,14 @@ export default function PlanPage() {
         <div className="text-white/55 text-[11px] font-extrabold tracking-[0.22em] uppercase">
           Plan
         </div>
+
         <h1
           className="mt-2 text-white text-[26px] leading-[1.08] font-extrabold"
           style={{ fontFamily: "var(--font-lora)" }}
         >
           Your Roadmap
         </h1>
+
         <div className="text-white/60 text-[13px] font-semibold mt-2 leading-relaxed">
           Milestones every 7 days. Re-measure your midline to unlock the next phase safely.
         </div>
@@ -44,12 +72,22 @@ export default function PlanPage() {
         </div>
 
         <div className="mt-4 flex flex-col gap-3">
-          {[...Array(16)].map((_, i) => {
-            const day = i + 1;
-            const isMilestone = day === 7 || day === 14;
+          {days.map((day) => {
+            const isMilestone = MILESTONES.includes(day as any);
 
+            // Locked rule:
+            // - Days 8+ locked until day 7 check-in done
+            // - Days 15+ locked until day 14 check-in done
             const locked = (day > 7 && !day7Done) || (day > 14 && !day14Done);
-            const isCurrent = day === currentDay;
+
+            const isToday = day === currentDay;
+            const isPast = day < currentDay;
+
+            const milestoneDone = day === 7 ? day7Done : day === 14 ? day14Done : false;
+
+            // Day 14 check-in should not be actionable unless Day 7 check-in is done
+            const milestoneActionAllowed =
+              day === 7 ? true : day === 14 ? day7Done : false;
 
             return (
               <div
@@ -61,7 +99,8 @@ export default function PlanPage() {
               >
                 <div className="min-w-0">
                   <div className="text-white font-extrabold text-[13px]">
-                    Day {day}{isMilestone ? " — Midline Check-in" : ""}
+                    Day {day}
+                    {isMilestone ? " — Midline Check-in" : ""}
                   </div>
 
                   {isMilestone && (
@@ -72,29 +111,54 @@ export default function PlanPage() {
                 </div>
 
                 <div className="shrink-0">
+                  {/* ✅ Milestone state */}
                   {isMilestone ? (
-                    (day === 7 ? day7Done : day14Done) ? (
-                      <CheckCircle2 className="text-[#33B373]" />
-                    ) : (
+                    milestoneDone ? (
+                      <div className="inline-flex items-center gap-2 text-white/70">
+                        <CheckCircle2 size={18} className="text-[#33B373]" />
+                        <span className="text-[11px] font-extrabold">Completed</span>
+                      </div>
+                    ) : milestoneActionAllowed ? (
                       <Link
                         href="/dashboard/gap"
+                        aria-label={`Re-measure for day ${day} check-in`}
                         className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-[color:var(--pink)]/18 border border-[color:var(--pink)]/25"
                       >
-                        <AlertTriangle size={16} className="text-[color:var(--pink)]" />
-                        <span className="text-white text-[11px] font-extrabold">Re-measure</span>
+                        <AlertTriangle
+                          size={16}
+                          className="text-[color:var(--pink)]"
+                        />
+                        <span className="text-white text-[11px] font-extrabold">
+                          Re-measure
+                        </span>
                       </Link>
+                    ) : (
+                      <div className="inline-flex items-center gap-2 text-white/50">
+                        <Lock size={16} />
+                        <span className="text-[11px] font-extrabold">Locked</span>
+                      </div>
                     )
                   ) : locked ? (
+                    /* ✅ Locked state */
                     <div className="inline-flex items-center gap-2 text-white/50">
                       <Lock size={16} />
                       <span className="text-[11px] font-extrabold">Locked</span>
                     </div>
-                  ) : isCurrent ? (
+                  ) : isToday ? (
+                    /* ✅ Today state */
                     <div className="text-white text-[11px] font-extrabold px-3 py-2 rounded-full bg-white/8 border border-white/10">
                       Today
                     </div>
+                  ) : isPast ? (
+                    /* ✅ Past state (not necessarily “done”, but no longer upcoming) */
+                    <div className="text-white/55 text-[11px] font-extrabold">
+                      Past
+                    </div>
                   ) : (
-                    <div className="text-white/35 text-[11px] font-extrabold">Upcoming</div>
+                    /* ✅ Upcoming state */
+                    <div className="text-white/35 text-[11px] font-extrabold">
+                      Upcoming
+                    </div>
                   )}
                 </div>
               </div>
@@ -104,7 +168,9 @@ export default function PlanPage() {
 
         {(lockedAfter7 || lockedAfter14) && (
           <div className="mt-4 rounded-2xl border border-yellow-500/25 bg-yellow-500/10 px-4 py-3">
-            <div className="text-yellow-100 font-extrabold text-[13px]">Progress Lock Active</div>
+            <div className="text-yellow-100 font-extrabold text-[13px]">
+              Progress Lock Active
+            </div>
             <div className="text-yellow-100/75 text-[12px] font-semibold mt-1">
               Complete your Midline Check-in to proceed safely.
             </div>
