@@ -66,91 +66,123 @@ function ProgressBar({ step }: { step: number }) {
   );
 }
 
+// --- SVG DEFINITIONS (Glow Filters) ---
+const SvgDefs = () => (
+  <defs>
+    <filter id="clinical-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <linearGradient id="fade-line" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stopColor="white" stopOpacity="0.1" />
+      <stop offset="50%" stopColor="white" stopOpacity="1" />
+      <stop offset="100%" stopColor="white" stopOpacity="0.1" />
+    </linearGradient>
+  </defs>
+);
+
 function ShapeArt({ id }: { id: Exclude<VisualShape, null> }) {
+  // 1. THE POOCH (Rounded lower bulge)
   if (id === "pooch") {
     return (
-      <svg viewBox="0 0 320 140" className="w-full h-full">
-        <defs>
-          <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="rgba(255,255,255,0.10)" />
-            <stop offset="1" stopColor="rgba(230,84,115,0.18)" />
-          </linearGradient>
-        </defs>
-        <rect x="10" y="10" width="300" height="120" rx="22" fill="url(#g1)" />
+      <svg viewBox="0 0 200 200" className="w-full h-full" fill="none">
+        <SvgDefs />
+        {/* Torso Outline */}
         <path
-          d="M70 95c30-40 70-55 120-50 40 4 70 22 85 48"
-          fill="none"
-          stroke="rgba(255,255,255,0.65)"
-          strokeWidth="10"
+          d="M40 40 C 40 40, 50 100, 45 130 C 40 160, 60 180, 100 190 C 140 180, 160 160, 155 130 C 150 100, 160 40, 160 40"
+          stroke="white"
+          strokeWidth="2"
+          opacity="0.5"
           strokeLinecap="round"
         />
+        {/* The Pooch: Soft, rounded curves below navel */}
         <path
-          d="M92 98c28-22 58-30 90-26 28 3 50 14 66 28"
-          fill="none"
-          stroke="rgba(210,235,255,0.55)"
-          strokeWidth="6"
-          strokeLinecap="round"
+          d="M70 110 C 70 110, 100 125, 130 110" 
+          stroke="white"
+          strokeWidth="2"
+          filter="url(#clinical-glow)"
         />
+        <path
+          d="M75 115 C 75 115, 100 155, 125 115"
+          stroke="white"
+          strokeWidth="3"
+          filter="url(#clinical-glow)"
+        />
+        {/* Navel */}
+        <circle cx="100" cy="95" r="2" fill="white" />
       </svg>
     );
   }
 
+  // 2. THE GAP (Trench + Arrows)
   if (id === "gap") {
     return (
-      <svg viewBox="0 0 320 140" className="w-full h-full">
-        <defs>
-          <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="rgba(255,255,255,0.10)" />
-            <stop offset="1" stopColor="rgba(120,200,255,0.12)" />
-          </linearGradient>
-        </defs>
-        <rect x="10" y="10" width="300" height="120" rx="22" fill="url(#g2)" />
+      <svg viewBox="0 0 200 200" className="w-full h-full" fill="none">
+        <SvgDefs />
+        {/* Torso Outline */}
         <path
-          d="M85 40c22-12 46-16 75-14 30 2 55 9 75 24"
-          fill="none"
-          stroke="rgba(255,255,255,0.65)"
-          strokeWidth="10"
+          d="M40 40 C 40 40, 55 100, 50 150 C 50 150, 70 180, 100 190 C 130 180, 150 150, 150 150 C 145 100, 160 40, 160 40"
+          stroke="white"
+          strokeWidth="2"
+          opacity="0.5"
           strokeLinecap="round"
         />
+        {/* The Gap: Two vertical curves pulling apart */}
         <path
-          d="M160 34v84"
-          stroke="rgba(230,84,115,0.70)"
-          strokeWidth="8"
-          strokeLinecap="round"
+          d="M90 60 Q 85 100, 90 140"
+          stroke="white"
+          strokeWidth="2"
+          filter="url(#clinical-glow)"
         />
         <path
-          d="M160 34v84"
-          stroke="rgba(255,255,255,0.25)"
-          strokeWidth="14"
-          strokeLinecap="round"
+          d="M110 60 Q 115 100, 110 140"
+          stroke="white"
+          strokeWidth="2"
+          filter="url(#clinical-glow)"
         />
+        
+        {/* Measurement Arrows */}
+        <path d="M65 100 L 82 100" stroke="white" strokeWidth="1.5" strokeDasharray="4 2" />
+        <path d="M65 100 L 70 95 M 65 100 L 70 105" stroke="white" strokeWidth="1.5" /> 
+
+        <path d="M118 100 L 135 100" stroke="white" strokeWidth="1.5" strokeDasharray="4 2" />
+        <path d="M135 100 L 130 95 M 135 100 L 130 105" stroke="white" strokeWidth="1.5" /> 
+
+        {/* Navel (floating in gap) */}
+        <circle cx="100" cy="100" r="1.5" fill="white" opacity="0.8" />
       </svg>
     );
   }
 
+  // 3. THE CONE (Doming/Tent)
   return (
-    <svg viewBox="0 0 320 140" className="w-full h-full">
-      <defs>
-        <linearGradient id="g3" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="rgba(255,255,255,0.10)" />
-          <stop offset="1" stopColor="rgba(245,158,11,0.14)" />
-        </linearGradient>
-      </defs>
-      <rect x="10" y="10" width="300" height="120" rx="22" fill="url(#g3)" />
+    <svg viewBox="0 0 200 200" className="w-full h-full" fill="none">
+      <SvgDefs />
+      {/* Torso Outline */}
       <path
-        d="M70 102c36-58 70-78 90-78s54 20 90 78"
-        fill="none"
-        stroke="rgba(255,255,255,0.65)"
-        strokeWidth="10"
+        d="M40 40 C 40 40, 50 100, 45 130 C 40 160, 60 180, 100 190 C 140 180, 160 160, 155 130 C 150 100, 160 40, 160 40"
+        stroke="white"
+        strokeWidth="2"
+        opacity="0.5"
         strokeLinecap="round"
       />
+      
+      {/* The Cone: Sharp Triangle Rising */}
       <path
-        d="M140 70c10-16 18-24 20-24s10 8 20 24"
-        fill="none"
-        stroke="rgba(245,158,11,0.65)"
-        strokeWidth="7"
-        strokeLinecap="round"
+        d="M80 140 L 100 70 L 120 140"
+        stroke="white"
+        strokeWidth="3"
+        strokeLinejoin="round"
+        filter="url(#clinical-glow)"
       />
+      
+      {/* Tension Lines (Radiating out) */}
+      <path d="M100 70 L 100 140" stroke="white" strokeWidth="1" opacity="0.5" />
+      <path d="M90 100 L 70 105" stroke="white" strokeWidth="1" opacity="0.3" />
+      <path d="M110 100 L 130 105" stroke="white" strokeWidth="1" opacity="0.3" />
+
+      {/* Navel (at peak of cone) */}
+      <circle cx="100" cy="90" r="2" fill="white" />
     </svg>
   );
 }
