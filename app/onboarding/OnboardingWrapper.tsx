@@ -1005,7 +1005,7 @@ function Step14Paywall() {
   }, []);
   useEffect(() => {
     const reviewTimer = setInterval(() => setCurrentReviewIndex((p) => (p + 1) % REVIEWS.length), 5000);
-    return () => { clearInterval(featureTimer); clearInterval(reviewTimer); };
+    return () => { clearInterval(reviewTimer); };
   }, []);
   useEffect(() => {
     if (!showContent) return; let start = 10150;
