@@ -105,43 +105,43 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
   );
 }
 
-// --- HIGH-VISIBILITY NAVY SHADERS ---
+// --- HIGH-VISIBILITY NAVY SHADERS (WITH ORIGINAL BRAND COLORS) ---
 const Defs = ({ p }: { p: string }) => (
   <defs>
-    {/* 1. Background: Deep Navy instead of Black */}
+    {/* 1. Background: Deep Navy Base */}
     <radialGradient id={`${p}-body-vol`} cx="50%" cy="40%" r="90%">
-      <stop offset="0%" stopColor="#334155" stopOpacity="1" /> {/* Lighter Slate */}
-      <stop offset="40%" stopColor="#1e293b" stopOpacity="1" /> {/* Dark Slate */}
-      <stop offset="100%" stopColor="#0f172a" stopOpacity="1" /> {/* Navy Base */}
+      <stop offset="0%" stopColor="#334155" stopOpacity="1" />
+      <stop offset="40%" stopColor="#1e293b" stopOpacity="1" />
+      <stop offset="100%" stopColor="#0f172a" stopOpacity="1" />
     </radialGradient>
 
-    {/* 2. Warmer, Brighter Core Glow */}
+    {/* 2. Warmer Core Glow */}
     <radialGradient id={`${p}-warmth`} cx="50%" cy="50%" r="60%">
-      <stop offset="0%" stopColor="#f472b6" stopOpacity="0.25" /> {/* Brighter Pink */}
-      <stop offset="100%" stopColor="#f472b6" stopOpacity="0" />
+      <stop offset="0%" stopColor="#E65473" stopOpacity="0.15" /> {/* Original Pink Tint */}
+      <stop offset="100%" stopColor="#E65473" stopOpacity="0" />
     </radialGradient>
 
-    {/* 3. Skin Sheen - Higher Opacity for Visibility */}
+    {/* 3. Skin Sheen */}
     <linearGradient id={`${p}-skin-sheen`} x1="0" y1="0" x2="1" y2="0.5">
       <stop offset="0%" stopColor="#fff" stopOpacity="0.15" />
       <stop offset="50%" stopColor="#fff" stopOpacity="0" />
       <stop offset="100%" stopColor="#fff" stopOpacity="0.05" />
     </linearGradient>
 
-    {/* 4. Navel Shadow - Adapted to Navy */}
+    {/* 4. Navel Shadow */}
     <radialGradient id={`${p}-navel-shadow`} cx="50%" cy="50%" r="50%">
       <stop offset="0%" stopColor="#0f172a" stopOpacity="0.8" />
       <stop offset="100%" stopColor="#0f172a" stopOpacity="0" />
     </radialGradient>
 
-    {/* 5. Brighter Topology Lines */}
+    {/* 5. Topology Lines Gradient */}
     <linearGradient id={`${p}-topo`} x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stopColor="#818cf8" stopOpacity="0" />
-      <stop offset="50%" stopColor="#c7d2fe" stopOpacity="0.5" /> {/* Very bright Indigo */}
-      <stop offset="100%" stopColor="#818cf8" stopOpacity="0" />
+      <stop offset="0%" stopColor="#78C8FF" stopOpacity="0" />
+      <stop offset="50%" stopColor="#78C8FF" stopOpacity="0.4" /> {/* Original Blue Tint */}
+      <stop offset="100%" stopColor="#78C8FF" stopOpacity="0" />
     </linearGradient>
 
-    {/* 6. Stronger Glow Filter */}
+    {/* 6. Glow Filter */}
     <filter id={`${p}-glow`} x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="2" result="coloredBlur" />
       <feMerge>
@@ -150,13 +150,34 @@ const Defs = ({ p }: { p: string }) => (
       </feMerge>
     </filter>
 
-    {/* 7. Texture - Lighter grain */}
+    {/* 7. Texture */}
     <filter id={`${p}-tissue`} x="0%" y="0%" width="100%" height="100%">
       <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" result="noise" />
       <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.08 0" in="noise" result="coloredNoise" />
       <feComposite operator="in" in="coloredNoise" in2="SourceGraphic" result="composite" />
       <feBlend mode="overlay" in="composite" in2="SourceGraphic" />
     </filter>
+
+    {/* 8. Active Zone Gradients (From Original Code) */}
+    
+    {/* Pooch Gradient (Pink #E65473) */}
+    <linearGradient id={`${p}-pooch-grad`} x1="0" y1="0" x2="1" y2="1">
+       <stop offset="0" stopColor="rgba(255,255,255,0.10)" />
+       <stop offset="1" stopColor="rgba(230,84,115,0.4)" />
+    </linearGradient>
+
+    {/* Gap Gradient (Blue #78C8FF) */}
+    <linearGradient id={`${p}-gap-grad`} x1="0" y1="0" x2="1" y2="1">
+       <stop offset="0" stopColor="rgba(255,255,255,0.10)" />
+       <stop offset="1" stopColor="rgba(120,200,255,0.4)" />
+    </linearGradient>
+
+    {/* Cone Gradient (Amber #F59E0B) */}
+    <linearGradient id={`${p}-cone-grad`} x1="0" y1="0" x2="1" y2="1">
+       <stop offset="0" stopColor="rgba(255,255,255,0.10)" />
+       <stop offset="1" stopColor="rgba(245,158,11,0.4)" />
+    </linearGradient>
+
   </defs>
 );
 
@@ -202,10 +223,8 @@ function ShapeArt({
   const c = id ? callouts[id] : null;
 
   return (
-    // UPDATED CONTAINER: Navy Blue #1A1A26 (Matches app theme)
     <div className="w-full h-full bg-[#1A1A26] relative overflow-hidden">
       
-      {/* ZOOMED IN: Changed viewBox from "0 0 200 200" to "40 40 120 160" to crop out empty space */}
       <svg viewBox="40 40 120 160" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
         <Defs p={p} />
 
@@ -214,7 +233,7 @@ function ShapeArt({
 
         {/* --- MAIN FIGURE --- */}
         <g>
-            {/* 1. Base Volume (Brighter Navy) */}
+            {/* 1. Base Volume */}
             <path d={torsoPath} fill={`url(#${p}-body-vol)`} />
 
             {/* 2. Subsurface Warmth */}
@@ -237,40 +256,50 @@ function ShapeArt({
                 <path d={`M ${navelX-2} ${navelY+0.5} Q ${navelX} ${navelY+2} ${navelX+2} ${navelY+0.5}`} stroke="#fff" strokeWidth="0.8" opacity="0.5" fill="none" />
             </g>
 
-            {/* 6. Rim Light (Thicker) */}
+            {/* 6. Rim Light */}
             <path d={torsoPath} stroke="white" strokeWidth="1" fill="none" opacity="0.2" />
             <path d={torsoPath} fill="none" stroke={`url(#${p}-skin-sheen)`} strokeWidth="2.5" opacity="0.6" style={{ mixBlendMode: 'overlay'}} />
         </g>
 
-        {/* --- ACTIVE ZONES (Thicker strokes + Brighter Colors) --- */}
+        {/* --- ACTIVE ZONES (Using Original Colors) --- */}
         
+        {/* POOCH: Pink #E65473 */}
         {id === "pooch" && (
             <g filter={`url(#${p}-glow)`}>
-                <path d="M 75 135 Q 100 165 125 135 L 120 155 Q 100 175 80 155 Z" fill="#ff4d7d" opacity="0.3" style={{ mixBlendMode: 'screen'}}/>
-                <path d="M 75 135 Q 100 165 125 135" stroke="#ff4d7d" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.9" />
+                {/* Volume Fill with Gradient */}
+                <path d="M 75 135 Q 100 165 125 135 L 120 155 Q 100 175 80 155 Z" fill={`url(#${p}-pooch-grad)`} style={{ mixBlendMode: 'screen'}}/>
+                {/* Stroke */}
+                <path d="M 75 135 Q 100 165 125 135" stroke="#E65473" strokeWidth="2" fill="none" strokeLinecap="round" opacity="1" />
                 
                 <circle cx="100" cy="150" r="2" fill="#fff" />
-                <circle cx="100" cy="150" r="10" stroke="#fff" strokeWidth="0.8" strokeDasharray="2 2" opacity="0.7" />
+                <circle cx="100" cy="150" r="10" stroke="#E65473" strokeWidth="0.8" strokeDasharray="2 2" opacity="0.7" />
             </g>
         )}
 
+        {/* GAP: Blue #78C8FF */}
         {id === "gap" && (
              <g filter={`url(#${p}-glow)`}>
-                <path d="M 96 80 Q 94 100 96 115" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
-                <path d="M 104 80 Q 106 100 104 115" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
-                <rect x="98" y="80" width="4" height="35" fill="#6366f1" opacity="0.25" />
+                {/* Highlight Lines */}
+                <path d="M 96 80 Q 94 100 96 115" stroke="#78C8FF" strokeWidth="2" strokeLinecap="round" opacity="1" />
+                <path d="M 104 80 Q 106 100 104 115" stroke="#78C8FF" strokeWidth="2" strokeLinecap="round" opacity="1" />
+                
+                {/* Center Fill Gradient */}
+                <rect x="98" y="80" width="4" height="35" fill={`url(#${p}-gap-grad)`} opacity="0.6" />
                 
                 <path d="M 90 95 L 96 95" stroke="#fff" strokeWidth="1.2" />
                 <path d="M 104 95 L 110 95" stroke="#fff" strokeWidth="1.2" />
             </g>
         )}
 
+        {/* CONE: Amber #F59E0B */}
         {id === "cone" && (
              <g filter={`url(#${p}-glow)`}>
-                <path d="M 100 120 L 80 70 L 120 70 Z" fill={`url(#${p}-topo)`} opacity="0.5" style={{ mixBlendMode: 'screen'}} />
-                <path d="M 80 70 L 120 70" stroke="#fff" strokeWidth="1.2" opacity="0.7" />
-                <path d="M 100 120 L 80 70" stroke="#fff" strokeWidth="0.8" strokeDasharray="3 3" opacity="0.5" />
-                <path d="M 100 120 L 120 70" stroke="#fff" strokeWidth="0.8" strokeDasharray="3 3" opacity="0.5" />
+                {/* Cone Fill Gradient */}
+                <path d="M 100 120 L 80 70 L 120 70 Z" fill={`url(#${p}-cone-grad)`} style={{ mixBlendMode: 'screen'}} />
+                {/* Stroke */}
+                <path d="M 80 70 L 120 70" stroke="#F59E0B" strokeWidth="1.5" opacity="1" />
+                <path d="M 100 120 L 80 70" stroke="#F59E0B" strokeWidth="1" strokeDasharray="3 3" opacity="0.7" />
+                <path d="M 100 120 L 120 70" stroke="#F59E0B" strokeWidth="1" strokeDasharray="3 3" opacity="0.7" />
             </g>
         )}
 
