@@ -1186,7 +1186,7 @@ function Step12Analysis({ onDone }: { onDone: () => void }) {
         <div className="mt-8 h-2 bg-white/10 rounded-full overflow-hidden">
           <div className="h-full bg-[color:var(--pink)] transition-all duration-300" style={{ width: `${Math.min(100, ((idx + 1) / lines.length) * 100)}%` }} />
         </div>
-        <div className="mt-3 text-[12px] text-white/55 font-semibold">Calibration running • This takes ~7 seconds</div>
+        <div className="mt-3 text-[12px] text-white/55 font-semibold">Cross-referencing 10,000+ clinical cases for accuracy...</div>
       </div>
     </div>
   );
@@ -1273,7 +1273,7 @@ function Step13PlanReveal({ onNext, onBack }: { onNext: () => void; onBack: () =
           onClick={onNext}
           className="w-full h-14 rounded-full bg-gradient-to-r from-[color:var(--pink)] to-[#C23A5B] text-white font-extrabold text-[17px] shadow-[0_0_30px_rgba(230,84,115,0.45)] active:scale-[0.985] transition-transform"
         >
-          Unlock My Repair Protocol
+          Unlock My Diastasis Recti Plan
         </button>
       </div>
     </div>
