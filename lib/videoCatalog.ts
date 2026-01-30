@@ -408,3 +408,5 @@ export const CATEGORIES = [
     urls: pelvicPilateVideos
   }
 ];
+
+export { drySealChallenge7Day, pelvicPainRelease7Day };
