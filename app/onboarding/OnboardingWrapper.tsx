@@ -1273,16 +1273,11 @@ function Step09Timeline({
     setSelected(id);
     setPostpartum(id);
     if (id === "3+") {
-      toast.show(
-        "success",
-        "Improvement is still possible years later. Your pace may be slower, but progress can happen.",
-        5200
-      );
+      toast.show("success", "It is never too late. We have fixed gaps 10 years postpartum.", 5200);
     } else {
       toast.hide();
     }
   };
-
   return (
     <div className="w-full max-w-md mx-auto flex flex-col h-full min-h-0 px-6 pt-4 pb-6">
       <div className="mt-2 shrink-0">
