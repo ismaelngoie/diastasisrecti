@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Send, Sparkles } from "lucide-react";
 import { useUserStore } from "@/lib/store/useUserStore";
 import { getTodaysPrescription } from "@/lib/protocolEngine";
@@ -12,19 +12,24 @@ export default function CoachMia() {
   const p = useMemo(() => getTodaysPrescription(user), [user]);
 
   const [msgs, setMsgs] = useState<Msg[]>([
-    { role: "assistant", text: `Hi ${user.name || "there"} — I’m Coach Mia. Tell me what you’re feeling today.` }
+    {
+      role: "assistant",
+      text: `Hi ${user.name || "there"} — I’m Coach Mia. Tell me what you felt today (pressure, pulling, doming/coning, pain).`,
+    },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
   const quickPrompts = useMemo(() => {
     const base: string[] = [];
-    if (p.track === "healer" && p.dayNumber === 1) base.push("How did the first session feel on your lower abs?");
-    if ((user.symptoms || []).includes("pelvicPain")) base.push("Do you want a mobility-focused session today?");
-    if (user.postpartumTimeline) base.push("How does your pelvic floor feel during lifting and sneezing?");
-    base.push("I’m seeing coning — what should I change?");
+    if (p.track === "healer" && p.dayNumber === 1) {
+      base.push("How did the first session feel in your midline (coning, pulling, pressure)?");
+    }
+    base.push("I noticed coning — what should I change right now?");
+    base.push("How should I breathe during lifts to protect my midline?");
+    base.push("Which moves should I avoid this week to keep pressure low?");
     return base.slice(0, 4);
-  }, [p.dayNumber, p.track, user.postpartumTimeline, user.symptoms]);
+  }, [p.dayNumber, p.track]);
 
   const send = async (text: string) => {
     const trimmed = text.trim();
@@ -50,26 +55,30 @@ export default function CoachMia() {
             navelAssessment: user.navelAssessment,
             highRisk: user.highRisk,
             herniaSafe: user.herniaSafe,
-            today: { track: p.track, dayNumber: p.dayNumber, phaseName: p.phaseName }
-          }
-        })
+            today: { track: p.track, dayNumber: p.dayNumber, phaseName: p.phaseName },
+          },
+        }),
       });
 
       const data = await res.json();
-      const reply = (data?.reply as string) || "I’m here. Can you tell me exactly what you felt (pain, pressure, coning)?";
+      const reply =
+        (data?.reply as string) ||
+        "I’m here. Tell me what you felt (pressure, coning, pulling, pain) and on which exercise.";
       setMsgs((m) => [...m, { role: "assistant", text: reply }]);
     } catch {
       setMsgs((m) => [
         ...m,
         {
           role: "assistant",
-          text: "I couldn’t reach the clinic server. If you’re on static export, you’ll need an external Mia endpoint."
-        }
+          text: "I couldn’t reach the clinic server. If you’re on static export, you’ll need an external Mia endpoint.",
+        },
       ]);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {}, []);
 
   return (
     <div className="flex flex-col gap-4">
@@ -78,7 +87,7 @@ export default function CoachMia() {
           <div>
             <div className="text-white font-extrabold text-[16px]">Coach Mia</div>
             <div className="text-white/55 text-[12px] font-semibold mt-1">
-              Medical-aware guidance • Pressure-first • Safe progressions
+              Rehab guidance • Pressure-first • Safe progressions
             </div>
           </div>
           <Sparkles className="text-[color:var(--pink)]" />
@@ -102,13 +111,16 @@ export default function CoachMia() {
           {msgs.map((m, i) => {
             const isUser = m.role === "user";
             return (
-              <div key={i} className={["mb-3 flex", isUser ? "justify-end" : "justify-start"].join(" ")}>
+              <div
+                key={i}
+                className={["mb-3 flex", isUser ? "justify-end" : "justify-start"].join(" ")}
+              >
                 <div
                   className={[
                     "max-w-[86%] px-4 py-3 rounded-2xl text-[13px] font-semibold leading-relaxed",
                     isUser
                       ? "bg-[color:var(--pink)] text-white rounded-br-none"
-                      : "bg-black/20 border border-white/10 text-white/85 rounded-bl-none"
+                      : "bg-black/20 border border-white/10 text-white/85 rounded-bl-none",
                   ].join(" ")}
                 >
                   {m.text}
@@ -125,7 +137,7 @@ export default function CoachMia() {
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about coning, pressure, pain, workouts…"
+            placeholder="Ask about coning, pressure, pulling, pain, breathing…"
             className="flex-1 h-12 rounded-2xl bg-black/25 border border-white/10 px-4 text-white font-semibold outline-none focus:border-[color:var(--pink)]"
             onKeyDown={(e) => e.key === "Enter" && send(input)}
           />
