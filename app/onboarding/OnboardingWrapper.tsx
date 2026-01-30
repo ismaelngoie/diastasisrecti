@@ -1340,9 +1340,9 @@ const CheckoutForm = ({ onClose, dateString }: { onClose: () => void; dateString
         <X size={20} className="text-white/70" />
       </button>
       <div className="mb-6">
-        <h3 className="text-xl font-extrabold text-white mb-1" style={{ fontFamily: "var(--font-lora)" }}>
-          100% Money-Back Guarantee.
-        </h3>
+        <h3 className="text-lg font-extrabold text-white mb-1 leading-tight" style={{ fontFamily: "var(--font-lora)" }}>
+    Join 10,243+ women fixing their Diastasis Recti
+  </h3>
         <p className="text-sm text-white/50 font-medium">Total due: $24.99 / month</p>
       </div>
       <div className="flex flex-col gap-4">
