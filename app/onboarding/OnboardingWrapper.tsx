@@ -2349,9 +2349,9 @@ const TOTAL_STEPS = 14;
 
 // Updated Mia copy to be clinical + diastasis-recti specific
 const MIA_M1 =
-  "Hi — I’m Mia, your core rehab coach. Let’s do a quick diastasis recti assessment.";
+  "Hi! I’m Mia, your core rehab coach. I've helped 10,000+ women close their gap";
 const MIA_M2 =
-  "First, what name should I use?";
+  "Let’s do a quick diastasis recti assessment. First, what name should I use?";
 
 const AGE_PROMPT_ANCHOR = "What is your age?";
 
@@ -2678,7 +2678,7 @@ export default function OnboardingWrapper() {
                         Which looks most like you?
                       </h1>
                       <p className="text-white/65 mt-3 text-[14px] leading-relaxed">
-                        Choose the closest match. This helps us start with the safest plan.
+                        Choose the closest match. This helps us start with the right plan.
                       </p>
                     </div>
 
@@ -2821,7 +2821,7 @@ export default function OnboardingWrapper() {
                               Select your age
                             </div>
                             <div className="text-slate-500 text-[13px] font-semibold mt-1">
-                              This helps set safe progression pacing.
+                              This helps us tailor tissue recovery pacing.
                             </div>
                           </div>
 
