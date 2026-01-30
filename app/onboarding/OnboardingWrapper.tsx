@@ -2605,7 +2605,7 @@ export default function OnboardingWrapper() {
                     </h1>
 
                     <p className="text-center text-white/70 mt-4 text-[15px] leading-relaxed max-w-sm">
-                      The only AI-driven protocol designed to close Diastasis Recti gaps of{" "}
+                      The only clinically adaptive plan designed to close Diastasis Recti gaps of{" "}
                       <span className="text-white font-semibold">2+ fingers</span>.
                     </p>
 
