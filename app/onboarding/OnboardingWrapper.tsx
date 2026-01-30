@@ -222,95 +222,146 @@ function WheelPicker({
 
 /* ------------------------------ VISUAL STEP 2 ---------------------------- */
 
-function ShapeArt({ id }: { id: Exclude<VisualShape, null> }) {
-  if (id === "pooch") {
-    return (
-      <svg viewBox="0 0 320 140" className="w-full h-full">
-        <defs>
-          <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="rgba(255,255,255,0.10)" />
-            <stop offset="1" stopColor="rgba(230,84,115,0.18)" />
-          </linearGradient>
-        </defs>
-        <rect x="10" y="10" width="300" height="120" rx="22" fill="url(#g1)" />
-        <path
-          d="M70 95c30-40 70-55 120-50 40 4 70 22 85 48"
-          fill="none"
-          stroke="rgba(255,255,255,0.65)"
-          strokeWidth="10"
-          strokeLinecap="round"
-        />
-        <path
-          d="M92 98c28-22 58-30 90-26 28 3 50 14 66 28"
-          fill="none"
-          stroke="rgba(210,235,255,0.55)"
-          strokeWidth="6"
-          strokeLinecap="round"
-        />
-      </svg>
-    );
-  }
+// --- HIGH-END 3D DEFINITIONS ---
+const SvgDefs = () => (
+  <defs>
+    {/* 1. Body Glass Gradient: Gives the torso volume/depth */}
+    <linearGradient id="body-glass" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stopColor="white" stopOpacity="0.15" />
+      <stop offset="50%" stopColor="white" stopOpacity="0.05" />
+      <stop offset="100%" stopColor="white" stopOpacity="0.02" />
+    </linearGradient>
 
-  if (id === "gap") {
-    return (
-      <svg viewBox="0 0 320 140" className="w-full h-full">
-        <defs>
-          <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="rgba(255,255,255,0.10)" />
-            <stop offset="1" stopColor="rgba(120,200,255,0.12)" />
-          </linearGradient>
-        </defs>
-        <rect x="10" y="10" width="300" height="120" rx="22" fill="url(#g2)" />
-        <path
-          d="M85 40c22-12 46-16 75-14 30 2 55 9 75 24"
-          fill="none"
-          stroke="rgba(255,255,255,0.65)"
-          strokeWidth="10"
-          strokeLinecap="round"
-        />
-        <path
-          d="M160 34v84"
-          stroke="rgba(230,84,115,0.70)"
-          strokeWidth="8"
-          strokeLinecap="round"
-        />
-        <path
-          d="M160 34v84"
-          stroke="rgba(255,255,255,0.25)"
-          strokeWidth="14"
-          strokeLinecap="round"
-        />
-      </svg>
-    );
-  }
+    {/* 2. The "Pooch" Sphere Gradient: Makes it look round/protruding */}
+    <radialGradient id="pooch-3d" cx="0.5" cy="0.8" r="0.4">
+      <stop offset="0%" stopColor="#E65473" stopOpacity="0.4" />
+      <stop offset="60%" stopColor="#E65473" stopOpacity="0.1" />
+      <stop offset="100%" stopColor="#E65473" stopOpacity="0" />
+    </radialGradient>
+
+    {/* 3. The "Gap" Depth Gradient: Makes the middle look like a deep trench */}
+    <linearGradient id="gap-depth" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stopColor="white" stopOpacity="0.1" />
+      <stop offset="40%" stopColor="#1A1A26" stopOpacity="0.8" /> {/* Dark middle */}
+      <stop offset="60%" stopColor="#1A1A26" stopOpacity="0.8" />
+      <stop offset="100%" stopColor="white" stopOpacity="0.1" />
+    </linearGradient>
+
+    {/* 4. The "Cone" Ridge Gradient: Simulates light hitting a pyramid peak */}
+    <linearGradient id="cone-ridge" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stopColor="white" stopOpacity="0" />
+      <stop offset="48%" stopColor="white" stopOpacity="0.1" />
+      <stop offset="50%" stopColor="#E65473" stopOpacity="0.8" /> {/* The Peak Highlight */}
+      <stop offset="52%" stopColor="white" stopOpacity="0.1" />
+      <stop offset="100%" stopColor="white" stopOpacity="0" />
+    </linearGradient>
+
+    {/* 5. Glow Filter for lasers/lines */}
+    <filter id="laser-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1.5" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+);
+
+function ShapeArt({ id }: { id: Exclude<VisualShape, null> }) {
+  // Shared Torso Path (Hourglass shape)
+  const torsoPath = "M50 40 C 50 40, 60 90, 55 120 C 50 150, 70 170, 100 180 C 130 170, 150 150, 145 120 C 140 90, 150 40, 150 40";
 
   return (
-    <svg viewBox="0 0 320 140" className="w-full h-full">
-      <defs>
-        <linearGradient id="g3" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="rgba(255,255,255,0.10)" />
-          <stop offset="1" stopColor="rgba(245,158,11,0.14)" />
-        </linearGradient>
-      </defs>
-      <rect x="10" y="10" width="300" height="120" rx="22" fill="url(#g3)" />
+    <svg viewBox="0 0 200 200" className="w-full h-full" fill="none">
+      <SvgDefs />
+      
+      {/* 1. Base Body Layer (Glass Effect) */}
       <path
-        d="M70 102c36-58 70-78 90-78s54 20 90 78"
-        fill="none"
-        stroke="rgba(255,255,255,0.65)"
-        strokeWidth="10"
-        strokeLinecap="round"
+        d={torsoPath}
+        fill="url(#body-glass)"
+        stroke="white"
+        strokeWidth="1.5"
+        strokeOpacity="0.3"
       />
-      <path
-        d="M140 70c10-16 18-24 20-24s10 8 20 24"
-        fill="none"
-        stroke="rgba(245,158,11,0.65)"
-        strokeWidth="7"
-        strokeLinecap="round"
-      />
+      
+      {/* --- THE POOCH (Volumetric Sphere) --- */}
+      {id === "pooch" && (
+        <>
+          {/* The 3D Volume Fill */}
+          <path
+            d="M75 110 C 75 110, 100 120, 125 110 C 125 110, 135 150, 100 160 C 65 150, 75 110, 75 110"
+            fill="url(#pooch-3d)"
+            filter="url(#laser-glow)"
+          />
+          {/* Top Contour Line (Crisp) */}
+          <path d="M75 110 Q 100 125, 125 110" stroke="white" strokeWidth="2" strokeLinecap="round" />
+          {/* Bottom Heavy Curve (Sag) */}
+          <path d="M80 115 Q 100 155, 120 115" stroke="white" strokeWidth="3" strokeOpacity="0.9" />
+          {/* Navel */}
+          <circle cx="100" cy="95" r="2" fill="white" />
+        </>
+      )}
+
+      {/* --- THE GAP (Deep Trench Scan) --- */}
+      {id === "gap" && (
+        <>
+          {/* Dark Channel in the middle to simulate depth */}
+          <path
+            d="M85 60 Q 85 100, 85 140 L 115 140 Q 115 100, 115 60 Z"
+            fill="url(#gap-depth)"
+          />
+          {/* Muscle Walls (Left & Right) */}
+          <path d="M85 60 Q 80 100, 85 140" stroke="white" strokeWidth="2" opacity="0.8" />
+          <path d="M115 60 Q 120 100, 115 140" stroke="white" strokeWidth="2" opacity="0.8" />
+          
+          {/* Laser Measurement Lines (Pink/White) */}
+          <g filter="url(#laser-glow)">
+            {/* Top Laser */}
+            <path d="M60 90 L 80 90" stroke="white" strokeWidth="1" strokeDasharray="3 3" opacity="0.5"/>
+            <path d="M80 90 L 120 90" stroke="#E65473" strokeWidth="1.5" />
+            <path d="M120 90 L 140 90" stroke="white" strokeWidth="1" strokeDasharray="3 3" opacity="0.5"/>
+            
+            {/* Bottom Laser */}
+            <path d="M60 110 L 80 110" stroke="white" strokeWidth="1" strokeDasharray="3 3" opacity="0.5"/>
+            <path d="M80 110 L 120 110" stroke="#E65473" strokeWidth="1.5" />
+            <path d="M120 110 L 140 110" stroke="white" strokeWidth="1" strokeDasharray="3 3" opacity="0.5"/>
+          </g>
+          
+          {/* Tiny arrowheads */}
+          <path d="M80 87 L 85 90 L 80 93" fill="white" />
+          <path d="M120 87 L 115 90 L 120 93" fill="white" />
+        </>
+      )}
+
+      {/* --- THE CONE (Holographic Ridge) --- */}
+      {id === "cone" && (
+        <>
+          {/* The Ridge Gradient (Simulating a tent shape rising up) */}
+          <path
+            d="M80 140 L 100 60 L 120 140"
+            fill="url(#cone-ridge)"
+          />
+          {/* The Sharp Spine (Pink Highlight) */}
+          <path
+            d="M100 60 L 100 140"
+            stroke="#E65473"
+            strokeWidth="2"
+            strokeLinecap="round"
+            filter="url(#laser-glow)"
+          />
+          {/* Tension Lines radiating out (Stress) */}
+          <path d="M100 80 L 70 85" stroke="white" strokeWidth="1" opacity="0.2" />
+          <path d="M100 100 L 65 105" stroke="white" strokeWidth="1" opacity="0.3" />
+          <path d="M100 120 L 70 125" stroke="white" strokeWidth="1" opacity="0.2" />
+          
+          <path d="M100 80 L 130 85" stroke="white" strokeWidth="1" opacity="0.2" />
+          <path d="M100 100 L 135 105" stroke="white" strokeWidth="1" opacity="0.3" />
+          <path d="M100 120 L 130 125" stroke="white" strokeWidth="1" opacity="0.2" />
+
+          {/* Navel at the peak */}
+          <circle cx="100" cy="90" r="2" fill="white" />
+        </>
+      )}
     </svg>
   );
 }
-
 function VisualCard({
   id,
   title,
