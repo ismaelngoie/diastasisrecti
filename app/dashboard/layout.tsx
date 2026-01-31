@@ -10,12 +10,21 @@ import { useUserStore } from "@/lib/store/useUserStore";
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const isPremium = useUserStore((s) => s.isPremium);
+  const joinDate = useUserStore((s) => s.joinDate);
+  const setJoinDate = useUserStore((s) => s.setJoinDate);
+
   const hasSeenBridge = useUserStore((s) => s.hasSeenBridge);
   const setHasSeenBridge = useUserStore((s) => s.setHasSeenBridge);
 
   useEffect(() => {
     if (!isPremium) router.replace("/");
   }, [isPremium, router]);
+
+  // ✅ Ensure cycle math is stable (start the 16-day loop when they first enter)
+  useEffect(() => {
+    if (!isPremium) return;
+    if (!joinDate) setJoinDate(new Date().toISOString());
+  }, [isPremium, joinDate, setJoinDate]);
 
   if (!isPremium) return null;
 
