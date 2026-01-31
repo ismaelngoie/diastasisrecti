@@ -1,10 +1,8 @@
-"use client";
-
 import "./globals.css";
-import React from "react";
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Inter, Lora } from "next/font/google";
+import ClientShell from "./ClientShell";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -19,8 +17,8 @@ const lora = Lora({
 });
 
 const SITE_NAME = "DiastaFix";
-const SITE_URL = "https://diastafix.com"; // ✅ update if you use a different canonical domain
-const OG_IMAGE = "/og.png"; // optional: add /public/og.png for best sharing previews
+const SITE_URL = "https://diastafix.com"; // ✅ change if needed
+const OG_IMAGE = "/og.png"; // optional: put /public/og.png
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -46,7 +44,6 @@ export const metadata: Metadata = {
     "postpartum core rehab",
     "core stability",
     "transverse abdominis",
-    "pelvic floor and core",
     "linea alba",
   ],
   alternates: {
@@ -69,7 +66,7 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     title: `${SITE_NAME} — Diastasis Recti Repair Plan`,
     description:
-      "Diastasis recti assessment + abdominal separation repair plan. Track your finger gap and follow safe, low-pressure core progressions.",
+      "Track your finger gap and follow safe, low-pressure core progressions for diastasis recti and abdominal separation.",
     images: [
       {
         url: OG_IMAGE,
@@ -83,33 +80,23 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: `${SITE_NAME} — Diastasis Recti Repair Plan`,
     description:
-      "Diastasis recti assessment + abdominal separation repair plan. Track your finger gap and follow safe, low-pressure core progressions.",
+      "Track your finger gap and follow safe, low-pressure core progressions for diastasis recti and abdominal separation.",
     images: [OG_IMAGE],
   },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  // ✅ Minimal, safe schema that helps Google understand brand/site
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
-      {
-        "@type": "Organization",
-        name: SITE_NAME,
-        url: SITE_URL,
-      },
-      {
-        "@type": "WebSite",
-        name: SITE_NAME,
-        url: SITE_URL,
-      },
+      { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
+      { "@type": "WebSite", name: SITE_NAME, url: SITE_URL },
     ],
   };
 
   return (
     <html lang="en" className={`${inter.variable} ${lora.variable} h-full`}>
       <head>
-        {/* Small perf boost for third-party scripts */}
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://www.clarity.ms" />
 
@@ -141,7 +128,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
                   t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
                   y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-              })(window, document, "clarity", "script", "v9s9ullom");
+              })(window, document, "clarity", "script", "v9s9ullomf");
             `,
           }}
         />
@@ -153,21 +140,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
 
-      <body className="bg-[color:var(--navy)] text-white fixed inset-0 h-full overflow-hidden">
-        <div className="w-full h-dvh flex flex-col min-h-0">
-          <div
-            className="
-              flex-1 min-h-0 w-full
-              overflow-y-auto overscroll-contain
-              [-webkit-overflow-scrolling:touch]
-              no-scrollbar
-              pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]
-              pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]
-            "
-          >
-            {children}
-          </div>
-        </div>
+      <body className="bg-[color:var(--navy)] text-white">
+        <ClientShell>{children}</ClientShell>
       </body>
     </html>
   );
