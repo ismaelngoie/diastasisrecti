@@ -1,7 +1,6 @@
 import Stripe from "stripe";
 
 export async function onRequest(context: any) {
-  // 1. Handle CORS Preflight
   if (context.request.method === "OPTIONS") {
     return new Response(null, {
       headers: {
@@ -12,14 +11,10 @@ export async function onRequest(context: any) {
     });
   }
 
-  // Only allow POST
   if (context.request.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
       status: 405,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
+      headers: { "Access-Control-Allow-Origin": "*" },
     });
   }
 
@@ -31,13 +26,14 @@ export async function onRequest(context: any) {
     };
 
     if (!secretKey) {
-      return new Response(JSON.stringify({ error: "Missing STRIPE_SECRET_KEY" }), {
+      return new Response(JSON.stringify({ error: "Missing Config" }), {
         status: 500,
         headers: responseHeaders,
       });
     }
 
-    const stripe = new Stripe(secretKey, { apiVersion: "2023-10-16" });
+    // FIX: Removed explicit apiVersion
+    const stripe = new Stripe(secretKey);
 
     const body = await context.request.json().catch(() => ({}));
     const email = String(body?.email || "").trim().toLowerCase();
@@ -49,7 +45,7 @@ export async function onRequest(context: any) {
       });
     }
 
-    // Stripe searches by exact email
+    // Lookup customer by email
     const customers = await stripe.customers.list({ email, limit: 10 });
 
     if (customers.data.length === 0) {
@@ -58,7 +54,7 @@ export async function onRequest(context: any) {
       });
     }
 
-    // Check any customer for eligible subscription
+    // Check for active subscriptions
     for (const customer of customers.data) {
       const subs = await stripe.subscriptions.list({
         customer: customer.id,
@@ -67,14 +63,13 @@ export async function onRequest(context: any) {
       });
 
       const eligible = subs.data.find((s) => s.status === "active" || s.status === "trialing");
+      
       if (eligible) {
         return new Response(
           JSON.stringify({
             isPremium: true,
             customerName: customer.name || null,
             subscriptionStatus: eligible.status,
-            currentPeriodEnd: eligible.current_period_end,
-            cancelAtPeriodEnd: eligible.cancel_at_period_end,
           }),
           { headers: responseHeaders }
         );
@@ -91,10 +86,7 @@ export async function onRequest(context: any) {
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err?.message || "Unknown error" }), {
       status: 500,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
+      headers: { "Access-Control-Allow-Origin": "*" },
     });
   }
 }
