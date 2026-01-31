@@ -10,9 +10,10 @@ import { getTodaysPrescription } from "@/lib/protocolEngine";
 import SafetyPlayer from "@/components/inside/SafetyPlayer";
 import ButterflyBackground from "@/components/ButterflyBackground";
 
-import ProgressRing from "@/components/inside/ProgressRing";
 import StreakCard from "@/components/inside/StreakCard";
 import ProgressGraph, { type GraphPoint, type GraphRange } from "@/components/inside/ProgressGraph";
+import PreviewRing from "@/components/inside/PreviewRing";
+import VideoPreviewCircle from "@/components/inside/VideoPreviewCircle";
 
 function sanitizeCopy(input?: string) {
   const s = String(input || "");
@@ -56,7 +57,6 @@ function formatLocalDate(isoYYYYMMDD: string) {
 function computeStreakInfo(dateSet: Set<string>) {
   const today = localDateISO(new Date());
 
-  // current streak (ending today)
   let current = 0;
   for (let i = 0; i < 3650; i++) {
     const iso = addDays(today, -i);
@@ -64,7 +64,6 @@ function computeStreakInfo(dateSet: Set<string>) {
     else break;
   }
 
-  // best streak (scan sorted)
   const dates = Array.from(dateSet).sort((a, b) => a.localeCompare(b));
   let best = 0;
   let run = 0;
@@ -103,7 +102,6 @@ function buildGraphPoints(range: GraphRange, dateSet: Set<string>) {
   }
 
   if (range === "month") {
-    // last 4 blocks of 7 days
     const pts: GraphPoint[] = [];
     for (let block = 3; block >= 0; block--) {
       const end = addDays(today, -(block * 7));
@@ -124,10 +122,9 @@ function buildGraphPoints(range: GraphRange, dateSet: Set<string>) {
     return { title: "Last 4 Weeks", points: pts };
   }
 
-  // year: last 12 months
   const byMonth = new Map<string, number>();
   for (const iso of dateSet) {
-    const key = iso.slice(0, 7); // YYYY-MM
+    const key = iso.slice(0, 7);
     byMonth.set(key, (byMonth.get(key) || 0) + 1);
   }
 
@@ -142,7 +139,6 @@ function buildGraphPoints(range: GraphRange, dateSet: Set<string>) {
     const label = d.toLocaleDateString("en-US", { month: "short" });
 
     const count = byMonth.get(key) || 0;
-    // normalize by 20 workouts/month for visual (keeps simple)
     const value = Math.min(1.2, count / 20);
 
     pts.push({ label, value, raw: count });
@@ -163,7 +159,6 @@ export default function DashboardTodayPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // preserve your existing "plan=monthly" param cleanup
   const planParam = searchParams.get("plan");
   const searchParamsString = searchParams.toString();
 
@@ -174,7 +169,7 @@ export default function DashboardTodayPage() {
       next.delete("plan");
       const qs = next.toString();
       router.replace(qs ? `/dashboard?${qs}` : "/dashboard", { scroll: false });
-    }, 30000);
+    }, 5000);
     return () => window.clearTimeout(t);
   }, [router, planParam, searchParamsString]);
 
@@ -209,10 +204,13 @@ export default function DashboardTodayPage() {
   const phaseNameDisplay = useMemo(() => sanitizeCopy(p.phaseName) || p.phaseName, [p.phaseName]);
   const whyDisplay = useMemo(() => sanitizeCopy(p.why) || p.why, [p.why]);
 
-  const ringPct = isDoneToday ? 100 : 0;
+  // Smooth fill to 100% and stay
+  const [ringPct, setRingPct] = useState(isDoneToday ? 100 : 0);
+  useEffect(() => {
+    setRingPct(isDoneToday ? 100 : 0);
+  }, [isDoneToday]);
 
   const streak = useMemo(() => computeStreakInfo(dateSet), [dateSet]);
-
   const graph = useMemo(() => buildGraphPoints(range, dateSet), [range, dateSet]);
 
   const habitItems = useMemo(
@@ -228,7 +226,10 @@ export default function DashboardTodayPage() {
     () => habitItems.reduce((acc, h) => acc + (dayHabits[h.id] ? 1 : 0), 0),
     [dayHabits, habitItems]
   );
-  const habitsPct = useMemo(() => Math.round((habitsDoneCount / (habitItems.length || 1)) * 100), [habitsDoneCount, habitItems.length]);
+  const habitsPct = useMemo(
+    () => Math.round((habitsDoneCount / (habitItems.length || 1)) * 100),
+    [habitsDoneCount, habitItems.length]
+  );
 
   const requestStart = (url: string) => {
     if (!hasVideos) return;
@@ -247,6 +248,7 @@ export default function DashboardTodayPage() {
     setPendingStartUrl(null);
   };
 
+  // Silent completion trigger remains inside player (after 5 seconds)
   const onStartedAfter5s = useCallback(() => {
     if (isDoneToday) return;
 
@@ -257,6 +259,8 @@ export default function DashboardTodayPage() {
       completedAtISO: new Date().toISOString(),
     });
   }, [addWorkoutCompletion, isDoneToday, p.dateISO, p.dayNumber]);
+
+  const heroSrc = hasVideos ? videos[0].url : "";
 
   return (
     <main className="w-full max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -286,17 +290,29 @@ export default function DashboardTodayPage() {
           )}
         </div>
 
+        {/* HERO */}
         <Card className="p-5">
-          <ProgressRing
+          <PreviewRing
             pct={ringPct}
-            labelTop={isDoneToday ? "Today is counted ✅" : "Start today’s routine"}
-            labelBottom="Counts automatically after 5 seconds of playback."
-          />
+            labelTop={isDoneToday ? "Today is complete ✅" : "Tap play to start"}
+            labelBottom="Plays every move automatically — you can jump anytime."
+          >
+            {hasVideos ? (
+              <VideoPreviewCircle
+                src={heroSrc}
+                onClick={() => requestStart(heroSrc)}
+                label="Start today's routine"
+                loopSeconds={3}
+              />
+            ) : (
+              <div className="w-[164px] h-[164px] rounded-full border border-white/12 bg-white/5" />
+            )}
+          </PreviewRing>
 
-          <div className="mt-4 flex gap-3">
+          <div className="mt-5 flex gap-3">
             <button
               type="button"
-              onClick={() => (hasVideos ? requestStart(videos[0].url) : null)}
+              onClick={() => (hasVideos ? requestStart(heroSrc) : null)}
               disabled={!hasVideos}
               className={[
                 "flex-1 h-14 rounded-full",
@@ -308,15 +324,19 @@ export default function DashboardTodayPage() {
               ].join(" ")}
             >
               {isDoneToday ? <CheckCircle2 size={18} /> : <Play size={18} />}
-              {isDoneToday ? "Completed" : "Start Routine"}
+              {isDoneToday ? "Replay Routine" : "Start Routine"}
             </button>
 
             <button
               type="button"
               onClick={() => setShowWhy((v) => !v)}
               className="h-14 px-4 rounded-full border border-white/10 bg-white/8 text-white font-extrabold"
+              aria-label="Show details"
             >
-              <ChevronDown className={["transition-transform", showWhy ? "rotate-180" : ""].join(" ")} size={18} />
+              <ChevronDown
+                className={["transition-transform", showWhy ? "rotate-180" : ""].join(" ")}
+                size={18}
+              />
             </button>
           </div>
 
@@ -332,7 +352,7 @@ export default function DashboardTodayPage() {
                 <div className="mt-4 text-white/70 text-[13px] font-semibold leading-relaxed">
                   {whyDisplay}
                   <div className="mt-2 text-white/45 text-[11px] font-semibold">
-                    If anything feels painful or wrong, stop and switch or rest.
+                    Quality reps only. If anything feels painful or wrong, stop and switch or rest.
                   </div>
                 </div>
               </motion.div>
@@ -342,19 +362,15 @@ export default function DashboardTodayPage() {
 
         <StreakCard current={streak.current} best={streak.best} total={streak.total} />
 
-        <ProgressGraph
-          range={range}
-          title={graph.title}
-          points={graph.points}
-          onRangeChange={setRange}
-        />
+        <ProgressGraph range={range} title={graph.title} points={graph.points} onRangeChange={setRange} />
 
+        {/* MOVES */}
         <Card className="p-5">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="text-white font-extrabold text-[16px]">Today’s Moves</div>
               <div className="text-white/55 text-[12px] font-semibold mt-1">
-                Only today’s routine is available.
+                Tap any move to start there — it will continue through the full routine.
               </div>
             </div>
           </div>
@@ -381,7 +397,7 @@ export default function DashboardTodayPage() {
                   <div className="min-w-0 flex-1">
                     <div className="text-white/90 text-[13px] font-extrabold truncate">{title}</div>
                     <div className="text-white/45 text-[11px] font-semibold mt-0.5 truncate">
-                      Ribs down • exhale on effort • stop if you feel pain
+                      Slow control • exhale on effort • stop if you feel pain
                     </div>
                   </div>
 
@@ -394,12 +410,13 @@ export default function DashboardTodayPage() {
           </div>
         </Card>
 
+        {/* HABITS */}
         <Card className="p-5">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="text-white font-extrabold text-[16px]">Daily Habits</div>
               <div className="text-white/55 text-[12px] font-semibold mt-1">
-                Small rules that protect your midline while it heals.
+                Small rules that protect your midline while it adapts.
               </div>
             </div>
 
@@ -457,7 +474,7 @@ export default function DashboardTodayPage() {
         </Card>
       </div>
 
-      {/* Start message modal (shows BEFORE starting, only if not counted yet) */}
+      {/* Start modal — improved “how to workout” */}
       <AnimatePresence>
         {startModalOpen && !isDoneToday && (
           <motion.div
@@ -475,14 +492,21 @@ export default function DashboardTodayPage() {
               exit={{ y: 10, scale: 0.98, opacity: 0 }}
               transition={{ duration: 0.25, ease: "easeOut" }}
             >
-              <div className="text-white font-extrabold text-[18px]">Today’s focus</div>
-              <div className="text-white/75 text-[13px] font-semibold mt-2 leading-relaxed">
+              <div className="text-white font-extrabold text-[18px]">Before you start</div>
+
+              <div className="mt-2 text-white/75 text-[13px] font-semibold leading-relaxed">
                 <span className="text-white font-extrabold">{phaseNameDisplay}.</span>{" "}
                 {whyDisplay}
               </div>
 
-              <div className="mt-3 text-white/45 text-[11px] font-semibold leading-relaxed">
-                Your streak counts after 5 seconds of playback.
+              <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+                <div className="text-white font-extrabold text-[13px]">How to get the most from today</div>
+                <ul className="mt-2 space-y-2 text-white/70 text-[12px] font-semibold leading-relaxed list-disc pl-4">
+                  <li>Follow each move with slow control. Keep ribs down and breathe.</li>
+                  <li>If a move is labeled Left/Right, do both sides — treat them as separate moves.</li>
+                  <li>If it feels easy and your form stays clean, run the routine one more time.</li>
+                  <li>Stop if you feel sharp pain, pulling, or anything that feels “wrong.”</li>
+                </ul>
               </div>
 
               <button
