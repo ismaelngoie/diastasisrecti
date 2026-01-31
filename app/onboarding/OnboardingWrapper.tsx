@@ -2050,23 +2050,31 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
+      
       const data = await res.json();
+      
       if (data.isPremium) {
         setPremium(true);
         setJoinDate(new Date().toISOString());
         if (data.customerName) setName(data.customerName);
+        
+        // Restore specific symptom logic
         const symptoms = useUserData.getState().symptoms || [];
         if (symptoms.includes("incontinence")) {
           useUserData.getState().startDrySeal();
         }
+        
         router.push("/dashboard");
         return;
       }
-      setMessage("We found your email, but no active subscription was detected.");
+      
+      // FIX: Use the actual message from the server, or fallback
+      setMessage(data.message || data.error || "No active subscription found.");
       setIsLoading(false);
+
     } catch (err) {
       console.error(err);
-      setMessage("Unable to verify purchase. Please check your internet connection.");
+      setMessage("Connection failed. Please check your internet.");
       setIsLoading(false);
     }
   };
@@ -2107,7 +2115,11 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
           </div>
 
           {message && (
-            <div className="text-red-300 text-sm bg-red-500/10 p-3 rounded-xl border border-red-500/20 font-semibold">
+            <div className={`text-sm p-3 rounded-xl border font-semibold ${
+               message.includes("could not find") 
+               ? "bg-yellow-500/10 border-yellow-500/20 text-yellow-200"
+               : "bg-red-500/10 border-red-500/20 text-red-300"
+            }`}>
               {message}
             </div>
           )}
