@@ -1,57 +1,61 @@
-import Stripe from 'stripe';
+import Stripe from "stripe";
 
-export async function onRequestPost(context: any) {
+export async function POST(req: Request) {
   try {
-    const stripe = new Stripe(context.env.STRIPE_SECRET_KEY);
-    const { email } = await context.request.json();
-
-    if (!email) {
-      return new Response(JSON.stringify({ error: "Email required" }), { 
-        status: 400,
-        headers: { "Content-Type": "application/json" }
-      });
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    if (!secretKey) {
+      return Response.json({ error: "Missing STRIPE_SECRET_KEY" }, { status: 500 });
     }
 
-    // 1. Find Customer by Email
-    const customers = await stripe.customers.list({ 
-      email: email, 
-      limit: 1 
-    });
+    const stripe = new Stripe(secretKey);
+
+    const { email } = await req.json();
+    const cleanEmail = String(email || "").trim().toLowerCase();
+
+    if (!cleanEmail || !cleanEmail.includes("@")) {
+      return Response.json({ error: "Email required" }, { status: 400 });
+    }
+
+    // Stripe filters by exact email match
+    const customers = await stripe.customers.list({ email: cleanEmail, limit: 10 });
 
     if (customers.data.length === 0) {
-      return new Response(JSON.stringify({ isPremium: false, error: "No account found." }), {
-        headers: { "Content-Type": "application/json" }
-      });
+      return Response.json({ isPremium: false, error: "No account found." });
     }
 
-    const customer = customers.data[0];
+    // Check any customer record for an eligible subscription
+    for (const customer of customers.data) {
+      const subs = await stripe.subscriptions.list({
+        customer: customer.id,
+        status: "all",
+        limit: 10,
+      });
 
-    // 2. Check for Active Subscriptions
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customer.id,
-      status: 'active',
-      limit: 1
+      const eligible = subs.data.find((s) =>
+        ["active", "trialing"].includes(s.status)
+        // optionally allow past_due:
+        // || s.status === "past_due"
+      );
+
+      if (eligible) {
+        return Response.json({
+          isPremium: true,
+          customerName: customer.name || null,
+          subscriptionStatus: eligible.status,
+          currentPeriodEnd: eligible.current_period_end,
+          cancelAtPeriodEnd: eligible.cancel_at_period_end,
+        });
+      }
+    }
+
+    return Response.json({
+      isPremium: false,
+      error: "We found your email, but no active subscription was detected.",
     });
-
-    const trialing = await stripe.subscriptions.list({
-      customer: customer.id,
-      status: 'trialing',
-      limit: 1
-    });
-
-    const isPremium = subscriptions.data.length > 0 || trialing.data.length > 0;
-
-    return new Response(JSON.stringify({ 
-      isPremium,
-      customerName: customer.name
-    }), {
-      headers: { "Content-Type": "application/json" }
-    });
-
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message || "Unknown error" }), { 
-      status: 500,
-      headers: { "Content-Type": "application/json" }
-    });
+    return Response.json(
+      { error: err?.message || "Unknown error" },
+      { status: 500 }
+    );
   }
 }
