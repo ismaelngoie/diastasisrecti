@@ -1,96 +1,57 @@
-import Stripe from "stripe";
+import Stripe from 'stripe';
 
-export async function onRequest(context: any) {
-  // 1. CORS Preflight
-  if (context.request.method === "OPTIONS") {
-    return new Response(null, {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-      },
-    });
-  }
+export async function onRequestPost(context: any) {
+  try {
+    // 1. Initialize Stripe
+    if (!context.env.STRIPE_SECRET_KEY) {
+      return new Response(JSON.stringify({ error: "Missing STRIPE_SECRET_KEY" }), { status: 500 });
+    }
+    
+    const stripe = new Stripe(context.env.STRIPE_SECRET_KEY);
+    const priceId = context.env.STRIPE_PRICE_ID;
 
-  // 2. Only Allow POST
-  if (context.request.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
-      status: 405,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-    });
-  }
+    if (!priceId) {
+      return new Response(JSON.stringify({ error: "Missing STRIPE_PRICE_ID" }), { status: 500 });
+    }
 
-  try {
-    const secretKey = context.env?.STRIPE_SECRET_KEY;
-    const priceId = context.env?.STRIPE_PRICE_ID;
+    // 2. Create Customer
+    const customer = await stripe.customers.create();
 
-    // Common headers
-    const responseHeaders = {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-    };
+    // 3. Create Subscription
+    const subscription = await stripe.subscriptions.create({
+      customer: customer.id,
+      items: [{
+        price: priceId,
+      }],
+      payment_behavior: 'default_incomplete',
+      payment_settings: { save_default_payment_method: 'on_subscription' },
+      expand: ['latest_invoice.payment_intent'],
+    });
 
-    if (!secretKey || !priceId) {
-      return new Response(JSON.stringify({ error: "Missing Stripe Config" }), {
-        status: 500,
-        headers: responseHeaders,
-      });
-    }
+    // 4. Extract Client Secret
+    // @ts-ignore
+    const clientSecret = subscription.latest_invoice?.payment_intent?.client_secret;
 
-    const stripe = new Stripe(secretKey);
+    if (!clientSecret) {
+      return new Response(JSON.stringify({ error: "Stripe failed to generate a client secret." }), { 
+        status: 500,
+        headers: { "Content-Type": "application/json" }
+      });
+    }
 
-    // 3. Create Anonymous Customer
-    const customer = await stripe.customers.create();
+    // 5. Return BOTH fields (Fixes your error)
+    return new Response(JSON.stringify({ 
+      clientSecret: clientSecret,
+      intentType: "payment" // <--- This was missing!
+    }), {
+      headers: { "Content-Type": "application/json" },
+    });
 
-    // 4. Create Subscription
-    const subscription = await stripe.subscriptions.create({
-      customer: customer.id,
-      items: [{ price: priceId }],
-      payment_behavior: "default_incomplete",
-      payment_settings: { save_default_payment_method: "on_subscription" },
-      expand: ["latest_invoice.payment_intent"],
-    });
-
-    // 5. Bulletproof Client Secret Retrieval
-    // Sometimes 'expand' doesn't work deep enough or version mismatches occur.
-    // We check exactly what we have and fetch what is missing.
-    let invoice = subscription.latest_invoice as any;
-
-    // If invoice is just an ID string, fetch the full invoice
-    if (typeof invoice === "string") {
-      invoice = await stripe.invoices.retrieve(invoice, {
-        expand: ["payment_intent"],
-      });
-    }
-
-    let paymentIntent = invoice?.payment_intent;
-
-    // If payment_intent is still just an ID string, fetch the full intent
-    if (typeof paymentIntent === "string") {
-      paymentIntent = await stripe.paymentIntents.retrieve(paymentIntent);
-    }
-
-    const clientSecret = paymentIntent?.client_secret;
-
-    if (!clientSecret) {
-      throw new Error("Could not retrieve client_secret from new subscription.");
-    }
-
-    // 6. Success
-    return new Response(JSON.stringify({ clientSecret }), {
-      headers: responseHeaders,
-    });
-
-  } catch (err: any) {
-    return new Response(JSON.stringify({ error: err?.message || "Unknown error" }), {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-    });
-  }
+  } catch (err: any) {
+    console.error("Stripe Error:", err.message);
+    return new Response(JSON.stringify({ error: err.message || "Unknown error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 }
