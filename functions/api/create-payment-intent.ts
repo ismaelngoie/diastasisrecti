@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 
 export async function onRequest(context: any) {
-  // 1. Handle CORS Preflight (OPTIONS request)
+  // 1. Handle CORS Preflight
   if (context.request.method === "OPTIONS") {
     return new Response(null, {
       headers: {
@@ -12,7 +12,7 @@ export async function onRequest(context: any) {
     });
   }
 
-  // Only allow POST for the actual logic
+  // 2. Only allow POST
   if (context.request.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
       status: 405,
@@ -27,28 +27,20 @@ export async function onRequest(context: any) {
     const secretKey = context.env?.STRIPE_SECRET_KEY;
     const priceId = context.env?.STRIPE_PRICE_ID;
 
-    // Common Headers for all responses
     const responseHeaders = {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
     };
 
-    if (!secretKey) {
-      return new Response(JSON.stringify({ error: "Missing STRIPE_SECRET_KEY" }), {
-        status: 500,
-        headers: responseHeaders,
-      });
-    }
-    if (!priceId) {
-      return new Response(JSON.stringify({ error: "Missing STRIPE_PRICE_ID" }), {
+    if (!secretKey || !priceId) {
+      return new Response(JSON.stringify({ error: "Missing Stripe Config" }), {
         status: 500,
         headers: responseHeaders,
       });
     }
 
-    const stripe = new Stripe(secretKey, {
-      apiVersion: "2023-10-16",
-    });
+    // FIX: Removed explicit apiVersion to satisfy latest Stripe SDK requirements
+    const stripe = new Stripe(secretKey);
 
     const body = await context.request.json().catch(() => ({}));
     const email = String(body?.email || "").trim().toLowerCase();
@@ -61,14 +53,17 @@ export async function onRequest(context: any) {
       });
     }
 
-    // 1) Reuse or create customer
+    // 1) Find existing customer by email to enable Restore later
     const existing = await stripe.customers.list({ email, limit: 1 });
-    const customer =
-      existing.data[0] ||
-      (await stripe.customers.create({
+    let customer = existing.data[0];
+
+    // If no customer exists, create one WITH the email
+    if (!customer) {
+      customer = await stripe.customers.create({
         email,
         name: name || undefined,
-      }));
+      });
+    }
 
     // 2) Prevent duplicate active subscriptions
     const active = await stripe.subscriptions.list({
@@ -76,7 +71,6 @@ export async function onRequest(context: any) {
       status: "active",
       limit: 1,
     });
-
     const trialing = await stripe.subscriptions.list({
       customer: customer.id,
       status: "trialing",
@@ -86,10 +80,7 @@ export async function onRequest(context: any) {
     if (active.data.length > 0 || trialing.data.length > 0) {
       return new Response(
         JSON.stringify({ error: "Subscription already active for this email." }),
-        {
-          status: 409,
-          headers: responseHeaders,
-        }
+        { status: 409, headers: responseHeaders }
       );
     }
 
@@ -104,37 +95,29 @@ export async function onRequest(context: any) {
         metadata: { email },
       },
       {
-        idempotencyKey: `sub_create_${email}_${Date.now()}`, // Added timestamp to prevent stale key collisions during testing
+        idempotencyKey: `sub_${email}_${Date.now()}`,
       }
     );
 
     const latestInvoice: any = subscription.latest_invoice;
     const paymentIntent: any = latestInvoice?.payment_intent;
-    const clientSecret: string | undefined = paymentIntent?.client_secret;
+    const clientSecret = paymentIntent?.client_secret;
 
     if (!clientSecret) {
-      return new Response(
-        JSON.stringify({ error: "Stripe failed to generate a client secret." }),
-        {
-          status: 500,
-          headers: responseHeaders,
-        }
-      );
+      throw new Error("Failed to generate client secret");
     }
 
     return new Response(JSON.stringify({ clientSecret }), {
       headers: responseHeaders,
     });
+
   } catch (err: any) {
-    return new Response(
-      JSON.stringify({ error: err?.message || "Unknown error" }),
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-      }
-    );
+    return new Response(JSON.stringify({ error: err?.message || "Unknown error" }), {
+      status: 500,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
   }
 }
