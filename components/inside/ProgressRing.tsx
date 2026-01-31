@@ -6,15 +6,18 @@ export default function ProgressRing({
   pct,
   labelTop,
   labelBottom,
+  center,
 }: {
   pct: number; // 0..100
   labelTop: string;
   labelBottom?: string;
+  center?: React.ReactNode;
 }) {
   const clamped = Math.max(0, Math.min(100, Math.round(pct)));
+
   const r = 44;
   const c = 2 * Math.PI * r;
-  const dash = (clamped / 100) * c;
+  const dashOffset = c * (1 - clamped / 100);
 
   return (
     <div className="flex items-center gap-4">
@@ -36,15 +39,21 @@ export default function ProgressRing({
             stroke="rgba(230,84,115,0.95)"
             strokeWidth="12"
             strokeLinecap="round"
-            strokeDasharray={`${dash} ${c - dash}`}
+            strokeDasharray={c}
+            strokeDashoffset={dashOffset}
             transform="rotate(-90 60 60)"
+            style={{ transition: "stroke-dashoffset 420ms ease" }}
           />
         </svg>
 
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-white font-extrabold text-[22px] tabular-nums">
-            {clamped}%
-          </div>
+          {center ? (
+            center
+          ) : (
+            <div className="text-white font-extrabold text-[22px] tabular-nums">
+              {clamped}%
+            </div>
+          )}
         </div>
       </div>
 
