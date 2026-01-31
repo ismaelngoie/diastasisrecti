@@ -76,7 +76,8 @@ function getFocusable(root: HTMLElement | null) {
 
   return nodes.filter((el) => {
     const isDisabled =
-      (el as HTMLButtonElement).disabled || el.getAttribute("aria-disabled") === "true";
+      (el as HTMLButtonElement).disabled ||
+      el.getAttribute("aria-disabled") === "true";
     const isHidden =
       el.getAttribute("aria-hidden") === "true" ||
       (el as any).hidden ||
@@ -164,7 +165,7 @@ export default function SafetyPlayer({
     };
   }, []);
 
-  // Focus management (mostly for desktop)
+  // Focus management
   useEffect(() => {
     lastFocusRef.current = document.activeElement as HTMLElement | null;
     closeBtnRef.current?.focus();
@@ -236,7 +237,9 @@ export default function SafetyPlayer({
 
     requestAnimationFrame(() => {
       if (!v) return;
-      v.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+      v.play()
+        .then(() => setIsPlaying(true))
+        .catch(() => setIsPlaying(false));
     });
   }, [url]);
 
@@ -246,6 +249,7 @@ export default function SafetyPlayer({
     if (!v) return;
 
     const onLoaded = () => setDuration(Number.isFinite(v.duration) ? v.duration : 0);
+
     const onTime = () => {
       const t = v.currentTime || 0;
       setCurrentTime(t);
@@ -366,13 +370,12 @@ export default function SafetyPlayer({
 
   const progress01 = duration ? Math.min(1, currentTime / duration) : 0;
 
-  // ✅ Mini “Up Next” logic
   const nextUpIndex = useMemo(() => {
     if (pool.length <= 1) return null;
-    if (repeatMode === "one") return null; // no need to show Up Next if repeating one
+    if (repeatMode === "one") return null;
     if (index < pool.length - 1) return index + 1;
     if (repeatMode === "all") return 0;
-    return null; // repeat off and end reached
+    return null;
   }, [pool.length, repeatMode, index]);
 
   const nextUp = useMemo(() => {
@@ -383,7 +386,7 @@ export default function SafetyPlayer({
   }, [nextUpIndex, pool]);
 
   return (
-    <div className="fixed inset-0 z-[180] bg-black/80 backdrop-blur-sm sm:flex sm:items-center sm:justify-center sm:p-4">
+    <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm sm:flex sm:items-center sm:justify-center sm:p-4">
       <div
         ref={dialogRef}
         role="dialog"
@@ -394,7 +397,7 @@ export default function SafetyPlayer({
         className={[
           // ✅ FULL SCREEN on mobile
           "w-full h-[100dvh] rounded-none",
-          // ✅ original on desktop
+          // ✅ Card on desktop
           "sm:h-auto sm:max-w-md sm:rounded-3xl",
           "overflow-hidden border border-white/12 bg-[#0F0F17] shadow-[0_40px_140px_rgba(0,0,0,0.7)]",
           "flex flex-col",
@@ -435,183 +438,159 @@ export default function SafetyPlayer({
           </div>
         </div>
 
-        {/* Video stage */}
-        <div className="relative bg-black flex-1 sm:flex-none">
+        {/* Video (NO controls on top of it) */}
+        <div className="relative bg-black flex-1">
           <BreathingPacer />
           <FormGuardToast />
 
-          {/* ✅ Full height on mobile; original aspect on desktop */}
           <video
             ref={videoRef}
             src={url}
             playsInline
             preload="metadata"
-            className="w-full h-full sm:h-auto sm:aspect-video bg-black object-contain"
+            className="w-full h-full bg-black object-contain"
           />
+        </div>
 
-          {/* Premium overlay controls */}
-          <div
-            className={[
-              "absolute inset-x-0 bottom-0",
-              "p-3 pt-10",
-              "bg-gradient-to-t from-black/80 via-black/40 to-transparent",
-              "pb-[calc(env(safe-area-inset-bottom)+12px)]",
-            ].join(" ")}
-          >
-            {/* progress bar */}
-            <div
-              className="h-2 rounded-full bg-white/10 overflow-hidden cursor-pointer"
-              onClick={(e) => {
-                const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-                const pct = (e.clientX - rect.left) / Math.max(1, rect.width);
-                seekToPct(pct);
-              }}
-              role="button"
-              aria-label="Seek"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  const pct = Math.min(1, Math.max(0, progress01));
-                  seekToPct(pct);
-                }
-              }}
+        {/* Bottom control dock (everything visible, video stays clean) */}
+        <div className="border-t border-white/10 bg-[#0F0F17] px-3 pt-3 pb-[calc(env(safe-area-inset-bottom)+14px)]">
+          {/* Up Next (compact) */}
+          {nextUp && (
+            <button
+              type="button"
+              onClick={() => setIndex(nextUp.index)}
+              className="w-full rounded-2xl border border-white/12 bg-white/6 backdrop-blur-xl px-3 py-2 text-left active:scale-[0.99] transition-transform"
+              aria-label={`Up next: ${nextUp.title}. Tap to skip.`}
             >
-              <div
-                className="h-full bg-[color:var(--pink)] transition-all duration-200"
-                style={{ width: `${progress01 * 100}%` }}
-              />
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-white/55 text-[10px] font-extrabold tracking-[0.22em] uppercase">
+                    Up Next
+                  </div>
+                  <div className="mt-1 text-white font-extrabold text-[13px] truncate">
+                    {nextUp.title}
+                  </div>
+                </div>
+                <div className="shrink-0 w-9 h-9 rounded-2xl border border-white/10 bg-black/20 flex items-center justify-center">
+                  <ArrowRight className="text-white/75" size={18} />
+                </div>
+              </div>
+            </button>
+          )}
+
+          {/* Progress bar (in dock, not on video) */}
+          <div
+            className="mt-3 h-[6px] rounded-full bg-white/10 overflow-hidden cursor-pointer"
+            onClick={(e) => {
+              const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+              const pct = (e.clientX - rect.left) / Math.max(1, rect.width);
+              seekToPct(pct);
+            }}
+            role="button"
+            aria-label="Seek"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                seekToPct(progress01);
+              }
+            }}
+          >
+            <div
+              className="h-full bg-[color:var(--pink)] transition-all duration-200"
+              style={{ width: `${progress01 * 100}%` }}
+            />
+          </div>
+
+          {/* Controls row (wraps safely on tiny screens) */}
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => skip(-10)}
+                className="w-10 h-10 rounded-2xl bg-white/8 border border-white/10 text-white/85 flex items-center justify-center"
+                aria-label="Back 10 seconds"
+              >
+                <Rewind size={18} />
+              </button>
+
+              <button
+                type="button"
+                onClick={prev}
+                disabled={pool.length <= 1 || index === 0}
+                className={[
+                  "w-10 h-10 rounded-2xl bg-white/8 border border-white/10 text-white/85 flex items-center justify-center",
+                  pool.length <= 1 || index === 0 ? "opacity-40 cursor-not-allowed" : "",
+                ].join(" ")}
+                aria-label="Previous"
+              >
+                <SkipBack size={18} />
+              </button>
+
+              <button
+                type="button"
+                onClick={togglePlay}
+                className="w-12 h-12 rounded-2xl bg-[color:var(--pink)] text-white flex items-center justify-center shadow-[0_18px_60px_rgba(230,84,115,0.22)] active:scale-[0.985] transition-transform"
+                aria-label={isPlaying ? "Pause" : "Play"}
+              >
+                {isPlaying ? <Pause size={20} /> : <Play size={20} />}
+              </button>
+
+              <button
+                type="button"
+                onClick={next}
+                disabled={pool.length <= 1 || index === pool.length - 1}
+                className={[
+                  "w-10 h-10 rounded-2xl bg-white/8 border border-white/10 text-white/85 flex items-center justify-center",
+                  pool.length <= 1 || index === pool.length - 1 ? "opacity-40 cursor-not-allowed" : "",
+                ].join(" ")}
+                aria-label="Next"
+              >
+                <SkipForward size={18} />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => skip(10)}
+                className="w-10 h-10 rounded-2xl bg-white/8 border border-white/10 text-white/85 flex items-center justify-center"
+                aria-label="Forward 10 seconds"
+              >
+                <FastForward size={18} />
+              </button>
             </div>
 
-            <div className="mt-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => skip(-10)}
-                  className="w-10 h-10 rounded-2xl bg-white/8 border border-white/10 text-white/85 flex items-center justify-center"
-                  aria-label="Back 10 seconds"
-                >
-                  <Rewind size={18} />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={prev}
-                  disabled={pool.length <= 1 || index === 0}
-                  className={[
-                    "w-10 h-10 rounded-2xl bg-white/8 border border-white/10 text-white/85 flex items-center justify-center",
-                    pool.length <= 1 || index === 0 ? "opacity-40 cursor-not-allowed" : "",
-                  ].join(" ")}
-                  aria-label="Previous"
-                >
-                  <SkipBack size={18} />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={togglePlay}
-                  className="w-12 h-12 rounded-2xl bg-[color:var(--pink)] text-white flex items-center justify-center shadow-[0_18px_60px_rgba(230,84,115,0.22)] active:scale-[0.985] transition-transform"
-                  aria-label={isPlaying ? "Pause" : "Play"}
-                >
-                  {isPlaying ? <Pause size={20} /> : <Play size={20} />}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={next}
-                  disabled={pool.length <= 1 || index === pool.length - 1}
-                  className={[
-                    "w-10 h-10 rounded-2xl bg-white/8 border border-white/10 text-white/85 flex items-center justify-center",
-                    pool.length <= 1 || index === pool.length - 1 ? "opacity-40 cursor-not-allowed" : "",
-                  ].join(" ")}
-                  aria-label="Next"
-                >
-                  <SkipForward size={18} />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => skip(10)}
-                  className="w-10 h-10 rounded-2xl bg-white/8 border border-white/10 text-white/85 flex items-center justify-center"
-                  aria-label="Forward 10 seconds"
-                >
-                  <FastForward size={18} />
-                </button>
-              </div>
-
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={cycleRepeat}
                 className="px-3 h-10 rounded-2xl bg-white/8 border border-white/10 text-white/85 flex items-center gap-2"
                 aria-label="Repeat mode"
-                title={repeatMode === "off" ? "Repeat off" : repeatMode === "all" ? "Repeat all" : "Repeat one"}
+                title={
+                  repeatMode === "off"
+                    ? "Repeat off"
+                    : repeatMode === "all"
+                    ? "Repeat all"
+                    : "Repeat one"
+                }
               >
                 {repeatMode === "one" ? <Repeat1 size={16} /> : <Repeat size={16} />}
-                <span className="text-[11px] font-extrabold tracking-[0.18em] uppercase">{repeatMode}</span>
+                <span className="text-[11px] font-extrabold tracking-[0.18em] uppercase">
+                  {repeatMode}
+                </span>
               </button>
-            </div>
 
-            {/* ✅ Mini Up Next card */}
-            {nextUp && (
-              <button
-                type="button"
-                onClick={() => setIndex(nextUp.index)}
-                className={[
-                  "mt-3 w-full rounded-2xl border border-white/12 bg-white/6 backdrop-blur-xl",
-                  "px-4 py-3 text-left",
-                  "active:scale-[0.99] transition-transform",
-                ].join(" ")}
-                aria-label={`Up next: ${nextUp.title}. Tap to skip.`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="text-white/55 text-[10px] font-extrabold tracking-[0.22em] uppercase">
-                      Up Next
-                    </div>
-                    <div className="mt-1 text-white font-extrabold text-[13px] truncate">
-                      {nextUp.title}
-                    </div>
-                    <div className="mt-1 text-white/45 text-[11px] font-semibold">
-                      Tap to skip
-                    </div>
-                  </div>
-
-                  <div className="shrink-0 w-10 h-10 rounded-2xl border border-white/10 bg-black/20 flex items-center justify-center">
-                    <ArrowRight className="text-white/75" size={18} />
-                  </div>
-                </div>
-              </button>
-            )}
-
-            {/* ✅ Mobile-only pain button INSIDE fullscreen overlay */}
-            <div className="sm:hidden">
+              {/* ✅ Always visible pain button (compact so it doesn’t steal video space) */}
               <button
                 onClick={onPain}
                 type="button"
-                className="mt-3 w-full h-12 rounded-full border border-red-500/25 bg-red-500/10 text-red-100 font-extrabold inline-flex items-center justify-center gap-2 active:scale-[0.985] transition-transform"
+                className="px-3 h-10 rounded-2xl border border-red-500/25 bg-red-500/10 text-red-100 font-extrabold inline-flex items-center justify-center gap-2 active:scale-[0.985] transition-transform"
               >
-                <AlertTriangle size={18} />
-                I feel pain / pulling
+                <AlertTriangle size={16} />
+                Pain
               </button>
-
-              <div className="mt-3 text-white/50 text-[11px] font-semibold leading-relaxed">
-                If anything feels sharp, painful, or wrong — stop and switch or rest.
-              </div>
             </div>
           </div>
-        </div>
 
-        {/* Actions (desktop-only; mobile uses overlay version above) */}
-        <div className="hidden sm:block p-4 border-t border-white/10 bg-[#0F0F17]">
-          <button
-            onClick={onPain}
-            type="button"
-            className="w-full h-12 rounded-full border border-red-500/25 bg-red-500/10 text-red-100 font-extrabold inline-flex items-center justify-center gap-2 active:scale-[0.985] transition-transform"
-          >
-            <AlertTriangle size={18} />
-            I feel pain / pulling
-          </button>
-
-          <div className="mt-3 text-white/50 text-[11px] font-semibold leading-relaxed">
+          <div className="mt-2 text-white/45 text-[11px] font-semibold leading-relaxed sm:block hidden">
             If anything feels sharp, painful, or wrong — stop and switch or rest.
           </div>
         </div>
@@ -621,7 +600,7 @@ export default function SafetyPlayer({
       <AnimatePresence>
         {showList && pool.length > 1 && (
           <motion.div
-            className="fixed inset-0 z-[190] bg-black/70 flex items-end justify-center sm:p-4"
+            className="fixed inset-0 z-[10000] bg-black/70 flex items-end justify-center sm:p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -629,10 +608,7 @@ export default function SafetyPlayer({
           >
             <motion.div
               onClick={(e) => e.stopPropagation()}
-              className={[
-                "w-full sm:max-w-md rounded-t-3xl border border-white/12 bg-[#0F0F17] p-4",
-                "shadow-[0_40px_120px_rgba(0,0,0,0.75)]",
-              ].join(" ")}
+              className="w-full sm:max-w-md rounded-t-3xl border border-white/12 bg-[#0F0F17] p-4 shadow-[0_40px_120px_rgba(0,0,0,0.75)]"
               initial={{ y: 18, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 18, opacity: 0 }}
@@ -663,7 +639,9 @@ export default function SafetyPlayer({
                       }}
                       className={[
                         "w-full text-left rounded-2xl border px-4 py-3 mt-2",
-                        active ? "border-[color:var(--pink)]/30 bg-[color:var(--pink)]/10" : "border-white/10 bg-black/20",
+                        active
+                          ? "border-[color:var(--pink)]/30 bg-[color:var(--pink)]/10"
+                          : "border-white/10 bg-black/20",
                       ].join(" ")}
                     >
                       <div className="text-white/90 text-[13px] font-extrabold truncate">
@@ -685,7 +663,7 @@ export default function SafetyPlayer({
       <AnimatePresence>
         {showPainModal && (
           <motion.div
-            className="fixed inset-0 z-[200] bg-black/70 flex items-center justify-center p-6"
+            className="fixed inset-0 z-[11000] bg-black/70 flex items-center justify-center p-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
