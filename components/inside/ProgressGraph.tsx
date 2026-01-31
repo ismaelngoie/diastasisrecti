@@ -6,8 +6,8 @@ export type GraphRange = "week" | "month" | "year";
 
 export type GraphPoint = {
   label: string;
-  value: number; // 0..1 (or up to 1.2 for year)
-  raw: number;
+  value: number; // 0..1
+  raw: number; // for tooltip
   isToday?: boolean;
 };
 
@@ -30,7 +30,7 @@ export default function ProgressGraph({
             {title}
           </div>
           <div className="text-white/55 text-[12px] font-semibold mt-1">
-            Full bar = a completed day in that period.
+            Bars fill as your day progresses.
           </div>
         </div>
 
@@ -66,7 +66,7 @@ export default function ProgressGraph({
             >
               <div
                 className={[
-                  "w-full rounded-xl border transition-all duration-700 ease-out",
+                  "w-full rounded-xl border transition-all duration-300",
                   p.isToday
                     ? "border-[color:var(--pink)]/30 bg-[color:var(--pink)]/14"
                     : "border-white/10 bg-white/6",
