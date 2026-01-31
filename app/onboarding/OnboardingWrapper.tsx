@@ -1884,7 +1884,7 @@ const CheckoutForm = ({ onClose, dateString }: { onClose: () => void; dateString
 
   const paymentElementOptions: StripePaymentElementOptions = {
     layout: "tabs",
-    fields: { billingDetails: { phone: "never" } },
+    fields: { billingDetails: { phone: "auto" } },
   };
 
  return (
