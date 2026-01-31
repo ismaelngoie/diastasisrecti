@@ -10,7 +10,7 @@ import React, {
 } from "react";
 import { X, AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { pelvicReleaseVideos, toVideoItems } from "@/lib/videoCatalog";
+import type { VideoItem } from "@/lib/videoCatalog";
 import { useUserStore } from "@/lib/store/useUserStore";
 
 function BreathingPacer() {
@@ -38,11 +38,9 @@ function FormGuardToast() {
   return (
     <div className="absolute top-4 right-4 z-20 max-w-[220px]" aria-hidden="true">
       <div className="rounded-2xl border border-white/12 bg-black/45 backdrop-blur-xl px-3 py-2 shadow-soft">
-        <div className="text-white text-[12px] font-extrabold">
-          ⚠️ Watch for Coning
-        </div>
+        <div className="text-white text-[12px] font-extrabold">⚠️ Watch for Doming</div>
         <div className="text-white/70 text-[11px] font-semibold mt-1 leading-snug">
-          If your belly domes, stop. Reduce the load.
+          If your abdomen domes, stop. Reduce the load.
         </div>
       </div>
     </div>
@@ -57,7 +55,6 @@ function getFocusable(root: HTMLElement | null) {
     )
   );
 
-  // Filter out hidden/disabled
   return nodes.filter((el) => {
     const isDisabled =
       (el as HTMLButtonElement).disabled ||
@@ -74,11 +71,17 @@ function getFocusable(root: HTMLElement | null) {
 export default function SafetyPlayer({
   initialUrl,
   title,
+  playlist,
+  dateISO,
   onClose,
+  onStartedAfter5s,
 }: {
   initialUrl: string;
   title: string;
+  playlist?: VideoItem[]; // for safer swaps + correct title
+  dateISO: string; // local YYYY-MM-DD
   onClose: () => void;
+  onStartedAfter5s?: () => void; // fires once after 5 seconds of playback
 }) {
   const dialogId = useId();
   const titleId = `safety-player-title-${dialogId}`;
@@ -92,44 +95,51 @@ export default function SafetyPlayer({
   const lastFocusRef = useRef<HTMLElement | null>(null);
   const autoplayNextRef = useRef(false);
 
+  const hasFiredStartedRef = useRef(false);
+
   const [url, setUrl] = useState(initialUrl);
   const [showPainModal, setShowPainModal] = useState(false);
 
   const addPainLog = useUserStore((s) => s.addPainLog);
 
-  const decompressionPool = useMemo(() => toVideoItems(pelvicReleaseVideos), []);
-  const dateISO = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const pool = useMemo<VideoItem[]>(() => {
+    const list = Array.isArray(playlist) ? playlist : [];
+    // fallback to just the current url if no playlist provided
+    if (!list.length) return [{ url: initialUrl, title }];
+    return list;
+  }, [playlist, initialUrl, title]);
 
-  const pickDecompression = useCallback(
+  const currentTitle = useMemo(() => {
+    const hit = pool.find((x) => x.url === url);
+    return hit?.title || title || "Exercise";
+  }, [pool, url, title]);
+
+  const pickSwap = useCallback(
     (avoidUrl?: string) => {
-      if (!decompressionPool.length) return initialUrl;
+      if (!pool.length) return initialUrl;
+      if (pool.length === 1) return pool[0].url;
 
-      if (decompressionPool.length === 1) {
-        return decompressionPool[0].url;
-      }
-
-      const candidates = decompressionPool.filter((v) => v.url !== avoidUrl);
-      const pool = candidates.length ? candidates : decompressionPool;
-      const idx = Math.floor(Math.random() * pool.length);
-      return pool[idx]?.url || initialUrl;
+      const candidates = pool.filter((v) => v.url !== avoidUrl);
+      const list = candidates.length ? candidates : pool;
+      const idx = Math.floor(Math.random() * list.length);
+      return list[idx]?.url || initialUrl;
     },
-    [decompressionPool, initialUrl]
+    [pool, initialUrl]
   );
 
   const handleClose = useCallback(() => {
-    // Pause media + close any nested modal before exiting
     try {
       videoRef.current?.pause();
     } catch {}
-
     setShowPainModal(false);
     onClose();
   }, [onClose]);
 
-  // Keep internal URL in sync with prop changes
   useEffect(() => {
     setUrl(initialUrl);
     setShowPainModal(false);
+    // do NOT reset hasFiredStartedRef here; we only want 1 fire per open player session
+    // parent de-dupes by date anyway.
   }, [initialUrl]);
 
   // Lock background scroll while open
@@ -138,8 +148,7 @@ export default function SafetyPlayer({
     const prevOverflow = body.style.overflow;
     const prevPaddingRight = body.style.paddingRight;
 
-    const scrollbarW =
-      window.innerWidth - document.documentElement.clientWidth;
+    const scrollbarW = window.innerWidth - document.documentElement.clientWidth;
     body.style.overflow = "hidden";
     if (scrollbarW > 0) body.style.paddingRight = `${scrollbarW}px`;
 
@@ -149,7 +158,7 @@ export default function SafetyPlayer({
     };
   }, []);
 
-  // Focus management: save previous focus, focus close on open, restore on unmount
+  // Focus management
   useEffect(() => {
     lastFocusRef.current = document.activeElement as HTMLElement | null;
     closeBtnRef.current?.focus();
@@ -176,7 +185,6 @@ export default function SafetyPlayer({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [showPainModal, handleClose]);
 
-  // Basic focus trap inside the main dialog
   const onDialogKeyDown = (e: React.KeyboardEvent) => {
     if (e.key !== "Tab") return;
 
@@ -196,15 +204,13 @@ export default function SafetyPlayer({
     }
   };
 
-  // When pain modal opens, focus primary action
   useEffect(() => {
     if (showPainModal) {
-      // allow paint
       window.setTimeout(() => swapBtnRef.current?.focus(), 0);
     }
   }, [showPainModal]);
 
-  // When url changes, load and optionally autoplay
+  // Autoplay next after swap
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
@@ -215,12 +221,28 @@ export default function SafetyPlayer({
 
     if (autoplayNextRef.current) {
       autoplayNextRef.current = false;
-      // Attempt to play after src swap
       requestAnimationFrame(() => {
         v.play().catch(() => {});
       });
     }
   }, [url]);
+
+  // ✅ Fire completion after 5 seconds of playback
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+
+    const onTime = () => {
+      if (hasFiredStartedRef.current) return;
+      if (v.currentTime >= 5) {
+        hasFiredStartedRef.current = true;
+        onStartedAfter5s?.();
+      }
+    };
+
+    v.addEventListener("timeupdate", onTime);
+    return () => v.removeEventListener("timeupdate", onTime);
+  }, [onStartedAfter5s]);
 
   const onPain = () => {
     try {
@@ -230,7 +252,7 @@ export default function SafetyPlayer({
   };
 
   const doSwap = () => {
-    const next = pickDecompression(url);
+    const next = pickSwap(url);
 
     try {
       addPainLog({
@@ -238,11 +260,10 @@ export default function SafetyPlayer({
         dateISO,
         currentVideoUrl: url,
         swappedToUrl: next,
-        note: "User reported pain/pulling. Switched to lower-pressure decompression movement.",
+        note:
+          "User reported discomfort. Switched to a different lower-load option from today's set.",
       });
-    } catch {
-      // If logging fails, the UX should still work.
-    }
+    } catch {}
 
     autoplayNextRef.current = true;
     setUrl(next);
@@ -250,10 +271,7 @@ export default function SafetyPlayer({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[180] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
-      aria-hidden={false}
-    >
+    <div className="fixed inset-0 z-[180] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
       <div
         ref={dialogRef}
         role="dialog"
@@ -265,11 +283,8 @@ export default function SafetyPlayer({
         className="w-full max-w-md rounded-3xl overflow-hidden border border-white/12 bg-[#0F0F17] shadow-[0_40px_140px_rgba(0,0,0,0.7)]"
       >
         <div className="p-4 flex items-center justify-between border-b border-white/10">
-          <div
-            id={titleId}
-            className="text-white font-extrabold text-[14px] truncate"
-          >
-            {title}
+          <div id={titleId} className="text-white font-extrabold text-[14px] truncate">
+            {currentTitle}
           </div>
 
           <button
@@ -299,7 +314,7 @@ export default function SafetyPlayer({
           <div className="p-4">
             <p id={descId} className="sr-only">
               Video player with safety controls. Use the pain button if you feel
-              discomfort to switch to a lower-pressure decompression option.
+              discomfort to switch to a different option.
             </p>
 
             <button
@@ -312,7 +327,7 @@ export default function SafetyPlayer({
             </button>
 
             <div className="mt-3 text-white/50 text-[11px] font-semibold leading-relaxed">
-              Pain is data. We stop and switch to a lower-pressure option immediately.
+              If anything feels sharp, painful, or wrong—stop and switch. Safety first.
             </div>
           </div>
         </div>
@@ -330,7 +345,7 @@ export default function SafetyPlayer({
             <motion.div
               role="dialog"
               aria-modal="true"
-              aria-label="Pain detected"
+              aria-label="Discomfort detected"
               onClick={(e) => e.stopPropagation()}
               className="w-full max-w-sm rounded-3xl border border-white/12 bg-[#0F0F17] p-6 shadow-[0_40px_120px_rgba(0,0,0,0.75)]"
               initial={{ y: 14, scale: 0.98, opacity: 0 }}
@@ -340,8 +355,7 @@ export default function SafetyPlayer({
             >
               <div className="text-white font-extrabold text-[18px]">Let’s stop.</div>
               <div className="text-white/70 text-[13px] font-semibold mt-2 leading-relaxed">
-                Your tissue isn’t ready for this load. Switching to a{" "}
-                <span className="text-white font-extrabold">Decompression</span> move.
+                Switching you to a different option from today’s routine.
               </div>
 
               <button
