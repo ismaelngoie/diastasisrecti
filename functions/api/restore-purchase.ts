@@ -33,7 +33,6 @@ export async function onRequestPost(context: any) {
       limit: 1
     });
 
-    // Optional: Check for Trialing if you ever add trials
     const trialing = await stripe.subscriptions.list({
       customer: customer.id,
       status: 'trialing',
@@ -44,7 +43,7 @@ export async function onRequestPost(context: any) {
 
     return new Response(JSON.stringify({ 
       isPremium,
-      customerName: customer.name // Returns the name to personalize the app
+      customerName: customer.name
     }), {
       headers: { "Content-Type": "application/json" }
     });
