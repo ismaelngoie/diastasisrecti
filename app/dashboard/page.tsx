@@ -10,10 +10,13 @@ import { getTodaysPrescription } from "@/lib/protocolEngine";
 import SafetyPlayer from "@/components/inside/SafetyPlayer";
 import ButterflyBackground from "@/components/ButterflyBackground";
 
+import ProgressRing from "@/components/inside/ProgressRing";
 import StreakCard from "@/components/inside/StreakCard";
-import ProgressGraph, { type GraphPoint, type GraphRange } from "@/components/inside/ProgressGraph";
-import PreviewRing from "@/components/inside/PreviewRing";
-import VideoPreviewCircle from "@/components/inside/VideoPreviewCircle";
+import ProgressGraph, {
+  type GraphPoint,
+  type GraphRange,
+} from "@/components/inside/ProgressGraph";
+import LoopPreviewBubble from "@/components/inside/LoopPreviewBubble";
 
 function sanitizeCopy(input?: string) {
   const s = String(input || "");
@@ -51,7 +54,11 @@ function formatLocalDate(isoYYYYMMDD: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(isoYYYYMMDD)) return "Today";
   const d = new Date(`${isoYYYYMMDD}T00:00:00`);
   if (Number.isNaN(d.getTime())) return "Today";
-  return d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+  return d.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 function computeStreakInfo(dateSet: Set<string>) {
@@ -86,7 +93,11 @@ function computeStreakInfo(dateSet: Set<string>) {
   return { current, best, total: dateSet.size };
 }
 
-function buildGraphPoints(range: GraphRange, dateSet: Set<string>) {
+function buildGraphPoints(
+  range: GraphRange,
+  dateSet: Set<string>,
+  todayProgress01: number
+) {
   const today = localDateISO(new Date());
 
   if (range === "week") {
@@ -94,9 +105,22 @@ function buildGraphPoints(range: GraphRange, dateSet: Set<string>) {
     for (let i = 6; i >= 0; i--) {
       const iso = addDays(today, -i);
       const d = new Date(`${iso}T00:00:00`);
-      const label = d.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 2);
-      const done = dateSet.has(iso) ? 1 : 0;
-      pts.push({ label, value: done, raw: done, isToday: iso === today });
+      const label = d
+        .toLocaleDateString("en-US", { weekday: "short" })
+        .slice(0, 2);
+
+      const done = dateSet.has(iso)
+        ? 1
+        : iso === today
+        ? Math.max(0, Math.min(1, todayProgress01))
+        : 0;
+
+      pts.push({
+        label,
+        value: done,
+        raw: Math.round(done * 100),
+        isToday: iso === today,
+      });
     }
     return { title: "This Week", points: pts };
   }
@@ -109,15 +133,21 @@ function buildGraphPoints(range: GraphRange, dateSet: Set<string>) {
 
       let count = 0;
       for (let i = 0; i < 7; i++) {
-        if (dateSet.has(addDays(start, i))) count++;
+        const iso = addDays(start, i);
+        if (dateSet.has(iso)) count++;
+        else if (iso === today) count += todayProgress01; // subtle “fills while watching”
       }
 
-      const label = `${new Date(`${start}T00:00:00`).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      })}`;
+      const label = `${new Date(`${start}T00:00:00`).toLocaleDateString(
+        "en-US",
+        { month: "short", day: "numeric" }
+      )}`;
 
-      pts.push({ label, value: count / 7, raw: count });
+      pts.push({
+        label,
+        value: Math.min(1.2, count / 7),
+        raw: Math.round(count * 10) / 10,
+      });
     }
     return { title: "Last 4 Weeks", points: pts };
   }
@@ -128,6 +158,10 @@ function buildGraphPoints(range: GraphRange, dateSet: Set<string>) {
     byMonth.set(key, (byMonth.get(key) || 0) + 1);
   }
 
+  // add subtle partial for today’s month
+  const todayKey = today.slice(0, 7);
+  byMonth.set(todayKey, (byMonth.get(todayKey) || 0) + todayProgress01);
+
   const pts: GraphPoint[] = [];
   const now = new Date(`${today}T00:00:00`);
 
@@ -135,21 +169,35 @@ function buildGraphPoints(range: GraphRange, dateSet: Set<string>) {
     const d = new Date(now);
     d.setMonth(d.getMonth() - i);
 
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+      2,
+      "0"
+    )}`;
     const label = d.toLocaleDateString("en-US", { month: "short" });
 
     const count = byMonth.get(key) || 0;
     const value = Math.min(1.2, count / 20);
 
-    pts.push({ label, value, raw: count });
+    pts.push({ label, value, raw: Math.round(count * 10) / 10 });
   }
 
   return { title: "This Year", points: pts };
 }
 
-function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function Card({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
-    <div className={["rounded-3xl border border-white/12 bg-white/6 backdrop-blur-xl shadow-soft", className].join(" ")}>
+    <div
+      className={[
+        "rounded-3xl border border-white/12 bg-white/6 backdrop-blur-xl shadow-soft",
+        className,
+      ].join(" ")}
+    >
       {children}
     </div>
   );
@@ -160,18 +208,8 @@ export default function DashboardTodayPage() {
   const searchParams = useSearchParams();
 
   const planParam = searchParams.get("plan");
+  const autoplayParam = searchParams.get("autoplay");
   const searchParamsString = searchParams.toString();
-
-  useEffect(() => {
-    if (!planParam) return;
-    const t = window.setTimeout(() => {
-      const next = new URLSearchParams(searchParamsString);
-      next.delete("plan");
-      const qs = next.toString();
-      router.replace(qs ? `/dashboard?${qs}` : "/dashboard", { scroll: false });
-    }, 5000);
-    return () => window.clearTimeout(t);
-  }, [router, planParam, searchParamsString]);
 
   const user = useUserStore();
   const p = useMemo(() => getTodaysPrescription(user), [user]);
@@ -199,19 +237,27 @@ export default function DashboardTodayPage() {
   }, [completions]);
 
   const isDoneToday = useMemo(() => dateSet.has(p.dateISO), [dateSet, p.dateISO]);
+
+  // live fill while watching (never decreases)
+  const [watchPct, setWatchPct] = useState<number>(isDoneToday ? 100 : 0);
+  useEffect(() => setWatchPct(isDoneToday ? 100 : 0), [isDoneToday]);
+
   const headerDate = useMemo(() => formatLocalDate(p.dateISO), [p.dateISO]);
 
-  const phaseNameDisplay = useMemo(() => sanitizeCopy(p.phaseName) || p.phaseName, [p.phaseName]);
+  const phaseNameDisplay = useMemo(
+    () => sanitizeCopy(p.phaseName) || p.phaseName,
+    [p.phaseName]
+  );
   const whyDisplay = useMemo(() => sanitizeCopy(p.why) || p.why, [p.why]);
 
-  // Smooth fill to 100% and stay
-  const [ringPct, setRingPct] = useState(isDoneToday ? 100 : 0);
-  useEffect(() => {
-    setRingPct(isDoneToday ? 100 : 0);
-  }, [isDoneToday]);
+  const ringPct = isDoneToday ? 100 : watchPct;
 
   const streak = useMemo(() => computeStreakInfo(dateSet), [dateSet]);
-  const graph = useMemo(() => buildGraphPoints(range, dateSet), [range, dateSet]);
+
+  const graph = useMemo(
+    () => buildGraphPoints(range, dateSet, (isDoneToday ? 1 : ringPct / 100)),
+    [range, dateSet, ringPct, isDoneToday]
+  );
 
   const habitItems = useMemo(
     () => [
@@ -231,6 +277,33 @@ export default function DashboardTodayPage() {
     [habitsDoneCount, habitItems.length]
   );
 
+  // Clean up URL param used by old monthly plan redirect
+  useEffect(() => {
+    if (!planParam) return;
+    const t = window.setTimeout(() => {
+      const next = new URLSearchParams(searchParamsString);
+      next.delete("plan");
+      const qs = next.toString();
+      router.replace(qs ? `/dashboard?${qs}` : "/dashboard", { scroll: false });
+    }, 1200);
+    return () => window.clearTimeout(t);
+  }, [router, planParam, searchParamsString]);
+
+  // ✅ Plan tab -> Today click (autoplay=today) opens the start modal
+  useEffect(() => {
+    if (autoplayParam !== "today") return;
+    if (!hasVideos) return;
+
+    setPendingStartUrl(videos[0].url);
+    setStartModalOpen(true);
+
+    const next = new URLSearchParams(searchParamsString);
+    next.delete("autoplay");
+    const qs = next.toString();
+    router.replace(qs ? `/dashboard?${qs}` : "/dashboard", { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoplayParam, hasVideos]);
+
   const requestStart = (url: string) => {
     if (!hasVideos) return;
     if (isDoneToday) {
@@ -248,9 +321,19 @@ export default function DashboardTodayPage() {
     setPendingStartUrl(null);
   };
 
-  // Silent completion trigger remains inside player (after 5 seconds)
+  const onProgressPct = useCallback(
+    (pct: number) => {
+      if (isDoneToday) return;
+      setWatchPct((prev) => Math.max(prev, Math.round(pct)));
+    },
+    [isDoneToday]
+  );
+
   const onStartedAfter5s = useCallback(() => {
     if (isDoneToday) return;
+
+    // lock UI fill at 100 when counted
+    setWatchPct(100);
 
     addWorkoutCompletion({
       dateISO: p.dateISO,
@@ -259,8 +342,6 @@ export default function DashboardTodayPage() {
       completedAtISO: new Date().toISOString(),
     });
   }, [addWorkoutCompletion, isDoneToday, p.dateISO, p.dayNumber]);
-
-  const heroSrc = hasVideos ? videos[0].url : "";
 
   return (
     <main className="w-full max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -290,29 +371,27 @@ export default function DashboardTodayPage() {
           )}
         </div>
 
-        {/* HERO */}
         <Card className="p-5">
-          <PreviewRing
+          <ProgressRing
             pct={ringPct}
-            labelTop={isDoneToday ? "Today is complete ✅" : "Tap play to start"}
-            labelBottom="Plays every move automatically — you can jump anytime."
-          >
-            {hasVideos ? (
-              <VideoPreviewCircle
-                src={heroSrc}
-                onClick={() => requestStart(heroSrc)}
-                label="Start today's routine"
-                loopSeconds={3}
-              />
-            ) : (
-              <div className="w-[164px] h-[164px] rounded-full border border-white/12 bg-white/5" />
-            )}
-          </PreviewRing>
+            labelTop={isDoneToday ? "Today is done ✅" : ringPct > 0 ? "Nice — keep going" : "Start today’s routine"}
+            labelBottom="Tap the preview to play. Your progress updates automatically."
+            center={
+              hasVideos ? (
+                <LoopPreviewBubble
+                  src={videos[0].url}
+                  onClick={() => requestStart(videos[0].url)}
+                  size="ring"
+                  ariaLabel="Play today’s routine"
+                />
+              ) : undefined
+            }
+          />
 
-          <div className="mt-5 flex gap-3">
+          <div className="mt-4 flex gap-3">
             <button
               type="button"
-              onClick={() => (hasVideos ? requestStart(heroSrc) : null)}
+              onClick={() => (hasVideos ? requestStart(videos[0].url) : null)}
               disabled={!hasVideos}
               className={[
                 "flex-1 h-14 rounded-full",
@@ -324,14 +403,13 @@ export default function DashboardTodayPage() {
               ].join(" ")}
             >
               {isDoneToday ? <CheckCircle2 size={18} /> : <Play size={18} />}
-              {isDoneToday ? "Replay Routine" : "Start Routine"}
+              {isDoneToday ? "Completed" : "Start Routine"}
             </button>
 
             <button
               type="button"
               onClick={() => setShowWhy((v) => !v)}
               className="h-14 px-4 rounded-full border border-white/10 bg-white/8 text-white font-extrabold"
-              aria-label="Show details"
             >
               <ChevronDown
                 className={["transition-transform", showWhy ? "rotate-180" : ""].join(" ")}
@@ -352,7 +430,7 @@ export default function DashboardTodayPage() {
                 <div className="mt-4 text-white/70 text-[13px] font-semibold leading-relaxed">
                   {whyDisplay}
                   <div className="mt-2 text-white/45 text-[11px] font-semibold">
-                    Quality reps only. If anything feels painful or wrong, stop and switch or rest.
+                    If anything feels painful or wrong, stop and switch or rest.
                   </div>
                 </div>
               </motion.div>
@@ -364,20 +442,19 @@ export default function DashboardTodayPage() {
 
         <ProgressGraph range={range} title={graph.title} points={graph.points} onRangeChange={setRange} />
 
-        {/* MOVES */}
         <Card className="p-5">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="text-white font-extrabold text-[16px]">Today’s Moves</div>
               <div className="text-white/55 text-[12px] font-semibold mt-1">
-                Tap any move to start there — it will continue through the full routine.
+                Your player will run these one after another.
               </div>
             </div>
           </div>
 
           <div className="mt-4 flex flex-col gap-2">
             {videos.map((v, idx) => {
-              const title = sanitizeCopy(v.title) || v.title || `Exercise ${idx + 1}`;
+              const t = sanitizeCopy(v.title) || v.title || `Exercise ${idx + 1}`;
               return (
                 <button
                   type="button"
@@ -395,9 +472,9 @@ export default function DashboardTodayPage() {
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <div className="text-white/90 text-[13px] font-extrabold truncate">{title}</div>
+                    <div className="text-white/90 text-[13px] font-extrabold truncate">{t}</div>
                     <div className="text-white/45 text-[11px] font-semibold mt-0.5 truncate">
-                      Slow control • exhale on effort • stop if you feel pain
+                      Slow + controlled • exhale on effort • stop if pain
                     </div>
                   </div>
 
@@ -410,7 +487,6 @@ export default function DashboardTodayPage() {
           </div>
         </Card>
 
-        {/* HABITS */}
         <Card className="p-5">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
@@ -451,16 +527,23 @@ export default function DashboardTodayPage() {
                   <div
                     className={[
                       "mt-0.5 w-6 h-6 rounded-full border flex items-center justify-center shrink-0",
-                      done
-                        ? "border-[color:var(--pink)]/40 bg-[color:var(--pink)]/15"
-                        : "border-white/15 bg-white/5",
+                      done ? "border-[color:var(--pink)]/40 bg-[color:var(--pink)]/15" : "border-white/15 bg-white/5",
                     ].join(" ")}
                   >
-                    {done ? <CheckCircle2 size={16} className="text-[color:var(--pink)]" /> : <div className="w-2 h-2 rounded-full bg-white/20" />}
+                    {done ? (
+                      <CheckCircle2 size={16} className="text-[color:var(--pink)]" />
+                    ) : (
+                      <div className="w-2 h-2 rounded-full bg-white/20" />
+                    )}
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <div className={["text-[13px] font-semibold leading-relaxed break-words", done ? "text-white/85" : "text-white/75"].join(" ")}>
+                    <div
+                      className={[
+                        "text-[13px] font-semibold leading-relaxed break-words",
+                        done ? "text-white/85" : "text-white/75",
+                      ].join(" ")}
+                    >
                       {h.text}
                     </div>
                     <div className="mt-1 text-white/35 text-[11px] font-semibold">
@@ -474,7 +557,7 @@ export default function DashboardTodayPage() {
         </Card>
       </div>
 
-      {/* Start modal — improved “how to workout” */}
+      {/* Start message modal (BEFORE starting, only if not counted yet) */}
       <AnimatePresence>
         {startModalOpen && !isDoneToday && (
           <motion.div
@@ -492,20 +575,21 @@ export default function DashboardTodayPage() {
               exit={{ y: 10, scale: 0.98, opacity: 0 }}
               transition={{ duration: 0.25, ease: "easeOut" }}
             >
-              <div className="text-white font-extrabold text-[18px]">Before you start</div>
+              <div className="text-white font-extrabold text-[18px]">How to do today</div>
 
-              <div className="mt-2 text-white/75 text-[13px] font-semibold leading-relaxed">
-                <span className="text-white font-extrabold">{phaseNameDisplay}.</span>{" "}
-                {whyDisplay}
+              <div className="text-white/75 text-[13px] font-semibold mt-2 leading-relaxed">
+                <span className="text-white font-extrabold">{phaseNameDisplay}.</span> {whyDisplay}
               </div>
 
               <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
-                <div className="text-white font-extrabold text-[13px]">How to get the most from today</div>
-                <ul className="mt-2 space-y-2 text-white/70 text-[12px] font-semibold leading-relaxed list-disc pl-4">
-                  <li>Follow each move with slow control. Keep ribs down and breathe.</li>
-                  <li>If a move is labeled Left/Right, do both sides — treat them as separate moves.</li>
-                  <li>If it feels easy and your form stays clean, run the routine one more time.</li>
-                  <li>Stop if you feel sharp pain, pulling, or anything that feels “wrong.”</li>
+                <div className="text-white/85 text-[12px] font-extrabold tracking-[0.18em] uppercase">
+                  Best results
+                </div>
+                <ul className="mt-2 text-white/70 text-[12px] font-semibold leading-relaxed list-disc pl-5 space-y-1">
+                  <li>Follow each move once in order — slow and controlled.</li>
+                  <li>Exhale during the hard part. Keep ribs stacked.</li>
+                  <li>If a move feels too hard, skip it or switch.</li>
+                  <li>If you want more, repeat the full round (quality over speed).</li>
                 </ul>
               </div>
 
@@ -533,8 +617,13 @@ export default function DashboardTodayPage() {
           title="Exercise"
           playlist={videos}
           dateISO={p.dateISO}
+          onProgressPct={onProgressPct}
           onStartedAfter5s={onStartedAfter5s}
-          onClose={() => setPlayerUrl(null)}
+          onClose={() => {
+            setPlayerUrl(null);
+            // reset partial UI if they didn’t finish today
+            if (!isDoneToday) setWatchPct(0);
+          }}
         />
       )}
     </main>
