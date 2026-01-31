@@ -106,10 +106,6 @@ const CheckoutForm = ({ onClose }: { onClose: () => void }) => {
 
       // ✅ AUTO-START DRY SEAL IF USER HAS LEAKS
       const symptoms = useUserData.getState().symptoms || [];
-      if (symptoms.includes("incontinence")) {
-        useUserData.getState().startDrySeal();
-      }
-
       router.push(DASHBOARD_PATH);
       return;
     }
@@ -222,10 +218,6 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
 
         // ✅ AUTO-START DRY SEAL IF USER HAS LEAKS
         const symptoms = useUserData.getState().symptoms || [];
-        if (symptoms.includes("incontinence")) {
-          useUserData.getState().startDrySeal();
-        }
-
         router.push(DASHBOARD_PATH);
         return;
       }
