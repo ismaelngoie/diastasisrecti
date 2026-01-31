@@ -1237,7 +1237,7 @@ function Step08Symptoms({
           Continue
         </button>
       </div>
-    </div>
+      </div>
   );
 }
 
