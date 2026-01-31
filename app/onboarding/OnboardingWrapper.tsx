@@ -69,7 +69,7 @@ function Logo() {
   return (
     <div className="flex flex-col items-center justify-center text-center">
       <img
-        src="/logo.png"
+        src="/logoo.png"
         alt="Fix Diastasis Recti"
         className="w-16 h-16 object-contain drop-shadow mb-3"
         onError={(e) => {
@@ -2158,7 +2158,7 @@ function Step14Paywall() {
   }, []);
 
   useEffect(() => {
-    const reviewTimer = setInterval(() => setCurrentReviewIndex((p) => (p + 1) % REVIEWS.length), 5000);
+    const reviewTimer = setInterval(() => setCurrentReviewIndex((p) => (p + 1) % REVIEWS.length), 2000);
     return () => clearInterval(reviewTimer);
   }, []);
 
