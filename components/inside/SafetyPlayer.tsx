@@ -20,6 +20,7 @@ import {
   ListMusic,
   Rewind,
   FastForward,
+  ArrowRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { VideoItem } from "@/lib/videoCatalog";
@@ -48,14 +49,9 @@ function BreathingPacer() {
 
 function FormGuardToast() {
   return (
-    <div
-      className="absolute top-4 right-4 z-20 max-w-[220px]"
-      aria-hidden="true"
-    >
+    <div className="absolute top-4 right-4 z-20 max-w-[220px]" aria-hidden="true">
       <div className="rounded-2xl border border-white/12 bg-black/45 backdrop-blur-xl px-3 py-2 shadow-soft">
-        <div className="text-white text-[12px] font-extrabold">
-          ⚠️ Watch for doming
-        </div>
+        <div className="text-white text-[12px] font-extrabold">⚠️ Watch for doming</div>
         <div className="text-white/70 text-[11px] font-semibold mt-1 leading-snug">
           If your abdomen domes, slow down or reduce the load.
         </div>
@@ -74,8 +70,7 @@ function getFocusable(root: HTMLElement | null) {
 
   return nodes.filter((el) => {
     const isDisabled =
-      (el as HTMLButtonElement).disabled ||
-      el.getAttribute("aria-disabled") === "true";
+      (el as HTMLButtonElement).disabled || el.getAttribute("aria-disabled") === "true";
     const isHidden =
       el.getAttribute("aria-hidden") === "true" ||
       (el as any).hidden ||
@@ -113,7 +108,7 @@ export default function SafetyPlayer({
 
   const lastFocusRef = useRef<HTMLElement | null>(null);
 
-  const addPainLog = useUserStore((s) => s.addPainLog);
+  const addPainLog = useUserStore((s: any) => s.addPainLog);
 
   const pool = useMemo<VideoItem[]>(() => {
     const list = Array.isArray(playlist) ? playlist : [];
@@ -175,7 +170,6 @@ export default function SafetyPlayer({
     };
   }, []);
 
-  // ESC handling
   const handleClose = useCallback(() => {
     try {
       videoRef.current?.pause();
@@ -185,6 +179,7 @@ export default function SafetyPlayer({
     onClose();
   }, [onClose]);
 
+  // ESC handling
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
@@ -231,15 +226,11 @@ export default function SafetyPlayer({
       v.load();
     } catch {}
 
-    // small premium feel: reset time display instantly
     setCurrentTime(0);
 
-    // autoplay when switching within playlist
     requestAnimationFrame(() => {
       if (!v) return;
-      v.play()
-        .then(() => setIsPlaying(true))
-        .catch(() => setIsPlaying(false));
+      v.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
     });
   }, [url]);
 
@@ -287,7 +278,6 @@ export default function SafetyPlayer({
         return;
       }
 
-      // repeat off
       setIsPlaying(false);
     };
 
@@ -347,14 +337,12 @@ export default function SafetyPlayer({
   };
 
   const doSwap = () => {
-    // pick a different option from today’s set (random)
     const candidates = pool.filter((x) => x.url !== url);
     const pick =
-      candidates[Math.floor(Math.random() * Math.max(1, candidates.length))] ||
-      pool[0];
+      candidates[Math.floor(Math.random() * Math.max(1, candidates.length))] || pool[0];
 
     try {
-      addPainLog({
+      addPainLog?.({
         ts: new Date().toISOString(),
         dateISO,
         currentVideoUrl: url,
@@ -367,11 +355,26 @@ export default function SafetyPlayer({
     setIndex(nextIndex >= 0 ? nextIndex : 0);
     setShowPainModal(false);
 
-    // keep progress UI “premium smooth”
     requestAnimationFrame(() => videoRef.current?.play().catch(() => {}));
   };
 
   const progress01 = duration ? Math.min(1, currentTime / duration) : 0;
+
+  // ✅ Mini “Up Next” logic
+  const nextUpIndex = useMemo(() => {
+    if (pool.length <= 1) return null;
+    if (repeatMode === "one") return null; // no need to show Up Next if repeating one
+    if (index < pool.length - 1) return index + 1;
+    if (repeatMode === "all") return 0;
+    return null; // repeat off and end reached
+  }, [pool.length, repeatMode, index]);
+
+  const nextUp = useMemo(() => {
+    if (nextUpIndex === null) return null;
+    const item = pool[nextUpIndex];
+    if (!item) return null;
+    return { index: nextUpIndex, title: item.title || "Next exercise" };
+  }, [nextUpIndex, pool]);
 
   return (
     <div className="fixed inset-0 z-[180] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -424,13 +427,7 @@ export default function SafetyPlayer({
           <BreathingPacer />
           <FormGuardToast />
 
-          <video
-            ref={videoRef}
-            src={url}
-            playsInline
-            preload="metadata"
-            className="w-full aspect-video bg-black"
-          />
+          <video ref={videoRef} src={url} playsInline preload="metadata" className="w-full aspect-video bg-black" />
 
           {/* Premium overlay controls */}
           <div className="absolute inset-x-0 bottom-0 p-3 pt-10 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
@@ -519,20 +516,44 @@ export default function SafetyPlayer({
                 onClick={cycleRepeat}
                 className="px-3 h-10 rounded-2xl bg-white/8 border border-white/10 text-white/85 flex items-center gap-2"
                 aria-label="Repeat mode"
-                title={
-                  repeatMode === "off"
-                    ? "Repeat off"
-                    : repeatMode === "all"
-                    ? "Repeat all"
-                    : "Repeat one"
-                }
+                title={repeatMode === "off" ? "Repeat off" : repeatMode === "all" ? "Repeat all" : "Repeat one"}
               >
                 {repeatMode === "one" ? <Repeat1 size={16} /> : <Repeat size={16} />}
-                <span className="text-[11px] font-extrabold tracking-[0.18em] uppercase">
-                  {repeatMode}
-                </span>
+                <span className="text-[11px] font-extrabold tracking-[0.18em] uppercase">{repeatMode}</span>
               </button>
             </div>
+
+            {/* ✅ Mini Up Next card */}
+            {nextUp && (
+              <button
+                type="button"
+                onClick={() => setIndex(nextUp.index)}
+                className={[
+                  "mt-3 w-full rounded-2xl border border-white/12 bg-white/6 backdrop-blur-xl",
+                  "px-4 py-3 text-left",
+                  "active:scale-[0.99] transition-transform",
+                ].join(" ")}
+                aria-label={`Up next: ${nextUp.title}. Tap to skip.`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-white/55 text-[10px] font-extrabold tracking-[0.22em] uppercase">
+                      Up Next
+                    </div>
+                    <div className="mt-1 text-white font-extrabold text-[13px] truncate">
+                      {nextUp.title}
+                    </div>
+                    <div className="mt-1 text-white/45 text-[11px] font-semibold">
+                      Tap to skip
+                    </div>
+                  </div>
+
+                  <div className="shrink-0 w-10 h-10 rounded-2xl border border-white/10 bg-black/20 flex items-center justify-center">
+                    <ArrowRight className="text-white/75" size={18} />
+                  </div>
+                </div>
+              </button>
+            )}
           </div>
         </div>
 
@@ -596,9 +617,7 @@ export default function SafetyPlayer({
                       }}
                       className={[
                         "w-full text-left rounded-2xl border px-4 py-3 mt-2",
-                        active
-                          ? "border-[color:var(--pink)]/30 bg-[color:var(--pink)]/10"
-                          : "border-white/10 bg-black/20",
+                        active ? "border-[color:var(--pink)]/30 bg-[color:var(--pink)]/10" : "border-white/10 bg-black/20",
                       ].join(" ")}
                     >
                       <div className="text-white/90 text-[13px] font-extrabold truncate">
