@@ -1948,9 +1948,6 @@ const CheckoutForm = ({ onClose, dateString, customerId }: { onClose: () => void
         setPremium(true);
         setJoinDate(new Date().toISOString());
         const symptoms = useUserData.getState().symptoms || [];
-        if (symptoms.includes("incontinence")) {
-          useUserData.getState().startDrySeal();
-        }
         
         // --- 1. HARD REDIRECT WITH PARAMS (The Pelvi Method) ---
         // This ensures Google Ads sees the URL before any React router cleaning happens.
@@ -2065,9 +2062,6 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
         setJoinDate(new Date().toISOString());
         if (data.customerName) setName(data.customerName);
         const symptoms = useUserData.getState().symptoms || [];
-        if (symptoms.includes("incontinence")) {
-          useUserData.getState().startDrySeal();
-        }
         router.push("/dashboard");
         return;
       }
