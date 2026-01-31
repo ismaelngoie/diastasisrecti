@@ -1848,8 +1848,13 @@ const CheckoutForm = ({ onClose, dateString }: { onClose: () => void; dateString
     e.preventDefault();
     if (!stripe || !elements) return;
     setIsLoading(true);
+    setMessage(null);
 
     const returnUrl = `${window.location.origin}${DASHBOARD_PATH}`;
+    
+    // IMPORTANT: We use redirect: "if_required". 
+    // If Stripe redirects (e.g. 3DSecure), this function will seemingly 'stop' here 
+    // as the browser navigates away.
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: { return_url: returnUrl, receipt_email: email },
@@ -1857,23 +1862,29 @@ const CheckoutForm = ({ onClose, dateString }: { onClose: () => void; dateString
     });
 
     if (error) {
+      // This catches card errors (insufficient funds, etc)
       setMessage(error.message || "Payment failed");
       setIsLoading(false);
       return;
     }
 
-    if (paymentIntent && paymentIntent.status === "succeeded") {
+    // FIX: Subscriptions often return "processing" initially, not just "succeeded".
+    if (paymentIntent && (paymentIntent.status === "succeeded" || paymentIntent.status === "processing")) {
       setPremium(true);
       setJoinDate(new Date().toISOString());
+      
       const symptoms = useUserData.getState().symptoms || [];
       if (symptoms.includes("incontinence")) {
         useUserData.getState().startDrySeal();
       }
+      
       router.push(DASHBOARD_PATH);
       return;
     }
 
-    setMessage("An unexpected error occurred.");
+    // If we get here, the status is something unexpected (like requires_payment_method)
+    // ensuring we don't just "pin" indefinitely.
+    setMessage(`Payment status: ${paymentIntent?.status}. Please try a different card.`);
     setIsLoading(false);
   };
 
@@ -1886,7 +1897,7 @@ const CheckoutForm = ({ onClose, dateString }: { onClose: () => void; dateString
     layout: "tabs",
   };
 
- return (
+  return (
     <form
       onClick={(e) => e.stopPropagation()}
       onSubmit={handleSubmit}
@@ -1935,7 +1946,7 @@ const CheckoutForm = ({ onClose, dateString }: { onClose: () => void; dateString
         {isLoading ? <Loader2 className="animate-spin" /> : "Start My Healing"}
       </button>
 
-       <div className="flex items-center justify-center gap-2 mt-4 text-white/30 text-[11px] font-semibold">
+      <div className="flex items-center justify-center gap-2 mt-4 text-white/30 text-[11px] font-semibold">
         <p className="text-center text-white/70 text-[12px] font-semibold mt-3 leading-snug px-4 drop-shadow-sm">
           {getStripeSubtext()}
         </p>
