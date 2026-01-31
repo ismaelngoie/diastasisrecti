@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, CheckCircle2, Ban } from "lucide-react";
+import { ChevronDown, CheckCircle2 } from "lucide-react";
 
 import { useUserStore } from "@/lib/store/useUserStore";
 import { getTodaysPrescription } from "@/lib/protocolEngine";
@@ -15,8 +15,6 @@ import StreakCard from "@/components/inside/StreakCard";
 import ProgressGraph, { type GraphPoint, type GraphRange } from "@/components/inside/ProgressGraph";
 import LoopPreviewBubble from "@/components/inside/LoopPreviewBubble";
 import DashboardHeader from "@/components/inside/DashboardHeader";
-
-// --- HELPER FUNCTIONS ---
 
 function sanitizeCopy(input?: string) {
   const s = String(input || "");
@@ -57,6 +55,7 @@ function formatLocalDate(isoYYYYMMDD: string) {
   return d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
 }
 
+// ✅ accept todayISO so streak/graph always align with your prescription date
 function computeStreakInfo(dateSet: Set<string>, todayISO: string) {
   const today = todayISO || localDateISO(new Date());
 
@@ -89,8 +88,20 @@ function computeStreakInfo(dateSet: Set<string>, todayISO: string) {
   return { current, best, total: dateSet.size };
 }
 
-function buildGraphPoints(range: GraphRange, dateSet: Set<string>, todayProgress01: number, todayISO: string) {
+/**
+ * ✅ YOUR REQUEST: Graph MUST follow streak/completions.
+ * If streak says today is done (dateSet has today), today bar must be 100% no matter what.
+ */
+function buildGraphPoints(
+  range: GraphRange,
+  dateSet: Set<string>,
+  todayProgress01: number,
+  todayISO: string
+) {
   const today = todayISO || localDateISO(new Date());
+
+  // ✅ If streak/completions say today is done, force progress to 100%
+  const forcedTodayProgress01 = dateSet.has(today) ? 1 : Math.max(0, Math.min(1, todayProgress01));
 
   if (range === "week") {
     const pts: GraphPoint[] = [];
@@ -99,7 +110,11 @@ function buildGraphPoints(range: GraphRange, dateSet: Set<string>, todayProgress
       const d = new Date(`${iso}T00:00:00`);
       const label = d.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 2);
 
-      const done = dateSet.has(iso) ? 1 : iso === today ? Math.max(0, Math.min(1, todayProgress01)) : 0;
+      const done = dateSet.has(iso)
+        ? 1
+        : iso === today
+        ? forcedTodayProgress01
+        : 0;
 
       pts.push({ label, value: done, raw: Math.round(done * 100), isToday: iso === today });
     }
@@ -116,7 +131,7 @@ function buildGraphPoints(range: GraphRange, dateSet: Set<string>, todayProgress
       for (let i = 0; i < 7; i++) {
         const iso = addDays(start, i);
         if (dateSet.has(iso)) count++;
-        else if (iso === today) count += todayProgress01;
+        else if (iso === today) count += forcedTodayProgress01;
       }
 
       const label = `${new Date(`${start}T00:00:00`).toLocaleDateString("en-US", {
@@ -135,8 +150,11 @@ function buildGraphPoints(range: GraphRange, dateSet: Set<string>, todayProgress
     byMonth.set(key, (byMonth.get(key) || 0) + 1);
   }
 
-  const todayKey = today.slice(0, 7);
-  byMonth.set(todayKey, (byMonth.get(todayKey) || 0) + todayProgress01);
+  // ✅ avoid double-counting today if it's already in dateSet
+  if (!dateSet.has(today)) {
+    const todayKey = today.slice(0, 7);
+    byMonth.set(todayKey, (byMonth.get(todayKey) || 0) + forcedTodayProgress01);
+  }
 
   const pts: GraphPoint[] = [];
   const now = new Date(`${today}T00:00:00`);
@@ -159,168 +177,46 @@ function buildGraphPoints(range: GraphRange, dateSet: Set<string>, todayProgress
 
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={["rounded-3xl border border-white/12 bg-white/6 backdrop-blur-xl shadow-soft", className].join(" ")}>
+    <div
+      className={[
+        "rounded-3xl border border-white/12 bg-white/6 backdrop-blur-xl shadow-soft",
+        className,
+      ].join(" ")}
+    >
       {children}
     </div>
   );
 }
 
-// --- BRIDGE PROTOCOL COMPONENTS (The Clinical Spinner) ---
-
-function AICoreView() {
-  return (
-    <div className="relative w-44 h-44 flex items-center justify-center">
-      <div className="absolute w-[86px] h-[86px] border-[3px] border-[color:var(--pink)]/80 rounded-full animate-spin [animation-duration:8s] border-t-transparent border-l-transparent" />
-      <div className="absolute w-[120px] h-[120px] border-[2px] border-[color:var(--pink)]/60 rounded-full animate-spin [animation-duration:12s] [animation-direction:reverse] border-b-transparent border-r-transparent" />
-      <div className="absolute w-[154px] h-[154px] border-[1px] border-[color:var(--pink)]/40 rounded-full animate-spin [animation-duration:15s] border-t-transparent" />
-      <div className="absolute w-10 h-10 bg-[color:var(--pink)]/45 rounded-full blur-md animate-pulse" />
-      <div className="absolute w-6 h-6 bg-[color:var(--pink)] rounded-full shadow-[0_0_20px_rgba(230,84,115,0.8)]" />
-    </div>
-  );
-}
-
-function BridgeLine({ text, danger, success }: { text: string; danger?: boolean; success?: boolean }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: -4 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.25 }}
-      className={[
-        "text-[14px] font-semibold tracking-wide flex items-center gap-2",
-        danger ? "text-red-300" : success ? "text-[#33B373]" : "text-white/80",
-      ].join(" ")}
-    >
-      {danger && <Ban size={16} className="shrink-0" />}
-      {success && <CheckCircle2 size={16} className="shrink-0" />}
-      {text}
-    </motion.div>
-  );
-}
-
-function BridgeProtocol({ onDone }: { onDone: () => void }) {
-  const name = useUserStore((s) => s.name) || "Patient";
-  const fingerGap = useUserStore((s) => s.fingerGap);
-  const sabotage = useUserStore((s) => s.sabotageExercises);
-
-  const harmful = useMemo(() => {
-    const list: string[] = [];
-    if ((sabotage || []).includes("crunches")) list.push("Crunches");
-    if ((sabotage || []).includes("planks")) list.push("Planks");
-    if (list.length === 0) list.push("Sit-ups");
-    return Array.from(new Set(list));
-  }, [sabotage]);
-
-  const lines = useMemo(() => {
-    const gapText = fingerGap ? (fingerGap === 4 ? "4+ finger" : `${fingerGap} finger`) : "midline";
-    return [
-      `Reviewing midline profile for ${name}...`,
-      `Focusing on a ${gapText} separation (diastasis recti)...`,
-      `Setting safe pressure limits...`,
-      `Building your core rehab plan...`,
-      `Avoiding high-pressure moves:`,
-      ...harmful.map((h) => `— ${h}`),
-      `Preparing your Phase 1 sessions...`,
-      `Plan ready.`,
-    ];
-  }, [name, fingerGap, harmful]);
-
-  const [idx, setIdx] = useState(0);
-  const done = idx >= lines.length - 1;
-
-  useEffect(() => {
-    const t = window.setInterval(() => {
-      setIdx((p) => Math.min(lines.length - 1, p + 1));
-    }, 650);
-    return () => window.clearInterval(t);
-  }, [lines.length]);
-
-  return (
-    <div className="fixed inset-0 z-[200] bg-[#0A0A0F] clinical-noise flex items-center justify-center px-6">
-      <div className="w-full max-w-md">
-        <div className="flex items-center justify-center mb-12">
-          <AICoreView />
-        </div>
-
-        <div className="rounded-[32px] border border-white/10 bg-white/5 backdrop-blur-2xl shadow-2xl p-7">
-          <div className="text-[color:var(--pink)] text-[11px] font-black tracking-[0.25em] uppercase mb-5">
-            Personal Rehab Plan
-          </div>
-
-          <div className="flex flex-col gap-3 min-h-[280px]">
-            {lines.slice(0, idx + 1).map((t, i) => {
-              const isDanger = t.startsWith("Avoiding") || t.startsWith("—");
-              const isFinal = t.includes("Plan ready");
-              return <BridgeLine key={i} text={t} danger={isDanger} success={isFinal} />;
-            })}
-          </div>
-
-          <AnimatePresence>
-            {done && (
-              <motion.button
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="mt-6 w-full h-14 rounded-full bg-gradient-to-r from-[color:var(--pink)] to-[#C23A5B] text-white font-extrabold text-[17px] shadow-[0_15px_40px_rgba(230,84,115,0.4)] active:scale-[0.98] transition-all inline-flex items-center justify-center gap-3"
-                onClick={onDone}
-              >
-                Start My Core Rehab Plan
-              </motion.button>
-            )}
-          </AnimatePresence>
-        </div>
-
-        <div className="mt-6 text-center px-4">
-          <p className="text-white/40 text-[12px] font-medium leading-relaxed">
-            {name}, your recovery starts now. Let’s get to work.
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// --- MAIN DASHBOARD PAGE ---
-
 export default function DashboardTodayPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Used for autoplay logic below
+  // These are used for autoplay logic below
   const autoplayParam = searchParams.get("autoplay");
   const searchParamsString = searchParams.toString();
 
-  // State for the Bridge Protocol (The Clinical Spinner)
-  const [showBridge, setShowBridge] = useState(false);
-
   // --- 1. THE "PELVI" METHOD: Reliable Conversion + URL Cleanup ---
   useEffect(() => {
-    // Only run on client
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      // Check if we just arrived from payment
       if (params.get("plan") === "monthly") {
-        
-        // A. Show the Clinical Spinner
-        setShowBridge(true);
-
-        // B. MANUALLY FIRE THE CONVERSION EVENT (IMMEDIATE)
         // @ts-ignore
         if (window.gtag) {
           // @ts-ignore
           window.gtag("event", "conversion", {
-            send_to: "AW-17911323675",
+            send_to: "AW-17883612588",
             value: 24.99,
             currency: "USD",
-            transaction_id: Date.now(), // Unique ID prevents dups
+            transaction_id: Date.now(),
           });
           console.log("✅ Google Ads Conversion Fired");
         }
 
-        // C. DELAY URL CLEANUP (10 Seconds)
-        // This keeps ?plan=monthly visible so simple URL matching works too
         setTimeout(() => {
           const cleanUrl = window.location.pathname;
           window.history.replaceState(null, "", cleanUrl);
-        }, 10000);
+        }, 15000);
       }
     }
   }, []);
@@ -328,8 +224,9 @@ export default function DashboardTodayPage() {
   const user = useUserStore();
   const p = useMemo(() => getTodaysPrescription(user), [user]);
 
-  // ✅ best-effort name + goal from store (safe even if your store fields differ)
-  const userName = useUserStore((s: any) => s.profile?.name || s.userName || s.name || s.user?.name || "Friend");
+  const userName = useUserStore(
+    (s: any) => s.profile?.name || s.userName || s.name || s.user?.name || "Friend"
+  );
   const userGoal = useUserStore((s: any) => s.profile?.goal || s.userGoal || s.goal || "");
 
   const completions = useUserStore((s: any) => s.workoutCompletions || []);
@@ -352,7 +249,6 @@ export default function DashboardTodayPage() {
   const [optimisticDoneISO, setOptimisticDoneISO] = useState<string | null>(null);
 
   useEffect(() => {
-    // when day changes, reset optimism
     setOptimisticDoneISO(null);
   }, [p.dateISO]);
 
@@ -379,8 +275,8 @@ export default function DashboardTodayPage() {
   const streak = useMemo(() => computeStreakInfo(dateSet, p.dateISO), [dateSet, p.dateISO]);
 
   const graph = useMemo(
-    () => buildGraphPoints(range, dateSet, isDoneToday ? 1 : ringPct / 100, p.dateISO),
-    [range, dateSet, ringPct, isDoneToday, p.dateISO]
+    () => buildGraphPoints(range, dateSet, ringPct / 100, p.dateISO),
+    [range, dateSet, ringPct, p.dateISO]
   );
 
   const habitItems = useMemo(
@@ -396,7 +292,10 @@ export default function DashboardTodayPage() {
     () => habitItems.reduce((acc, h) => acc + (dayHabits[h.id] ? 1 : 0), 0),
     [dayHabits, habitItems]
   );
-  const habitsPct = useMemo(() => Math.round((habitsDoneCount / (habitItems.length || 1)) * 100), [habitsDoneCount, habitItems.length]);
+  const habitsPct = useMemo(
+    () => Math.round((habitsDoneCount / (habitItems.length || 1)) * 100),
+    [habitsDoneCount, habitItems.length]
+  );
 
   // Plan tab -> Today click opens start modal
   useEffect(() => {
@@ -441,7 +340,6 @@ export default function DashboardTodayPage() {
   const onStartedAfter5s = useCallback(() => {
     if (isDoneToday) return;
 
-    // ✅ instantly “complete” UI even if store write is slow
     setOptimisticDoneISO(p.dateISO);
     setWatchPct(100);
 
@@ -455,13 +353,6 @@ export default function DashboardTodayPage() {
 
   const topLabel = isDoneToday ? "Today is done ✅" : ringPct > 0 ? "Nice — keep going" : "Tap to start";
 
-  // --- RENDER ---
-
-  // If Bridge Protocol is active (user just paid), show ONLY that.
-  if (showBridge) {
-    return <BridgeProtocol onDone={() => setShowBridge(false)} />;
-  }
-
   return (
     <main className="w-full max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div className="absolute inset-0 -z-10 bg-[color:var(--navy)]" />
@@ -471,12 +362,12 @@ export default function DashboardTodayPage() {
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-white/0 via-white/0 to-black/25" />
 
       <div className="flex flex-col gap-5 pb-[calc(env(safe-area-inset-bottom)+96px)]">
-        {/* ✅ Swift-like header */}
         <DashboardHeader userName={userName} userGoal={userGoal} />
 
-        {/* Day / Phase */}
         <div className="min-w-0">
-          <div className="text-white/45 text-[10px] font-extrabold tracking-[0.22em] uppercase">Today • {headerDate}</div>
+          <div className="text-white/45 text-[10px] font-extrabold tracking-[0.22em] uppercase">
+            Today • {headerDate}
+          </div>
 
           <h1 className="mt-2 text-white text-[24px] sm:text-[26px] leading-[1.1] font-extrabold">
             Day {p.dayNumber}: <span className="text-white/90">{phaseNameDisplay}</span>
@@ -489,13 +380,11 @@ export default function DashboardTodayPage() {
           )}
         </div>
 
-        {/* ✅ Progress card (start by tapping video bubble) */}
         <Card className="p-5">
           <ProgressRing
             pct={ringPct}
             labelTop={topLabel}
             labelBottom="Tap the preview video to play. Your progress updates automatically."
-            // ✅ NEW: place Why next to labelTop
             labelTopRight={
               <button
                 type="button"
@@ -509,23 +398,15 @@ export default function DashboardTodayPage() {
             }
             center={
               hasVideos ? (
-                <LoopPreviewBubble src={videos[0].url} onClick={() => requestStart(videos[0].url)} size="ring" ariaLabel="Play today’s routine" />
+                <LoopPreviewBubble
+                  src={videos[0].url}
+                  onClick={() => requestStart(videos[0].url)}
+                  size="ring"
+                  ariaLabel="Play today’s routine"
+                />
               ) : undefined
             }
           />
-
-          {/* ✅ kept your old Why button code (but hidden so we “don’t remove a thing”) */}
-          <div className="mt-4 flex justify-end hidden">
-            <button
-              type="button"
-              onClick={() => setShowWhy((v) => !v)}
-              className="h-12 px-4 rounded-full border border-white/10 bg-white/8 text-white font-extrabold inline-flex items-center gap-2"
-              aria-expanded={showWhy}
-            >
-              Why
-              <ChevronDown className={["transition-transform", showWhy ? "rotate-180" : ""].join(" ")} size={18} />
-            </button>
-          </div>
 
           <AnimatePresence initial={false}>
             {showWhy && (
@@ -551,12 +432,13 @@ export default function DashboardTodayPage() {
 
         <ProgressGraph range={range} title={graph.title} points={graph.points} onRangeChange={setRange} />
 
-        {/* Moves list */}
         <Card className="p-5">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="text-white font-extrabold text-[16px]">Today’s Moves</div>
-              <div className="text-white/55 text-[12px] font-semibold mt-1">Your player will run these one after another.</div>
+              <div className="text-white/55 text-[12px] font-semibold mt-1">
+                Your player will run these one after another.
+              </div>
             </div>
           </div>
 
@@ -586,14 +468,15 @@ export default function DashboardTodayPage() {
                     </div>
                   </div>
 
-                  <div className="shrink-0 text-white/45 text-[11px] font-extrabold tracking-[0.16em] uppercase">Tap</div>
+                  <div className="shrink-0 text-white/45 text-[11px] font-extrabold tracking-[0.16em] uppercase">
+                    Tap
+                  </div>
                 </button>
               );
             })}
           </div>
         </Card>
 
-        {/* Habits */}
         <Card className="p-5">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
@@ -635,14 +518,25 @@ export default function DashboardTodayPage() {
                       done ? "border-[color:var(--pink)]/40 bg-[color:var(--pink)]/15" : "border-white/15 bg-white/5",
                     ].join(" ")}
                   >
-                    {done ? <CheckCircle2 size={16} className="text-[color:var(--pink)]" /> : <div className="w-2 h-2 rounded-full bg-white/20" />}
+                    {done ? (
+                      <CheckCircle2 size={16} className="text-[color:var(--pink)]" />
+                    ) : (
+                      <div className="w-2 h-2 rounded-full bg-white/20" />
+                    )}
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <div className={["text-[13px] font-semibold leading-relaxed break-words", done ? "text-white/85" : "text-white/75"].join(" ")}>
+                    <div
+                      className={[
+                        "text-[13px] font-semibold leading-relaxed break-words",
+                        done ? "text-white/85" : "text-white/75",
+                      ].join(" ")}
+                    >
                       {h.text}
                     </div>
-                    <div className="mt-1 text-white/35 text-[11px] font-semibold">{done ? "Done" : "Tap to mark as done"}</div>
+                    <div className="mt-1 text-white/35 text-[11px] font-semibold">
+                      {done ? "Done" : "Tap to mark as done"}
+                    </div>
                   </div>
                 </label>
               );
@@ -667,7 +561,7 @@ export default function DashboardTodayPage() {
               initial={{ y: 14, scale: 0.98, opacity: 0 }}
               animate={{ y: 0, scale: 1, opacity: 1 }}
               exit={{ y: 10, scale: 0.98, opacity: 0 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
+              transition={{ duration: playerUrl ? 0 : 0.25, ease: "easeOut" }}
             >
               <div className="text-white font-extrabold text-[18px]">Before you start</div>
 
