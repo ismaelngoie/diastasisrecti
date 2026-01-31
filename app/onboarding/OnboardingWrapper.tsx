@@ -69,7 +69,7 @@ function Logo() {
   return (
     <div className="flex flex-col items-center justify-center text-center">
       <img
-        src="/logoo.png"
+        src="/logo.png"
         alt="Fix Diastasis Recti"
         className="w-16 h-16 object-contain drop-shadow mb-3"
         onError={(e) => {
@@ -1824,7 +1824,7 @@ function Step13PlanReveal({ onNext, onBack }: { onNext: () => void; onBack: () =
 
 // --- Step 14: Paywall ---
 
-// ADDED: Success Overlay Component
+// Success Overlay Component
 function SuccessOverlay() {
   return (
     <motion.div
@@ -1903,7 +1903,8 @@ const REVIEWS = [
 ];
 const DASHBOARD_PATH = "/dashboard?plan=monthly";
 
-const CheckoutForm = ({ onClose, dateString }: { onClose: () => void; dateString: string }) => {
+// CHANGED: Accept customerId so we can send the email update
+const CheckoutForm = ({ onClose, dateString, customerId }: { onClose: () => void; dateString: string; customerId: string }) => {
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
@@ -1911,13 +1912,22 @@ const CheckoutForm = ({ onClose, dateString }: { onClose: () => void; dateString
   const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
-  // ADDED: Payment success state
   const [paymentSuccess, setPaymentSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!stripe || !elements) return;
     setIsLoading(true);
+
+    // --- CRITICAL FIX: Save email to backend customer record ---
+    if (customerId && email) {
+      await fetch("/api/create-payment-intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerId, email }),
+      }).catch(err => console.error("Failed to update email", err));
+    }
+    // -----------------------------------------------------------
 
     const returnUrl = `${window.location.origin}${DASHBOARD_PATH}`;
     const { error, paymentIntent } = await stripe.confirmPayment({
@@ -1933,9 +1943,7 @@ const CheckoutForm = ({ onClose, dateString }: { onClose: () => void; dateString
     }
 
     if (paymentIntent && paymentIntent.status === "succeeded") {
-      // MODIFIED: Show success overlay, wait, then redirect
       setPaymentSuccess(true);
-      
       setTimeout(() => {
         setPremium(true);
         setJoinDate(new Date().toISOString());
@@ -1957,7 +1965,6 @@ const CheckoutForm = ({ onClose, dateString }: { onClose: () => void; dateString
     return `Feel real progress by ${dateString}. If not, one tap full $24.99 refund.`;
   };
 
-  // FIXED: Removed 'fields' property to fix phone number error
   const paymentElementOptions: StripePaymentElementOptions = {
     layout: "tabs",
   };
@@ -1968,7 +1975,6 @@ const CheckoutForm = ({ onClose, dateString }: { onClose: () => void; dateString
       onSubmit={handleSubmit}
       className="w-full max-w-md bg-[#1A1A26] p-6 rounded-[32px] border border-white/10 shadow-[0_50px_120px_rgba(0,0,0,0.7)] animate-in slide-in-from-bottom-10 fade-in duration-500 relative my-auto mx-4 min-h-[400px]"
     >
-      {/* RENDER SUCCESS OVERLAY IF SUCCESSFUL */}
       {paymentSuccess && <SuccessOverlay />}
 
       <button
@@ -2050,31 +2056,25 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-      
       const data = await res.json();
-      
       if (data.isPremium) {
         setPremium(true);
         setJoinDate(new Date().toISOString());
         if (data.customerName) setName(data.customerName);
-        
-        // Restore specific symptom logic
         const symptoms = useUserData.getState().symptoms || [];
         if (symptoms.includes("incontinence")) {
           useUserData.getState().startDrySeal();
         }
-        
         router.push("/dashboard");
         return;
       }
       
-      // FIX: Use the actual message from the server, or fallback
+      // Use actual message from backend
       setMessage(data.message || data.error || "No active subscription found.");
       setIsLoading(false);
-
     } catch (err) {
       console.error(err);
-      setMessage("Connection failed. Please check your internet.");
+      setMessage("Unable to verify purchase. Please check your internet connection.");
       setIsLoading(false);
     }
   };
@@ -2115,11 +2115,7 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
           </div>
 
           {message && (
-            <div className={`text-sm p-3 rounded-xl border font-semibold ${
-               message.includes("could not find") 
-               ? "bg-yellow-500/10 border-yellow-500/20 text-yellow-200"
-               : "bg-red-500/10 border-red-500/20 text-red-300"
-            }`}>
+            <div className="text-red-300 text-sm bg-red-500/10 p-3 rounded-xl border border-red-500/20 font-semibold">
               {message}
             </div>
           )}
@@ -2141,7 +2137,6 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
 };
 
 function Step14Paywall() {
-  // UNCHANGED
   const { name } = useUserData();
   const fingerGap = useUserStore((s) => s.fingerGap);
 
@@ -2151,6 +2146,8 @@ function Step14Paywall() {
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [isFaqOpen, setIsFaqOpen] = useState(false);
   const [clientSecret, setClientSecret] = useState("");
+  // CHANGED: Added customerId state
+  const [customerId, setCustomerId] = useState("");
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [showRestoreModal, setShowRestoreModal] = useState(false);
   const [isButtonLoading, setIsButtonLoading] = useState(false);
@@ -2210,6 +2207,8 @@ function Step14Paywall() {
         const data = await res.json();
         if (!data?.clientSecret) throw new Error("No clientSecret returned from server.");
         setClientSecret(data.clientSecret);
+        // CHANGED: Save customerId
+        if (data?.customerId) setCustomerId(data.customerId);
       } catch (err: any) {
         console.error("Stripe init error:", err);
         alert(`Could not initialize payment: ${err?.message || "Unknown error"}`);
@@ -2419,9 +2418,11 @@ function Step14Paywall() {
               options={{ clientSecret, appearance: stripeAppearance }}
               stripe={stripePromise}
             >
+              {/* CHANGED: Pass customerId */}
               <CheckoutForm
                 onClose={() => setShowCheckoutModal(false)}
                 dateString={dateString}
+                customerId={customerId}
               />
             </Elements>
           </div>
