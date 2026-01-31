@@ -100,7 +100,7 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
   );
 }
 
-// --- VISUALS (Defs, ShapeArt, VisualCard) REMAIN UNCHANGED ---
+// --- VISUALS (Defs, ShapeArt, VisualCard) ---
 const Defs = ({ p }: { p: string }) => (
   <defs>
     <radialGradient id={`${p}-body-vol`} cx="50%" cy="40%" r="90%">
@@ -602,7 +602,7 @@ function Benefit({
   );
 }
 
-// --- Steps 5-13 COMPONENTS UNCHANGED UNTIL Step14Paywall ---
+// --- Steps 5-13 COMPONENTS ---
 
 const step05Options: Array<{
   gap: Exclude<FingerGap, null>;
@@ -1823,7 +1823,7 @@ function Step13PlanReveal({ onNext, onBack }: { onNext: () => void; onBack: () =
 }
 
 // --- Step 14: Paywall ---
-// (UNCHANGED per your instruction)
+
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 const REVIEW_IMAGES = ["/review9.png", "/review1.png", "/review5.png", "/review4.png", "/review2.png"];
 const REVIEWS = [
@@ -1839,7 +1839,7 @@ const CheckoutForm = ({ onClose, dateString }: { onClose: () => void; dateString
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
-  const { setPremium, setJoinDate, setName } = useUserData();
+  const { setPremium, setJoinDate } = useUserData();
   const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -1852,23 +1852,23 @@ const CheckoutForm = ({ onClose, dateString }: { onClose: () => void; dateString
 
     const returnUrl = `${window.location.origin}${DASHBOARD_PATH}`;
     
-    // IMPORTANT: We use redirect: "if_required". 
-    // If Stripe redirects (e.g. 3DSecure), this function will seemingly 'stop' here 
-    // as the browser navigates away.
+    // We use "if_required" so the code continues here if no redirect is needed
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
-      confirmParams: { return_url: returnUrl, receipt_email: email },
+      confirmParams: { 
+        return_url: returnUrl,
+        receipt_email: email 
+      },
       redirect: "if_required",
     });
 
     if (error) {
-      // This catches card errors (insufficient funds, etc)
       setMessage(error.message || "Payment failed");
       setIsLoading(false);
       return;
     }
 
-    // FIX: Subscriptions often return "processing" initially, not just "succeeded".
+    // FIX FOR PINNING: Subscriptions return 'processing' or 'succeeded'
     if (paymentIntent && (paymentIntent.status === "succeeded" || paymentIntent.status === "processing")) {
       setPremium(true);
       setJoinDate(new Date().toISOString());
@@ -1882,9 +1882,8 @@ const CheckoutForm = ({ onClose, dateString }: { onClose: () => void; dateString
       return;
     }
 
-    // If we get here, the status is something unexpected (like requires_payment_method)
-    // ensuring we don't just "pin" indefinitely.
-    setMessage(`Payment status: ${paymentIntent?.status}. Please try a different card.`);
+    // Default fallback
+    setMessage("Payment processing...");
     setIsLoading(false);
   };
 
@@ -1922,6 +1921,7 @@ const CheckoutForm = ({ onClose, dateString }: { onClose: () => void; dateString
       </div>
 
       <div className="flex flex-col gap-4">
+        {/* LinkAuthenticationElement handles email input inside Stripe Elements */}
         <div className="text-white">
           <LinkAuthenticationElement
             id="link-authentication-element"
@@ -1983,18 +1983,22 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
         body: JSON.stringify({ email }),
       });
       const data = await res.json();
+      
       if (data.isPremium) {
         setPremium(true);
         setJoinDate(new Date().toISOString());
         if (data.customerName) setName(data.customerName);
+        
         const symptoms = useUserData.getState().symptoms || [];
         if (symptoms.includes("incontinence")) {
           useUserData.getState().startDrySeal();
         }
+        
         router.push("/dashboard");
         return;
       }
-      setMessage("We found your email, but no active subscription was detected.");
+      
+      setMessage(data.error || "We found your email, but no active subscription was detected.");
       setIsLoading(false);
     } catch (err) {
       console.error(err);
@@ -2022,7 +2026,7 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
         </div>
 
         <p className="text-white/60 text-sm mb-5 font-medium leading-relaxed">
-          Enter the email address you used at checkout. We’ll find your active plan and unlock your dashboard.
+          Enter the email address you used at checkout. We’ll find your active plan.
         </p>
 
         <form onSubmit={handleRestoreSubmit} className="flex flex-col gap-4">
@@ -2050,10 +2054,6 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
           >
             {isLoading ? <Loader2 className="animate-spin" /> : "Find My Plan"}
           </button>
-
-          <p className="text-center text-white/30 text-[11px] font-semibold">
-            If your subscription is active, your access restores instantly.
-          </p>
         </form>
       </div>
     </div>
@@ -2061,7 +2061,6 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
 };
 
 function Step14Paywall() {
-  // UNCHANGED
   const { name } = useUserData();
   const fingerGap = useUserStore((s) => s.fingerGap);
 
@@ -2070,6 +2069,7 @@ function Step14Paywall() {
   const [showContent, setShowContent] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [isFaqOpen, setIsFaqOpen] = useState(false);
+  
   const [clientSecret, setClientSecret] = useState("");
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [showRestoreModal, setShowRestoreModal] = useState(false);
@@ -2120,6 +2120,7 @@ function Step14Paywall() {
         const res = await fetch("/api/create-payment-intent", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          // No body required - creates anonymous customer
         });
 
         if (!res.ok) {
@@ -2196,7 +2197,6 @@ function Step14Paywall() {
           </div>
         </div>
 
-        {/* HIGH CONVERSION HEADLINE CHANGE */}
         <h1
           className="text-[36px] font-extrabold text-white text-center mb-4 leading-[1.05] drop-shadow-xl"
           style={{ fontFamily: "var(--font-lora)" }}
@@ -2206,7 +2206,6 @@ function Step14Paywall() {
           <span className="text-[color:var(--pink)]">Avoid surgery.</span>
         </h1>
 
-        {/* PAIN-AGITATING SUBHEAD */}
         <p className="text-center text-white/80 text-[16px] font-medium leading-relaxed mb-8 max-w-xs mx-auto">
           Your customized 12-week plan to close your{" "}
           <span className="text-white font-extrabold border-b border-white/30">
