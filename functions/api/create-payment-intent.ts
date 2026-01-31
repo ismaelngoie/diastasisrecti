@@ -39,10 +39,10 @@ export async function onRequestPost(context: any) {
       });
     }
 
-    // 5. Return BOTH fields (Fixes your error)
+    // 5. Return BOTH fields (Fixes the frontend error)
     return new Response(JSON.stringify({ 
       clientSecret: clientSecret,
-      intentType: "payment" // <--- This was missing!
+      intentType: "payment"
     }), {
       headers: { "Content-Type": "application/json" },
     });
