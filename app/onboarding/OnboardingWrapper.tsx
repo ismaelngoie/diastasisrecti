@@ -100,7 +100,7 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
   );
 }
 
-// --- VISUALS (Defs, ShapeArt, VisualCard) REMAIN UNCHANGED ---
+// --- VISUALS (Defs, ShapeArt, VisualCard) ---
 const Defs = ({ p }: { p: string }) => (
   <defs>
     <radialGradient id={`${p}-body-vol`} cx="50%" cy="40%" r="90%">
@@ -1948,8 +1948,14 @@ const CheckoutForm = ({ onClose, dateString, customerId }: { onClose: () => void
         setPremium(true);
         setJoinDate(new Date().toISOString());
         const symptoms = useUserData.getState().symptoms || [];
-        router.push(DASHBOARD_PATH);
-      }, 10000);
+        if (symptoms.includes("incontinence")) {
+          useUserData.getState().startDrySeal();
+        }
+        
+        // --- 1. HARD REDIRECT WITH PARAMS (The Pelvi Method) ---
+        // This ensures Google Ads sees the URL before any React router cleaning happens.
+        window.location.href = "/dashboard?plan=monthly";
+      }, 2500);
       return;
     }
 
@@ -2059,6 +2065,9 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
         setJoinDate(new Date().toISOString());
         if (data.customerName) setName(data.customerName);
         const symptoms = useUserData.getState().symptoms || [];
+        if (symptoms.includes("incontinence")) {
+          useUserData.getState().startDrySeal();
+        }
         router.push("/dashboard");
         return;
       }
@@ -2158,7 +2167,7 @@ function Step14Paywall() {
   }, []);
 
   useEffect(() => {
-    const reviewTimer = setInterval(() => setCurrentReviewIndex((p) => (p + 1) % REVIEWS.length), 2000);
+    const reviewTimer = setInterval(() => setCurrentReviewIndex((p) => (p + 1) % REVIEWS.length), 5000);
     return () => clearInterval(reviewTimer);
   }, []);
 
@@ -2527,10 +2536,16 @@ useEffect(() => {
     setCheckedPremium(true);
   }, [router]);
 
+  // --- 2. THE FIX: IGNORE REDIRECT IF WE ARE ON PAYWALL STEP (14) ---
   useEffect(() => {
     if (!checkedPremium) return;
+    
+    // If the user is on the paywall screen (step 14), DO NOT redirect them yet.
+    // Let the CheckoutForm handle the redirect logic (Pelvi Method).
+    if (onboardingStep === 14) return;
+
     if (isPremium) router.replace("/dashboard");
-  }, [checkedPremium, isPremium, router]);
+  }, [checkedPremium, isPremium, router, onboardingStep]);
 
   useEffect(() => {
     if (screen !== 3) return;
