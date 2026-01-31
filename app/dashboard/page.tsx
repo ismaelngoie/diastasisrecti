@@ -174,7 +174,7 @@ export default function DashboardTodayPage() {
       next.delete("plan");
       const qs = next.toString();
       router.replace(qs ? `/dashboard?${qs}` : "/dashboard", { scroll: false });
-    }, 5000);
+    }, 30000);
     return () => window.clearTimeout(t);
   }, [router, planParam, searchParamsString]);
 
