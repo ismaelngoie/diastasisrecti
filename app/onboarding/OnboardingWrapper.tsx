@@ -1948,9 +1948,6 @@ const CheckoutForm = ({ onClose, dateString, customerId }: { onClose: () => void
         setPremium(true);
         setJoinDate(new Date().toISOString());
         const symptoms = useUserData.getState().symptoms || [];
-        if (symptoms.includes("incontinence")) {
-          useUserData.getState().startDrySeal();
-        }
         router.push(DASHBOARD_PATH);
       }, 10000);
       return;
@@ -2062,9 +2059,6 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
         setJoinDate(new Date().toISOString());
         if (data.customerName) setName(data.customerName);
         const symptoms = useUserData.getState().symptoms || [];
-        if (symptoms.includes("incontinence")) {
-          useUserData.getState().startDrySeal();
-        }
         router.push("/dashboard");
         return;
       }
