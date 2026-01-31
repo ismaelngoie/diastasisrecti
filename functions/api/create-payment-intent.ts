@@ -2,53 +2,56 @@ import Stripe from 'stripe';
 
 export async function onRequestPost(context: any) {
   try {
-    // 1. Initialize Stripe
     if (!context.env.STRIPE_SECRET_KEY) {
       return new Response(JSON.stringify({ error: "Missing STRIPE_SECRET_KEY" }), { status: 500 });
     }
-     
-    const stripe = new Stripe(context.env.STRIPE_SECRET_KEY);
-    const priceId = context.env.STRIPE_PRICE_ID;
 
+    const stripe = new Stripe(context.env.STRIPE_SECRET_KEY);
+    const body = await context.request.json().catch(() => ({}));
+
+    // === JOB 1: UPDATE CUSTOMER EMAIL (Called when user clicks "Start My Healing") ===
+    if (body.customerId && body.email) {
+      // This ensures the Stripe Customer has the email saved for Restore to work later
+      await stripe.customers.update(body.customerId, { email: body.email });
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+
+    // === JOB 2: CREATE NEW SESSION (Called when Paywall loads) ===
+    const priceId = context.env.STRIPE_PRICE_ID;
     if (!priceId) {
       return new Response(JSON.stringify({ error: "Missing STRIPE_PRICE_ID" }), { status: 500 });
     }
 
-    // 2. Create Customer
+    // Create a blank customer first
     const customer = await stripe.customers.create();
 
-    // 3. Create Subscription
+    // Create the subscription
     const subscription = await stripe.subscriptions.create({
       customer: customer.id,
-      items: [{
-        price: priceId,
-      }],
+      items: [{ price: priceId }],
       payment_behavior: 'default_incomplete',
       payment_settings: { save_default_payment_method: 'on_subscription' },
       expand: ['latest_invoice.payment_intent'],
     });
 
-    // 4. Extract Client Secret
     // @ts-ignore
     const clientSecret = subscription.latest_invoice?.payment_intent?.client_secret;
 
     if (!clientSecret) {
-      return new Response(JSON.stringify({ error: "Stripe failed to generate a client secret." }), { 
-        status: 500,
-        headers: { "Content-Type": "application/json" }
-      });
+      throw new Error("Stripe failed to generate a client secret.");
     }
 
-    // 5. Return BOTH fields (Fixes your error)
+    // Return the Secret AND the Customer ID (so we can update email later)
     return new Response(JSON.stringify({ 
       clientSecret: clientSecret,
-      intentType: "payment" // <--- This was missing!
+      customerId: customer.id 
     }), {
       headers: { "Content-Type": "application/json" },
     });
 
   } catch (err: any) {
-    console.error("Stripe Error:", err.message);
     return new Response(JSON.stringify({ error: err.message || "Unknown error" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
