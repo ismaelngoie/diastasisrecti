@@ -1,12 +1,39 @@
 import Stripe from "stripe";
 
-export async function onRequestPost(context: any) {
+export async function onRequest(context: any) {
+  // 1. Handle CORS Preflight
+  if (context.request.method === "OPTIONS") {
+    return new Response(null, {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      },
+    });
+  }
+
+  // Only allow POST
+  if (context.request.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
+      status: 405,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
+  }
+
   try {
     const secretKey = context.env?.STRIPE_SECRET_KEY;
+    const responseHeaders = {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+    };
+
     if (!secretKey) {
       return new Response(JSON.stringify({ error: "Missing STRIPE_SECRET_KEY" }), {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: responseHeaders,
       });
     }
 
@@ -18,7 +45,7 @@ export async function onRequestPost(context: any) {
     if (!email || !email.includes("@")) {
       return new Response(JSON.stringify({ error: "Email required" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: responseHeaders,
       });
     }
 
@@ -27,7 +54,7 @@ export async function onRequestPost(context: any) {
 
     if (customers.data.length === 0) {
       return new Response(JSON.stringify({ isPremium: false, error: "No account found." }), {
-        headers: { "Content-Type": "application/json" },
+        headers: responseHeaders,
       });
     }
 
@@ -49,7 +76,7 @@ export async function onRequestPost(context: any) {
             currentPeriodEnd: eligible.current_period_end,
             cancelAtPeriodEnd: eligible.cancel_at_period_end,
           }),
-          { headers: { "Content-Type": "application/json" } }
+          { headers: responseHeaders }
         );
       }
     }
@@ -59,12 +86,15 @@ export async function onRequestPost(context: any) {
         isPremium: false,
         error: "We found your email, but no active subscription was detected.",
       }),
-      { headers: { "Content-Type": "application/json" } }
+      { headers: responseHeaders }
     );
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err?.message || "Unknown error" }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
     });
   }
 }
