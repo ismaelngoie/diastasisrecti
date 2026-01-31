@@ -1,29 +1,37 @@
 import Stripe from "stripe";
 
-export async function POST(req: Request) {
+export async function onRequestPost(context: any) {
   try {
-    const secretKey = process.env.STRIPE_SECRET_KEY;
+    const secretKey = context.env?.STRIPE_SECRET_KEY;
     if (!secretKey) {
-      return Response.json({ error: "Missing STRIPE_SECRET_KEY" }, { status: 500 });
+      return new Response(JSON.stringify({ error: "Missing STRIPE_SECRET_KEY" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
-    const stripe = new Stripe(secretKey);
+    const stripe = new Stripe(secretKey, { apiVersion: "2023-10-16" });
 
-    const { email } = await req.json();
-    const cleanEmail = String(email || "").trim().toLowerCase();
+    const body = await context.request.json().catch(() => ({}));
+    const email = String(body?.email || "").trim().toLowerCase();
 
-    if (!cleanEmail || !cleanEmail.includes("@")) {
-      return Response.json({ error: "Email required" }, { status: 400 });
+    if (!email || !email.includes("@")) {
+      return new Response(JSON.stringify({ error: "Email required" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
-    // Stripe filters by exact email match
-    const customers = await stripe.customers.list({ email: cleanEmail, limit: 10 });
+    // Stripe searches by exact email
+    const customers = await stripe.customers.list({ email, limit: 10 });
 
     if (customers.data.length === 0) {
-      return Response.json({ isPremium: false, error: "No account found." });
+      return new Response(JSON.stringify({ isPremium: false, error: "No account found." }), {
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
-    // Check any customer record for an eligible subscription
+    // Check any customer for eligible subscription
     for (const customer of customers.data) {
       const subs = await stripe.subscriptions.list({
         customer: customer.id,
@@ -31,31 +39,32 @@ export async function POST(req: Request) {
         limit: 10,
       });
 
-      const eligible = subs.data.find((s) =>
-        ["active", "trialing"].includes(s.status)
-        // optionally allow past_due:
-        // || s.status === "past_due"
-      );
-
+      const eligible = subs.data.find((s) => s.status === "active" || s.status === "trialing");
       if (eligible) {
-        return Response.json({
-          isPremium: true,
-          customerName: customer.name || null,
-          subscriptionStatus: eligible.status,
-          currentPeriodEnd: eligible.current_period_end,
-          cancelAtPeriodEnd: eligible.cancel_at_period_end,
-        });
+        return new Response(
+          JSON.stringify({
+            isPremium: true,
+            customerName: customer.name || null,
+            subscriptionStatus: eligible.status,
+            currentPeriodEnd: eligible.current_period_end,
+            cancelAtPeriodEnd: eligible.cancel_at_period_end,
+          }),
+          { headers: { "Content-Type": "application/json" } }
+        );
       }
     }
 
-    return Response.json({
-      isPremium: false,
-      error: "We found your email, but no active subscription was detected.",
-    });
-  } catch (err: any) {
-    return Response.json(
-      { error: err?.message || "Unknown error" },
-      { status: 500 }
+    return new Response(
+      JSON.stringify({
+        isPremium: false,
+        error: "We found your email, but no active subscription was detected.",
+      }),
+      { headers: { "Content-Type": "application/json" } }
     );
+  } catch (err: any) {
+    return new Response(JSON.stringify({ error: err?.message || "Unknown error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }
