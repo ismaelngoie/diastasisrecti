@@ -28,7 +28,10 @@ import { useUserStore } from "@/lib/store/useUserStore";
 
 function BreathingPacer() {
   return (
-    <div className="absolute top-4 left-4 z-20" aria-hidden="true">
+    <div
+      className="absolute top-[calc(env(safe-area-inset-top)+12px)] left-4 z-20"
+      aria-hidden="true"
+    >
       <div className="text-white/60 text-[10px] font-extrabold tracking-widest uppercase mb-2">
         Exhale on Effort
       </div>
@@ -49,7 +52,10 @@ function BreathingPacer() {
 
 function FormGuardToast() {
   return (
-    <div className="absolute top-4 right-4 z-20 max-w-[220px]" aria-hidden="true">
+    <div
+      className="absolute top-[calc(env(safe-area-inset-top)+12px)] right-4 z-20 max-w-[220px]"
+      aria-hidden="true"
+    >
       <div className="rounded-2xl border border-white/12 bg-black/45 backdrop-blur-xl px-3 py-2 shadow-soft">
         <div className="text-white text-[12px] font-extrabold">⚠️ Watch for doming</div>
         <div className="text-white/70 text-[11px] font-semibold mt-1 leading-snug">
@@ -158,7 +164,7 @@ export default function SafetyPlayer({
     };
   }, []);
 
-  // Focus management
+  // Focus management (mostly for desktop)
   useEffect(() => {
     lastFocusRef.current = document.activeElement as HTMLElement | null;
     closeBtnRef.current?.focus();
@@ -377,7 +383,7 @@ export default function SafetyPlayer({
   }, [nextUpIndex, pool]);
 
   return (
-    <div className="fixed inset-0 z-[180] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[180] bg-black/80 backdrop-blur-sm sm:flex sm:items-center sm:justify-center sm:p-4">
       <div
         ref={dialogRef}
         role="dialog"
@@ -385,10 +391,17 @@ export default function SafetyPlayer({
         aria-labelledby={titleId}
         tabIndex={-1}
         onKeyDown={onDialogKeyDown}
-        className="w-full max-w-md rounded-3xl overflow-hidden border border-white/12 bg-[#0F0F17] shadow-[0_40px_140px_rgba(0,0,0,0.7)]"
+        className={[
+          // ✅ FULL SCREEN on mobile
+          "w-full h-[100dvh] rounded-none",
+          // ✅ original on desktop
+          "sm:h-auto sm:max-w-md sm:rounded-3xl",
+          "overflow-hidden border border-white/12 bg-[#0F0F17] shadow-[0_40px_140px_rgba(0,0,0,0.7)]",
+          "flex flex-col",
+        ].join(" ")}
       >
         {/* Top bar */}
-        <div className="p-4 flex items-center justify-between border-b border-white/10">
+        <div className="px-4 pb-3 pt-[calc(env(safe-area-inset-top)+12px)] sm:p-4 flex items-center justify-between border-b border-white/10">
           <div className="min-w-0">
             <div id={titleId} className="text-white font-extrabold text-[14px] truncate">
               {currentTitle}
@@ -423,14 +436,28 @@ export default function SafetyPlayer({
         </div>
 
         {/* Video stage */}
-        <div className="relative bg-black">
+        <div className="relative bg-black flex-1 sm:flex-none">
           <BreathingPacer />
           <FormGuardToast />
 
-          <video ref={videoRef} src={url} playsInline preload="metadata" className="w-full aspect-video bg-black" />
+          {/* ✅ Full height on mobile; original aspect on desktop */}
+          <video
+            ref={videoRef}
+            src={url}
+            playsInline
+            preload="metadata"
+            className="w-full h-full sm:h-auto sm:aspect-video bg-black object-contain"
+          />
 
           {/* Premium overlay controls */}
-          <div className="absolute inset-x-0 bottom-0 p-3 pt-10 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+          <div
+            className={[
+              "absolute inset-x-0 bottom-0",
+              "p-3 pt-10",
+              "bg-gradient-to-t from-black/80 via-black/40 to-transparent",
+              "pb-[calc(env(safe-area-inset-bottom)+12px)]",
+            ].join(" ")}
+          >
             {/* progress bar */}
             <div
               className="h-2 rounded-full bg-white/10 overflow-hidden cursor-pointer"
@@ -554,11 +581,27 @@ export default function SafetyPlayer({
                 </div>
               </button>
             )}
+
+            {/* ✅ Mobile-only pain button INSIDE fullscreen overlay */}
+            <div className="sm:hidden">
+              <button
+                onClick={onPain}
+                type="button"
+                className="mt-3 w-full h-12 rounded-full border border-red-500/25 bg-red-500/10 text-red-100 font-extrabold inline-flex items-center justify-center gap-2 active:scale-[0.985] transition-transform"
+              >
+                <AlertTriangle size={18} />
+                I feel pain / pulling
+              </button>
+
+              <div className="mt-3 text-white/50 text-[11px] font-semibold leading-relaxed">
+                If anything feels sharp, painful, or wrong — stop and switch or rest.
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="p-4 border-t border-white/10 bg-[#0F0F17]">
+        {/* Actions (desktop-only; mobile uses overlay version above) */}
+        <div className="hidden sm:block p-4 border-t border-white/10 bg-[#0F0F17]">
           <button
             onClick={onPain}
             type="button"
@@ -578,7 +621,7 @@ export default function SafetyPlayer({
       <AnimatePresence>
         {showList && pool.length > 1 && (
           <motion.div
-            className="fixed inset-0 z-[190] bg-black/70 flex items-end justify-center p-4"
+            className="fixed inset-0 z-[190] bg-black/70 flex items-end justify-center sm:p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -586,7 +629,10 @@ export default function SafetyPlayer({
           >
             <motion.div
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md rounded-t-3xl border border-white/12 bg-[#0F0F17] p-4 shadow-[0_40px_120px_rgba(0,0,0,0.75)]"
+              className={[
+                "w-full sm:max-w-md rounded-t-3xl border border-white/12 bg-[#0F0F17] p-4",
+                "shadow-[0_40px_120px_rgba(0,0,0,0.75)]",
+              ].join(" ")}
               initial={{ y: 18, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 18, opacity: 0 }}
@@ -604,7 +650,7 @@ export default function SafetyPlayer({
                 </button>
               </div>
 
-              <div className="mt-3 max-h-[360px] overflow-y-auto no-scrollbar pr-1">
+              <div className="mt-3 max-h-[55dvh] sm:max-h-[360px] overflow-y-auto no-scrollbar pr-1 pb-[calc(env(safe-area-inset-bottom)+8px)]">
                 {pool.map((v, i) => {
                   const active = i === index;
                   return (
