@@ -16,7 +16,7 @@ export default function StreakCard({
     <div className="rounded-3xl border border-white/12 bg-white/6 backdrop-blur-xl shadow-soft p-5">
       <div className="text-white font-extrabold text-[16px]">Streaks</div>
       <div className="text-white/55 text-[12px] font-semibold mt-1">
-        Updates automatically when you complete today’s session.
+        Keeps you consistent — one day at a time.
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-2">
