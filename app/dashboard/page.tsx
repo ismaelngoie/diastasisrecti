@@ -55,8 +55,9 @@ function formatLocalDate(isoYYYYMMDD: string) {
   return d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
 }
 
-function computeStreakInfo(dateSet: Set<string>) {
-  const today = localDateISO(new Date());
+// ✅ accept todayISO so streak/graph always align with your prescription date
+function computeStreakInfo(dateSet: Set<string>, todayISO: string) {
+  const today = todayISO || localDateISO(new Date());
 
   let current = 0;
   for (let i = 0; i < 3650; i++) {
@@ -87,8 +88,9 @@ function computeStreakInfo(dateSet: Set<string>) {
   return { current, best, total: dateSet.size };
 }
 
-function buildGraphPoints(range: GraphRange, dateSet: Set<string>, todayProgress01: number) {
-  const today = localDateISO(new Date());
+// ✅ accept todayISO so graph always aligns with your prescription date
+function buildGraphPoints(range: GraphRange, dateSet: Set<string>, todayProgress01: number, todayISO: string) {
+  const today = todayISO || localDateISO(new Date());
 
   if (range === "week") {
     const pts: GraphPoint[] = [];
@@ -175,20 +177,19 @@ export default function DashboardTodayPage() {
   // Replaces the old useEffect that used planParam/router.replace
   useEffect(() => {
     // Only run on client
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       // Check if we just arrived from payment
-      if (params.get('plan') === 'monthly') {
-        
+      if (params.get("plan") === "monthly") {
         // A. MANUALLY FIRE THE CONVERSION EVENT (IMMEDIATE)
         // @ts-ignore
         if (window.gtag) {
           // @ts-ignore
-          window.gtag('event', 'conversion', {
-            'send_to': 'AW-17911323675', 
-            'value': 24.99,
-            'currency': 'USD',
-            'transaction_id': Date.now() // Unique ID prevents dups
+          window.gtag("event", "conversion", {
+            send_to: "AW-17911323675",
+            value: 24.99,
+            currency: "USD",
+            transaction_id: Date.now(), // Unique ID prevents dups
           });
           console.log("✅ Google Ads Conversion Fired");
         }
@@ -196,9 +197,9 @@ export default function DashboardTodayPage() {
         // B. DELAY URL CLEANUP (5 Seconds)
         // This keeps ?plan=monthly visible so simple URL matching works too
         setTimeout(() => {
-          const cleanUrl = window.location.pathname; 
-          window.history.replaceState(null, '', cleanUrl);
-        }, 15000); 
+          const cleanUrl = window.location.pathname;
+          window.history.replaceState(null, "", cleanUrl);
+        }, 15000);
       }
     }
   }, []);
@@ -226,11 +227,20 @@ export default function DashboardTodayPage() {
   const videos = useMemo(() => (p?.videos ? p.videos : []), [p?.videos]);
   const hasVideos = videos.length > 0;
 
+  // ✅ optimistic completion so graph/ring update instantly at 5s even if store write lags
+  const [optimisticDoneISO, setOptimisticDoneISO] = useState<string | null>(null);
+
+  useEffect(() => {
+    // when day changes, reset optimism
+    setOptimisticDoneISO(null);
+  }, [p.dateISO]);
+
   const dateSet = useMemo(() => {
     const s = new Set<string>();
     for (const c of completions || []) s.add(c.dateISO);
+    if (optimisticDoneISO) s.add(optimisticDoneISO);
     return s;
-  }, [completions]);
+  }, [completions, optimisticDoneISO]);
 
   const isDoneToday = useMemo(() => dateSet.has(p.dateISO), [dateSet, p.dateISO]);
 
@@ -245,11 +255,11 @@ export default function DashboardTodayPage() {
 
   const ringPct = isDoneToday ? 100 : watchPct;
 
-  const streak = useMemo(() => computeStreakInfo(dateSet), [dateSet]);
+  const streak = useMemo(() => computeStreakInfo(dateSet, p.dateISO), [dateSet, p.dateISO]);
 
   const graph = useMemo(
-    () => buildGraphPoints(range, dateSet, isDoneToday ? 1 : ringPct / 100),
-    [range, dateSet, ringPct, isDoneToday]
+    () => buildGraphPoints(range, dateSet, isDoneToday ? 1 : ringPct / 100, p.dateISO),
+    [range, dateSet, ringPct, isDoneToday, p.dateISO]
   );
 
   const habitItems = useMemo(
@@ -265,10 +275,7 @@ export default function DashboardTodayPage() {
     () => habitItems.reduce((acc, h) => acc + (dayHabits[h.id] ? 1 : 0), 0),
     [dayHabits, habitItems]
   );
-  const habitsPct = useMemo(
-    () => Math.round((habitsDoneCount / (habitItems.length || 1)) * 100),
-    [habitsDoneCount, habitItems.length]
-  );
+  const habitsPct = useMemo(() => Math.round((habitsDoneCount / (habitItems.length || 1)) * 100), [habitsDoneCount, habitItems.length]);
 
   // Plan tab -> Today click opens start modal
   useEffect(() => {
@@ -313,6 +320,8 @@ export default function DashboardTodayPage() {
   const onStartedAfter5s = useCallback(() => {
     if (isDoneToday) return;
 
+    // ✅ instantly “complete” UI even if store write is slow
+    setOptimisticDoneISO(p.dateISO);
     setWatchPct(100);
 
     addWorkoutCompletion?.({
@@ -322,6 +331,8 @@ export default function DashboardTodayPage() {
       completedAtISO: new Date().toISOString(),
     });
   }, [addWorkoutCompletion, isDoneToday, p.dateISO, p.dayNumber]);
+
+  const topLabel = isDoneToday ? "Today is done ✅" : ringPct > 0 ? "Nice — keep going" : "Tap to start";
 
   return (
     <main className="w-full max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -337,9 +348,7 @@ export default function DashboardTodayPage() {
 
         {/* Day / Phase */}
         <div className="min-w-0">
-          <div className="text-white/45 text-[10px] font-extrabold tracking-[0.22em] uppercase">
-            Today • {headerDate}
-          </div>
+          <div className="text-white/45 text-[10px] font-extrabold tracking-[0.22em] uppercase">Today • {headerDate}</div>
 
           <h1 className="mt-2 text-white text-[24px] sm:text-[26px] leading-[1.1] font-extrabold">
             Day {p.dayNumber}: <span className="text-white/90">{phaseNameDisplay}</span>
@@ -356,22 +365,29 @@ export default function DashboardTodayPage() {
         <Card className="p-5">
           <ProgressRing
             pct={ringPct}
-            labelTop={isDoneToday ? "Today is done ✅" : ringPct > 0 ? "Nice — keep going" : "Tap to start"}
+            labelTop={topLabel}
             labelBottom="Tap the preview video to play. Your progress updates automatically."
+            // ✅ NEW: place Why next to labelTop
+            labelTopRight={
+              <button
+                type="button"
+                onClick={() => setShowWhy((v) => !v)}
+                className="h-9 px-3 rounded-full border border-white/10 bg-white/8 text-white/90 font-extrabold inline-flex items-center gap-2"
+                aria-expanded={showWhy}
+              >
+                Why
+                <ChevronDown className={["transition-transform", showWhy ? "rotate-180" : ""].join(" ")} size={16} />
+              </button>
+            }
             center={
               hasVideos ? (
-                <LoopPreviewBubble
-                  src={videos[0].url}
-                  onClick={() => requestStart(videos[0].url)}
-                  size="ring"
-                  ariaLabel="Play today’s routine"
-                />
+                <LoopPreviewBubble src={videos[0].url} onClick={() => requestStart(videos[0].url)} size="ring" ariaLabel="Play today’s routine" />
               ) : undefined
             }
           />
 
-          {/* Removed the big Play button. Keep only “Why” toggle */}
-          <div className="mt-4 flex justify-end">
+          {/* ✅ kept your old Why button code (but hidden so we “don’t remove a thing”) */}
+          <div className="mt-4 flex justify-end hidden">
             <button
               type="button"
               onClick={() => setShowWhy((v) => !v)}
@@ -379,10 +395,7 @@ export default function DashboardTodayPage() {
               aria-expanded={showWhy}
             >
               Why
-              <ChevronDown
-                className={["transition-transform", showWhy ? "rotate-180" : ""].join(" ")}
-                size={18}
-              />
+              <ChevronDown className={["transition-transform", showWhy ? "rotate-180" : ""].join(" ")} size={18} />
             </button>
           </div>
 
@@ -415,9 +428,7 @@ export default function DashboardTodayPage() {
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="text-white font-extrabold text-[16px]">Today’s Moves</div>
-              <div className="text-white/55 text-[12px] font-semibold mt-1">
-                Your player will run these one after another.
-              </div>
+              <div className="text-white/55 text-[12px] font-semibold mt-1">Your player will run these one after another.</div>
             </div>
           </div>
 
@@ -447,9 +458,7 @@ export default function DashboardTodayPage() {
                     </div>
                   </div>
 
-                  <div className="shrink-0 text-white/45 text-[11px] font-extrabold tracking-[0.16em] uppercase">
-                    Tap
-                  </div>
+                  <div className="shrink-0 text-white/45 text-[11px] font-extrabold tracking-[0.16em] uppercase">Tap</div>
                 </button>
               );
             })}
@@ -505,9 +514,7 @@ export default function DashboardTodayPage() {
                     <div className={["text-[13px] font-semibold leading-relaxed break-words", done ? "text-white/85" : "text-white/75"].join(" ")}>
                       {h.text}
                     </div>
-                    <div className="mt-1 text-white/35 text-[11px] font-semibold">
-                      {done ? "Done" : "Tap to mark as done"}
-                    </div>
+                    <div className="mt-1 text-white/35 text-[11px] font-semibold">{done ? "Done" : "Tap to mark as done"}</div>
                   </div>
                 </label>
               );
@@ -532,13 +539,12 @@ export default function DashboardTodayPage() {
               initial={{ y: 14, scale: 0.98, opacity: 0 }}
               animate={{ y: 0, scale: 1, opacity: 1 }}
               exit={{ y: 10, scale: 0.98, opacity: 0 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
+              transition={{ duration: playerUrl ? 0 : 0.25, ease: "easeOut" }}
             >
               <div className="text-white font-extrabold text-[18px]">Before you start</div>
 
               <div className="mt-2 text-white/75 text-[13px] font-semibold leading-relaxed">
-                <span className="text-white font-extrabold">{phaseNameDisplay}.</span>{" "}
-                {whyDisplay}
+                <span className="text-white font-extrabold">{phaseNameDisplay}.</span> {whyDisplay}
               </div>
 
               <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
