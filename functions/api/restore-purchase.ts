@@ -6,48 +6,65 @@ export async function onRequestPost(context: any) {
     const { email } = await context.request.json();
 
     if (!email) {
-      return new Response(JSON.stringify({ error: "Email required" }), { 
+      return new Response(JSON.stringify({ error: "Email is required." }), { 
         status: 400,
         headers: { "Content-Type": "application/json" }
       });
     }
 
-    // 1. Find Customer by Email
+    // 1. Find ALL customers with this email (not just the first one)
     const customers = await stripe.customers.list({ 
       email: email, 
-      limit: 1 
+      limit: 100 // Safety net for duplicate accounts
     });
 
     if (customers.data.length === 0) {
-      return new Response(JSON.stringify({ isPremium: false, error: "No account found." }), {
+      // CODE 404: Explicitly tell frontend "User not found"
+      return new Response(JSON.stringify({ 
+        isPremium: false, 
+        message: "We could not find any account with that email." 
+      }), {
         headers: { "Content-Type": "application/json" }
       });
     }
 
-    const customer = customers.data[0];
+    // 2. Check ALL matching customers for an active subscription
+    let hasActiveSub = false;
+    let validCustomerName = "";
 
-    // 2. Check for Active Subscriptions
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customer.id,
-      status: 'active',
-      limit: 1
-    });
+    for (const customer of customers.data) {
+      // Check for 'active' or 'trialing' subscriptions
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customer.id,
+        status: 'all', // Get all, then filter
+      });
 
-    // Optional: Check for Trialing if you ever add trials
-    const trialing = await stripe.subscriptions.list({
-      customer: customer.id,
-      status: 'trialing',
-      limit: 1
-    });
+      const activeSub = subscriptions.data.find(sub => 
+        sub.status === 'active' || sub.status === 'trialing'
+      );
 
-    const isPremium = subscriptions.data.length > 0 || trialing.data.length > 0;
+      if (activeSub) {
+        hasActiveSub = true;
+        validCustomerName = customer.name || "";
+        break; // Found one! We are done.
+      }
+    }
 
-    return new Response(JSON.stringify({ 
-      isPremium,
-      customerName: customer.name // Returns the name to personalize the app
-    }), {
-      headers: { "Content-Type": "application/json" }
-    });
+    if (hasActiveSub) {
+      return new Response(JSON.stringify({ 
+        isPremium: true, 
+        customerName: validCustomerName 
+      }), {
+        headers: { "Content-Type": "application/json" }
+      });
+    } else {
+      return new Response(JSON.stringify({ 
+        isPremium: false, 
+        message: "Account found, but no active subscription detected." 
+      }), {
+        headers: { "Content-Type": "application/json" }
+      });
+    }
 
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err.message || "Unknown error" }), { 
