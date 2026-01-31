@@ -1952,7 +1952,7 @@ const CheckoutForm = ({ onClose, dateString, customerId }: { onClose: () => void
           useUserData.getState().startDrySeal();
         }
         router.push(DASHBOARD_PATH);
-      }, 2500);
+      }, 10000);
       return;
     }
 
