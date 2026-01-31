@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 
 export async function onRequest(context: any) {
+  // CORS Preflight
   if (context.request.method === "OPTIONS") {
     return new Response(null, {
       headers: {
@@ -11,82 +12,70 @@ export async function onRequest(context: any) {
     });
   }
 
-  if (context.request.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
-      status: 405,
-      headers: { "Access-Control-Allow-Origin": "*" },
-    });
-  }
+  if (context.request.method === "POST") {
+    const stripe = new Stripe(context.env.STRIPE_SECRET_KEY);
 
-  try {
-    const secretKey = context.env?.STRIPE_SECRET_KEY;
-    const responseHeaders = {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-    };
-
-    if (!secretKey) {
-      return new Response(JSON.stringify({ error: "Missing Config" }), {
-        status: 500,
-        headers: responseHeaders,
-      });
-    }
-
-    // FIX: Removed explicit apiVersion
-    const stripe = new Stripe(secretKey);
-
-    const body = await context.request.json().catch(() => ({}));
-    const email = String(body?.email || "").trim().toLowerCase();
-
-    if (!email || !email.includes("@")) {
-      return new Response(JSON.stringify({ error: "Email required" }), {
-        status: 400,
-        headers: responseHeaders,
-      });
-    }
-
-    // Lookup customer by email
-    const customers = await stripe.customers.list({ email, limit: 10 });
-
-    if (customers.data.length === 0) {
-      return new Response(JSON.stringify({ isPremium: false, error: "No account found." }), {
-        headers: responseHeaders,
-      });
-    }
-
-    // Check for active subscriptions
-    for (const customer of customers.data) {
-      const subs = await stripe.subscriptions.list({
-        customer: customer.id,
-        status: "all",
-        limit: 10,
-      });
-
-      const eligible = subs.data.find((s) => s.status === "active" || s.status === "trialing");
+    try {
+      const body = await context.request.json().catch(() => ({}));
+      const email = body?.email;
       
-      if (eligible) {
-        return new Response(
-          JSON.stringify({
-            isPremium: true,
-            customerName: customer.name || null,
-            subscriptionStatus: eligible.status,
-          }),
-          { headers: responseHeaders }
-        );
+      if (!email) {
+        return new Response("Email required", { 
+          status: 400,
+          headers: { "Access-Control-Allow-Origin": "*" }
+        });
       }
-    }
 
-    return new Response(
-      JSON.stringify({
-        isPremium: false,
-        error: "We found your email, but no active subscription was detected.",
-      }),
-      { headers: responseHeaders }
-    );
-  } catch (err: any) {
-    return new Response(JSON.stringify({ error: err?.message || "Unknown error" }), {
-      status: 500,
-      headers: { "Access-Control-Allow-Origin": "*" },
-    });
+      // 1. Find Customer
+      const customers = await stripe.customers.list({ email: email, limit: 1 });
+      
+      if (customers.data.length === 0) {
+        return new Response(JSON.stringify({ isPremium: false, error: "No account found." }), {
+          headers: { 
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*" 
+          }
+        });
+      }
+
+      const customer = customers.data[0];
+
+      // 2. Check for Active Subscriptions
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customer.id,
+        status: 'active',
+        limit: 1
+      });
+
+      // Also check for 'trialing'
+      const trialing = await stripe.subscriptions.list({
+        customer: customer.id,
+        status: 'trialing',
+        limit: 1
+      });
+
+      const hasActiveSub = subscriptions.data.length > 0 || trialing.data.length > 0;
+
+      return new Response(JSON.stringify({ 
+        isPremium: hasActiveSub,
+        customerName: customer.name
+      }), {
+        headers: { 
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*" 
+        }
+      });
+
+    } catch (error: any) {
+      return new Response(JSON.stringify({ error: error.message }), { 
+        status: 500,
+        headers: { 
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*" 
+        }
+      });
+    }
   }
+  
+  return new Response("Method Not Allowed", { status: 405 });
 }
