@@ -1887,7 +1887,7 @@ const CheckoutForm = ({ onClose, dateString }: { onClose: () => void; dateString
     fields: { billingDetails: { phone: "never" } },
   };
 
-  return (
+ return (
     <form
       onClick={(e) => e.stopPropagation()}
       onSubmit={handleSubmit}
@@ -1918,8 +1918,15 @@ const CheckoutForm = ({ onClose, dateString }: { onClose: () => void; dateString
             onChange={(e: any) => setEmail(e.value.email)}
           />
         </div>
+
         <PaymentElement id="payment-element" options={paymentElementOptions} />
       </div>
+
+      {message && (
+        <div className="text-red-300 text-sm mt-4 bg-red-500/10 p-3 rounded-xl border border-red-500/20 font-semibold">
+          {message}
+        </div>
+      )}
 
       <button
         disabled={isLoading || !stripe || !elements}
@@ -1929,7 +1936,7 @@ const CheckoutForm = ({ onClose, dateString }: { onClose: () => void; dateString
         {isLoading ? <Loader2 className="animate-spin" /> : "Start My Healing"}
       </button>
 
-      <div className="flex items-center justify-center gap-2 mt-4 text-white/30 text-[11px] font-semibold">
+       <div className="flex items-center justify-center gap-2 mt-4 text-white/30 text-[11px] font-semibold">
         <p className="text-center text-white/70 text-[12px] font-semibold mt-3 leading-snug px-4 drop-shadow-sm">
           {getStripeSubtext()}
         </p>
