@@ -46,6 +46,11 @@ export const metadata: Metadata = {
     "transverse abdominis",
     "linea alba",
   ],
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/logo.png",
+  },
   alternates: {
     canonical: SITE_URL,
   },
