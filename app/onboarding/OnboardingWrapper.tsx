@@ -69,7 +69,7 @@ function Logo() {
   return (
     <div className="flex flex-col items-center justify-center text-center">
       <img
-        src="/logoo.png"
+        src="/logo.png"
         alt="Fix Diastasis Recti"
         className="w-16 h-16 object-contain drop-shadow mb-3"
         onError={(e) => {
@@ -1823,7 +1823,75 @@ function Step13PlanReveal({ onNext, onBack }: { onNext: () => void; onBack: () =
 }
 
 // --- Step 14: Paywall ---
-// (UNCHANGED per your instruction)
+
+// ADDED: Success Overlay Component
+function SuccessOverlay() {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="absolute inset-0 z-[100] flex items-center justify-center bg-[#1A1A26]/95 backdrop-blur-md rounded-[32px]"
+    >
+      <div className="flex flex-col items-center justify-center text-center p-6">
+        {/* Animated Circle & Check */}
+        <div className="relative w-24 h-24 mb-6">
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.4, type: "spring" }}
+            className="absolute inset-0 bg-[color:var(--pink)]/20 rounded-full"
+          />
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.4, delay: 0.1, type: "spring" }}
+            className="absolute inset-4 bg-[color:var(--pink)] rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(230,84,115,0.6)]"
+          >
+            <svg
+              width="40"
+              height="40"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <motion.path
+                d="M20 6L9 17l-5-5"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 0.5, delay: 0.2, ease: "easeInOut" }}
+              />
+            </svg>
+          </motion.div>
+        </div>
+
+        {/* Text */}
+        <motion.h3
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="text-2xl font-extrabold text-white mb-2"
+          style={{ fontFamily: "var(--font-lora)" }}
+        >
+          Payment Successful
+        </motion.h3>
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="text-white/60 font-medium text-sm"
+        >
+          Welcome to the program.
+          <br />
+          Preparing your dashboard...
+        </motion.p>
+      </div>
+    </motion.div>
+  );
+}
+
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 const REVIEW_IMAGES = ["/review9.png", "/review1.png", "/review5.png", "/review4.png", "/review2.png"];
 const REVIEWS = [
@@ -1843,6 +1911,8 @@ const CheckoutForm = ({ onClose, dateString }: { onClose: () => void; dateString
   const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
+  // ADDED: Payment success state
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1863,13 +1933,18 @@ const CheckoutForm = ({ onClose, dateString }: { onClose: () => void; dateString
     }
 
     if (paymentIntent && paymentIntent.status === "succeeded") {
-      setPremium(true);
-      setJoinDate(new Date().toISOString());
-      const symptoms = useUserData.getState().symptoms || [];
-      if (symptoms.includes("incontinence")) {
-        useUserData.getState().startDrySeal();
-      }
-      router.push(DASHBOARD_PATH);
+      // MODIFIED: Show success overlay, wait, then redirect
+      setPaymentSuccess(true);
+      
+      setTimeout(() => {
+        setPremium(true);
+        setJoinDate(new Date().toISOString());
+        const symptoms = useUserData.getState().symptoms || [];
+        if (symptoms.includes("incontinence")) {
+          useUserData.getState().startDrySeal();
+        }
+        router.push(DASHBOARD_PATH);
+      }, 2500);
       return;
     }
 
@@ -1882,17 +1957,20 @@ const CheckoutForm = ({ onClose, dateString }: { onClose: () => void; dateString
     return `Feel real progress by ${dateString}. If not, one tap full $24.99 refund.`;
   };
 
+  // FIXED: Removed 'fields' property to fix phone number error
   const paymentElementOptions: StripePaymentElementOptions = {
     layout: "tabs",
-    fields: { billingDetails: { phone: "auto" } },
   };
 
- return (
+  return (
     <form
       onClick={(e) => e.stopPropagation()}
       onSubmit={handleSubmit}
-      className="w-full max-w-md bg-[#1A1A26] p-6 rounded-[32px] border border-white/10 shadow-[0_50px_120px_rgba(0,0,0,0.7)] animate-in slide-in-from-bottom-10 fade-in duration-500 relative my-auto mx-4"
+      className="w-full max-w-md bg-[#1A1A26] p-6 rounded-[32px] border border-white/10 shadow-[0_50px_120px_rgba(0,0,0,0.7)] animate-in slide-in-from-bottom-10 fade-in duration-500 relative my-auto mx-4 min-h-[400px]"
     >
+      {/* RENDER SUCCESS OVERLAY IF SUCCESSFUL */}
+      {paymentSuccess && <SuccessOverlay />}
+
       <button
         type="button"
         onClick={onClose}
@@ -1929,7 +2007,7 @@ const CheckoutForm = ({ onClose, dateString }: { onClose: () => void; dateString
       )}
 
       <button
-        disabled={isLoading || !stripe || !elements}
+        disabled={isLoading || !stripe || !elements || paymentSuccess}
         id="submit"
         className="mt-6 w-full h-14 rounded-full bg-gradient-to-r from-[color:var(--pink)] to-[#C23A5B] text-white font-extrabold text-[17px] shadow-[0_10px_40px_rgba(230,84,115,0.4)] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
       >
