@@ -1,13 +1,7 @@
 "use client";
 
-import React, {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useCallback,
-  useId,
-} from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback, useId } from "react";
+import { createPortal } from "react-dom";
 import {
   X,
   AlertTriangle,
@@ -29,7 +23,7 @@ import { useUserStore } from "@/lib/store/useUserStore";
 function BreathingPacer() {
   return (
     <div
-      className="absolute top-[calc(env(safe-area-inset-top)+12px)] left-4 z-20"
+      className="absolute top-[calc(env(safe-area-inset-top)+10px)] left-4 z-20"
       aria-hidden="true"
     >
       <div className="text-white/60 text-[10px] font-extrabold tracking-widest uppercase mb-2">
@@ -53,7 +47,7 @@ function BreathingPacer() {
 function FormGuardToast() {
   return (
     <div
-      className="absolute top-[calc(env(safe-area-inset-top)+12px)] right-4 z-20 max-w-[220px]"
+      className="absolute top-[calc(env(safe-area-inset-top)+10px)] right-4 z-20 max-w-[240px]"
       aria-hidden="true"
     >
       <div className="rounded-2xl border border-white/12 bg-black/45 backdrop-blur-xl px-3 py-2 shadow-soft">
@@ -75,9 +69,7 @@ function getFocusable(root: HTMLElement | null) {
   );
 
   return nodes.filter((el) => {
-    const isDisabled =
-      (el as HTMLButtonElement).disabled ||
-      el.getAttribute("aria-disabled") === "true";
+    const isDisabled = (el as HTMLButtonElement).disabled || el.getAttribute("aria-disabled") === "true";
     const isHidden =
       el.getAttribute("aria-hidden") === "true" ||
       (el as any).hidden ||
@@ -88,6 +80,14 @@ function getFocusable(root: HTMLElement | null) {
 }
 
 type RepeatMode = "off" | "all" | "one";
+
+function formatTime(sec: number) {
+  if (!Number.isFinite(sec) || sec <= 0) return "0:00";
+  const s = Math.floor(sec);
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}:${String(r).padStart(2, "0")}`;
+}
 
 export default function SafetyPlayer({
   initialUrl,
@@ -103,16 +103,17 @@ export default function SafetyPlayer({
   playlist?: VideoItem[];
   dateISO: string;
   onClose: () => void;
-  onStartedAfter5s?: () => void; // internal milestone (hidden from UI)
-  onProgressPct?: (pct: number) => void; // 0..100 for ring/graph animation
+  onStartedAfter5s?: () => void;
+  onProgressPct?: (pct: number) => void;
 }) {
   const dialogId = useId();
   const titleId = `safety-player-title-${dialogId}`;
 
+  const [mounted, setMounted] = useState(false);
+
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
-
   const lastFocusRef = useRef<HTMLElement | null>(null);
 
   const addPainLog = useUserStore((s: any) => s.addPainLog);
@@ -144,6 +145,9 @@ export default function SafetyPlayer({
   const url = currentItem?.url || initialUrl;
   const currentTitle = currentItem?.title || title || "Exercise";
 
+  // mount/portal
+  useEffect(() => setMounted(true), []);
+
   // Keep index synced if initialUrl changes
   useEffect(() => {
     setIndex(initialIndex);
@@ -165,7 +169,7 @@ export default function SafetyPlayer({
     };
   }, []);
 
-  // Focus management
+  // Focus management (mostly for desktop)
   useEffect(() => {
     lastFocusRef.current = document.activeElement as HTMLElement | null;
     closeBtnRef.current?.focus();
@@ -237,9 +241,7 @@ export default function SafetyPlayer({
 
     requestAnimationFrame(() => {
       if (!v) return;
-      v.play()
-        .then(() => setIsPlaying(true))
-        .catch(() => setIsPlaying(false));
+      v.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
     });
   }, [url]);
 
@@ -249,7 +251,6 @@ export default function SafetyPlayer({
     if (!v) return;
 
     const onLoaded = () => setDuration(Number.isFinite(v.duration) ? v.duration : 0);
-
     const onTime = () => {
       const t = v.currentTime || 0;
       setCurrentTime(t);
@@ -348,8 +349,7 @@ export default function SafetyPlayer({
 
   const doSwap = () => {
     const candidates = pool.filter((x) => x.url !== url);
-    const pick =
-      candidates[Math.floor(Math.random() * Math.max(1, candidates.length))] || pool[0];
+    const pick = candidates[Math.floor(Math.random() * Math.max(1, candidates.length))] || pool[0];
 
     try {
       addPainLog?.({
@@ -385,23 +385,18 @@ export default function SafetyPlayer({
     return { index: nextUpIndex, title: item.title || "Next exercise" };
   }, [nextUpIndex, pool]);
 
-  return (
-    <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm sm:flex sm:items-center sm:justify-center sm:p-4">
+  if (!mounted) return null;
+
+  const ui = (
+    <div className="fixed inset-0 z-[99999] bg-black/85 backdrop-blur-sm">
       <div
+        className="w-full h-[100dvh] sm:h-auto sm:max-w-4xl sm:mx-auto sm:my-6 sm:rounded-3xl overflow-hidden border border-white/12 bg-[#0F0F17] shadow-[0_40px_140px_rgba(0,0,0,0.7)] flex flex-col"
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
         onKeyDown={onDialogKeyDown}
-        className={[
-          // ✅ FULL SCREEN on mobile
-          "w-full h-[100dvh] rounded-none",
-          // ✅ Card on desktop
-          "sm:h-auto sm:max-w-md sm:rounded-3xl",
-          "overflow-hidden border border-white/12 bg-[#0F0F17] shadow-[0_40px_140px_rgba(0,0,0,0.7)]",
-          "flex flex-col",
-        ].join(" ")}
       >
         {/* Top bar */}
         <div className="px-4 pb-3 pt-[calc(env(safe-area-inset-top)+12px)] sm:p-4 flex items-center justify-between border-b border-white/10">
@@ -438,7 +433,7 @@ export default function SafetyPlayer({
           </div>
         </div>
 
-        {/* Video (NO controls on top of it) */}
+        {/* Video stage (no progress overlay on top of it) */}
         <div className="relative bg-black flex-1">
           <BreathingPacer />
           <FormGuardToast />
@@ -452,14 +447,24 @@ export default function SafetyPlayer({
           />
         </div>
 
-        {/* Bottom control dock (everything visible, video stays clean) */}
-        <div className="border-t border-white/10 bg-[#0F0F17] px-3 pt-3 pb-[calc(env(safe-area-inset-bottom)+14px)]">
-          {/* Up Next (compact) */}
+        {/* Bottom dock (the “dark” area) */}
+        <div
+          className={[
+            "border-t border-white/10 bg-[#0F0F17]",
+            "px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+14px)]",
+            "sm:p-4",
+          ].join(" ")}
+        >
+          {/* Up next lives in the dock (not over the video) */}
           {nextUp && (
             <button
               type="button"
               onClick={() => setIndex(nextUp.index)}
-              className="w-full rounded-2xl border border-white/12 bg-white/6 backdrop-blur-xl px-3 py-2 text-left active:scale-[0.99] transition-transform"
+              className={[
+                "w-full rounded-2xl border border-white/12 bg-white/6 backdrop-blur-xl",
+                "px-4 py-3 text-left",
+                "active:scale-[0.99] transition-transform",
+              ].join(" ")}
               aria-label={`Up next: ${nextUp.title}. Tap to skip.`}
             >
               <div className="flex items-center justify-between gap-3">
@@ -470,39 +475,50 @@ export default function SafetyPlayer({
                   <div className="mt-1 text-white font-extrabold text-[13px] truncate">
                     {nextUp.title}
                   </div>
+                  <div className="mt-1 text-white/45 text-[11px] font-semibold">
+                    Tap to skip
+                  </div>
                 </div>
-                <div className="shrink-0 w-9 h-9 rounded-2xl border border-white/10 bg-black/20 flex items-center justify-center">
+
+                <div className="shrink-0 w-10 h-10 rounded-2xl border border-white/10 bg-black/20 flex items-center justify-center">
                   <ArrowRight className="text-white/75" size={18} />
                 </div>
               </div>
             </button>
           )}
 
-          {/* Progress bar (in dock, not on video) */}
-          <div
-            className="mt-3 h-[6px] rounded-full bg-white/10 overflow-hidden cursor-pointer"
-            onClick={(e) => {
-              const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-              const pct = (e.clientX - rect.left) / Math.max(1, rect.width);
-              seekToPct(pct);
-            }}
-            role="button"
-            aria-label="Seek"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                seekToPct(progress01);
-              }
-            }}
-          >
+          {/* progress bar (in dock, not on video) */}
+          <div className="mt-3">
+            <div className="flex items-center justify-between text-white/45 text-[11px] font-semibold">
+              <span>{formatTime(currentTime)}</span>
+              <span>{formatTime(duration)}</span>
+            </div>
+
             <div
-              className="h-full bg-[color:var(--pink)] transition-all duration-200"
-              style={{ width: `${progress01 * 100}%` }}
-            />
+              className="mt-2 h-2 rounded-full bg-white/10 overflow-hidden cursor-pointer"
+              onClick={(e) => {
+                const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                const pct = (e.clientX - rect.left) / Math.max(1, rect.width);
+                seekToPct(pct);
+              }}
+              role="button"
+              aria-label="Seek"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  seekToPct(progress01);
+                }
+              }}
+            >
+              <div
+                className="h-full bg-[color:var(--pink)] transition-all duration-200"
+                style={{ width: `${progress01 * 100}%` }}
+              />
+            </div>
           </div>
 
-          {/* Controls row (wraps safely on tiny screens) */}
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+          {/* transport */}
+          <div className="mt-3 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -558,39 +574,29 @@ export default function SafetyPlayer({
               </button>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={cycleRepeat}
-                className="px-3 h-10 rounded-2xl bg-white/8 border border-white/10 text-white/85 flex items-center gap-2"
-                aria-label="Repeat mode"
-                title={
-                  repeatMode === "off"
-                    ? "Repeat off"
-                    : repeatMode === "all"
-                    ? "Repeat all"
-                    : "Repeat one"
-                }
-              >
-                {repeatMode === "one" ? <Repeat1 size={16} /> : <Repeat size={16} />}
-                <span className="text-[11px] font-extrabold tracking-[0.18em] uppercase">
-                  {repeatMode}
-                </span>
-              </button>
-
-              {/* ✅ Always visible pain button (compact so it doesn’t steal video space) */}
-              <button
-                onClick={onPain}
-                type="button"
-                className="px-3 h-10 rounded-2xl border border-red-500/25 bg-red-500/10 text-red-100 font-extrabold inline-flex items-center justify-center gap-2 active:scale-[0.985] transition-transform"
-              >
-                <AlertTriangle size={16} />
-                Pain
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={cycleRepeat}
+              className="px-3 h-10 rounded-2xl bg-white/8 border border-white/10 text-white/85 flex items-center gap-2"
+              aria-label="Repeat mode"
+              title={repeatMode === "off" ? "Repeat off" : repeatMode === "all" ? "Repeat all" : "Repeat one"}
+            >
+              {repeatMode === "one" ? <Repeat1 size={16} /> : <Repeat size={16} />}
+              <span className="text-[11px] font-extrabold tracking-[0.18em] uppercase">{repeatMode}</span>
+            </button>
           </div>
 
-          <div className="mt-2 text-white/45 text-[11px] font-semibold leading-relaxed sm:block hidden">
+          {/* pain button (always visible, inside the dock) */}
+          <button
+            onClick={onPain}
+            type="button"
+            className="mt-3 w-full h-12 rounded-full border border-red-500/25 bg-red-500/10 text-red-100 font-extrabold inline-flex items-center justify-center gap-2 active:scale-[0.985] transition-transform"
+          >
+            <AlertTriangle size={18} />
+            I feel pain / pulling
+          </button>
+
+          <div className="mt-3 text-white/50 text-[11px] font-semibold leading-relaxed">
             If anything feels sharp, painful, or wrong — stop and switch or rest.
           </div>
         </div>
@@ -600,7 +606,7 @@ export default function SafetyPlayer({
       <AnimatePresence>
         {showList && pool.length > 1 && (
           <motion.div
-            className="fixed inset-0 z-[10000] bg-black/70 flex items-end justify-center sm:p-4"
+            className="fixed inset-0 z-[100000] bg-black/70 flex items-end justify-center sm:p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -608,7 +614,10 @@ export default function SafetyPlayer({
           >
             <motion.div
               onClick={(e) => e.stopPropagation()}
-              className="w-full sm:max-w-md rounded-t-3xl border border-white/12 bg-[#0F0F17] p-4 shadow-[0_40px_120px_rgba(0,0,0,0.75)]"
+              className={[
+                "w-full sm:max-w-md rounded-t-3xl border border-white/12 bg-[#0F0F17] p-4",
+                "shadow-[0_40px_120px_rgba(0,0,0,0.75)]",
+              ].join(" ")}
               initial={{ y: 18, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 18, opacity: 0 }}
@@ -663,7 +672,7 @@ export default function SafetyPlayer({
       <AnimatePresence>
         {showPainModal && (
           <motion.div
-            className="fixed inset-0 z-[11000] bg-black/70 flex items-center justify-center p-6"
+            className="fixed inset-0 z-[100001] bg-black/70 flex items-center justify-center p-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -706,4 +715,6 @@ export default function SafetyPlayer({
       </AnimatePresence>
     </div>
   );
+
+  return createPortal(ui, document.body);
 }
