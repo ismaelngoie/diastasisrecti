@@ -178,7 +178,13 @@ function buildGraphPoints(range: GraphRange, dateSet: Set<string>, todayProgress
 
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={["rounded-3xl border border-white/12 bg-white/6 backdrop-blur-xl shadow-soft", className].join(" ")}>
+    <div
+      className={[
+        "rounded-3xl border border-white/12 bg-white/6 backdrop-blur-xl shadow-soft",
+        "min-[960px]:bg-white/[0.07] min-[960px]:border-white/14",
+        className,
+      ].join(" ")}
+    >
       {children}
     </div>
   );
@@ -245,9 +251,7 @@ function HabitMiniDiagram({ habit }: { habit: HabitCard }) {
         })}
       </div>
 
-      <div className="mt-3 text-white/45 text-[11px] font-semibold leading-relaxed">
-        Keep it calm. Low pressure = faster healing.
-      </div>
+      <div className="mt-3 text-white/45 text-[11px] font-semibold leading-relaxed">Keep it calm. Low pressure = faster healing.</div>
     </div>
   );
 }
@@ -558,10 +562,6 @@ function HabitLearnSheet({
                   Close
                 </button>
               </div>
-
-              <div className="mt-3 text-white/40 text-[11px] font-semibold leading-relaxed">
-                Low pressure today = faster healing tomorrow.
-              </div>
             </div>
           </motion.div>
         </motion.div>
@@ -820,7 +820,7 @@ export default function DashboardTodayPage() {
   const topLabel = isDoneToday ? "Today is done ✅" : ringPct > 0 ? "Nice — keep going" : "Tap to start";
 
   return (
-    <main className="w-full max-w-2xl lg:max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-6 lg:py-10">
+    <main className="w-full max-w-2xl min-[960px]:max-w-6xl mx-auto px-4 sm:px-6 min-[960px]:px-10 py-6 min-[960px]:py-10">
       <div className="absolute inset-0 -z-10 bg-[color:var(--navy)]" />
       <div className="absolute inset-0 -z-10 pointer-events-none opacity-[0.22] blur-[0.6px]">
         <ButterflyBackground />
@@ -833,21 +833,19 @@ export default function DashboardTodayPage() {
         <div className="min-w-0">
           <div className="text-white/45 text-[10px] font-extrabold tracking-[0.22em] uppercase">Today • {headerDate}</div>
 
-          <h1 className="mt-2 text-white text-[24px] sm:text-[26px] lg:text-[32px] leading-[1.1] font-extrabold">
+          <h1 className="mt-2 text-white text-[24px] sm:text-[26px] min-[960px]:text-[32px] leading-[1.1] font-extrabold">
             Day {p.dayNumber}: <span className="text-white/90">{phaseNameDisplay}</span>
           </h1>
 
           {!hasVideos && (
-            <div className="mt-2 text-white/60 text-[12px] font-semibold leading-relaxed">
-              Today’s routine videos aren’t available yet. Please refresh.
-            </div>
+            <div className="mt-2 text-white/60 text-[12px] font-semibold leading-relaxed">Today’s routine videos aren’t available yet. Please refresh.</div>
           )}
         </div>
 
         {/* ✅ Desktop: premium "dashboard grid" without changing mobile order */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          <div className="lg:col-span-7">
-            <Card className="p-5 lg:p-6">
+        <div className="grid grid-cols-1 min-[960px]:grid-cols-12 gap-5">
+          <div className="min-[960px]:col-span-7">
+            <Card className="p-5 min-[960px]:p-6">
               <ProgressRing
                 pct={ringPct}
                 labelTop={topLabel}
@@ -865,7 +863,12 @@ export default function DashboardTodayPage() {
                 }
                 center={
                   hasVideos ? (
-                    <LoopPreviewBubble src={videos[0].url} onClick={() => requestStart(videos[0].url)} size="ring" ariaLabel="Play today’s routine" />
+                    <LoopPreviewBubble
+                      src={videos[0].url}
+                      onClick={() => requestStart(videos[0].url)}
+                      size="ring"
+                      ariaLabel="Play today’s routine"
+                    />
                   ) : undefined
                 }
               />
@@ -881,9 +884,7 @@ export default function DashboardTodayPage() {
                   >
                     <div className="mt-4 text-white/70 text-[13px] font-semibold leading-relaxed">
                       {whyDisplay}
-                      <div className="mt-2 text-white/45 text-[11px] font-semibold">
-                        If anything feels painful or wrong, stop and switch or rest.
-                      </div>
+                      <div className="mt-2 text-white/45 text-[11px] font-semibold">If anything feels painful or wrong, stop and switch or rest.</div>
                     </div>
                   </motion.div>
                 )}
@@ -891,15 +892,15 @@ export default function DashboardTodayPage() {
             </Card>
           </div>
 
-          <div className="lg:col-span-5 flex flex-col gap-5">
+          <div className="min-[960px]:col-span-5 flex flex-col gap-5">
             <StreakCard current={streak.current} best={streak.best} total={streak.total} />
             <ProgressGraph range={range} title={graph.title} points={graph.points} onRangeChange={setRange} />
           </div>
         </div>
 
         {/* ✅ Desktop: 2-column content area (mobile stays stacked) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          <Card className="p-5 lg:p-6">
+        <div className="grid grid-cols-1 min-[960px]:grid-cols-2 gap-5">
+          <Card className="p-5 min-[960px]:p-6">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="text-white font-extrabold text-[16px]">Today’s Moves</div>
@@ -941,15 +942,13 @@ export default function DashboardTodayPage() {
           </Card>
 
           {/* ✅ PREMIUM Daily Habits */}
-          <Card className="p-5 lg:p-6 relative overflow-hidden">
+          <Card className="p-5 min-[960px]:p-6 relative overflow-hidden">
             <HabitConfetti show={showHabitCelebrate} pieces={celebratePieces} />
 
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="text-white font-extrabold text-[16px]">Daily Habits</div>
-                <div className="text-white/55 text-[12px] font-semibold mt-1">
-                  Protect your healing between workouts — low pressure all day.
-                </div>
+                <div className="text-white/55 text-[12px] font-semibold mt-1">Protect your healing between workouts — low pressure all day.</div>
               </div>
 
               <div className="shrink-0 text-right">
@@ -978,9 +977,7 @@ export default function DashboardTodayPage() {
                     </div>
                     <div className="min-w-0">
                       <div className="text-white font-extrabold text-[13px]">You protected your healing today ✅</div>
-                      <div className="mt-1 text-white/70 text-[12px] font-semibold leading-snug">
-                        Come back tomorrow — Day {p.dayNumber + 1} gets easier.
-                      </div>
+                      <div className="mt-1 text-white/70 text-[12px] font-semibold leading-snug">Come back tomorrow — Day {p.dayNumber + 1} gets easier.</div>
                     </div>
                   </div>
                 </motion.div>
@@ -1089,9 +1086,7 @@ export default function DashboardTodayPage() {
                             <div className={["mt-1 text-[11px] font-semibold leading-snug", done ? "text-white/45" : "text-white/55"].join(" ")}>
                               {h.oneLiner}
                             </div>
-                            <div className="mt-1 text-white/35 text-[10px] font-extrabold tracking-[0.18em] uppercase">
-                              {done ? "Done" : "Tap to mark done"}
-                            </div>
+                            <div className="mt-1 text-white/35 text-[10px] font-extrabold tracking-[0.18em] uppercase">{done ? "Done" : "Tap to mark done"}</div>
                           </div>
 
                           <button
@@ -1115,9 +1110,7 @@ export default function DashboardTodayPage() {
                     })}
                   </div>
 
-                  <div className="mt-3 text-white/45 text-[11px] font-semibold leading-relaxed">
-                    Small habits, big results: protect your midline all day.
-                  </div>
+                  <div className="mt-3 text-white/45 text-[11px] font-semibold leading-relaxed">Small habits, big results: protect your midline all day.</div>
                 </motion.div>
               )}
             </AnimatePresence>
