@@ -1,9 +1,22 @@
 "use client";
 
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, CheckCircle2 } from "lucide-react";
+import {
+  ChevronDown,
+  CheckCircle2,
+  Info,
+  X,
+  Sparkles,
+  Wind,
+  BedDouble,
+  RotateCw,
+  Timer,
+  Shield,
+  ArrowRight,
+  ArrowUpRight,
+} from "lucide-react";
 
 import { useUserStore } from "@/lib/store/useUserStore";
 import { getTodaysPrescription } from "@/lib/protocolEngine";
@@ -88,13 +101,8 @@ function computeStreakInfo(dateSet: Set<string>, todayISO: string) {
   return { current, best, total: dateSet.size };
 }
 
-// ✅ UPDATED: your exact requested logic (forces today to 100% if streak/completions say done)
-function buildGraphPoints(
-  range: GraphRange,
-  dateSet: Set<string>,
-  todayProgress01: number,
-  todayISO: string
-) {
+// ✅ UPDATED: forces today to 100% if streak/completions say done
+function buildGraphPoints(range: GraphRange, dateSet: Set<string>, todayProgress01: number, todayISO: string) {
   const today = todayISO || localDateISO(new Date());
 
   // ✅ If streak/completions say today is done, force progress to 100%
@@ -107,11 +115,7 @@ function buildGraphPoints(
       const d = new Date(`${iso}T00:00:00`);
       const label = d.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 2);
 
-      const done = dateSet.has(iso)
-        ? 1
-        : iso === today
-        ? forcedTodayProgress01
-        : 0;
+      const done = dateSet.has(iso) ? 1 : iso === today ? forcedTodayProgress01 : 0;
 
       pts.push({ label, value: done, raw: Math.round(done * 100), isToday: iso === today });
     }
@@ -180,37 +184,421 @@ function Card({ children, className = "" }: { children: React.ReactNode; classNa
   );
 }
 
+/* -------------------------
+   ✅ PREMIUM DAILY HABITS
+-------------------------- */
+
+type HabitCard = {
+  id: "log_roll" | "exhale_before_lift";
+  title: string;
+  oneLiner: string;
+  why: string;
+  how: string;
+  mistake: string;
+};
+
+type HabitLearnTab = "why" | "how" | "mistake";
+
+function HabitMiniDiagram({ habit }: { habit: HabitCard }) {
+  const frames =
+    habit.id === "log_roll"
+      ? [
+          { icon: RotateCw, title: "Roll", sub: "To your side" },
+          { icon: BedDouble, title: "Legs off", sub: "Feet down" },
+          { icon: ArrowUpRight, title: "Push up", sub: "Using arms" },
+        ]
+      : [
+          { icon: Wind, title: "Exhale", sub: "Before lift" },
+          { icon: Shield, title: "Ribs down", sub: "No doming" },
+          { icon: ArrowUpRight, title: "Lift", sub: "Smooth effort" },
+        ];
+
+  return (
+    <div className="mt-4 rounded-3xl border border-white/10 bg-black/20 p-4 overflow-hidden">
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-white/85 font-extrabold text-[12px] tracking-[0.18em] uppercase">How it looks</div>
+        <div className="text-white/45 text-[11px] font-semibold">3 steps</div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        {frames.map((f, idx) => {
+          const Icon = f.icon;
+          return (
+            <motion.div
+              key={idx}
+              className="rounded-2xl border border-white/10 bg-white/5 p-3"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.22, ease: "easeOut", delay: 0.03 * idx }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="w-9 h-9 rounded-2xl border border-white/10 bg-black/25 flex items-center justify-center">
+                  <Icon size={18} className="text-[color:var(--pink)]" />
+                </div>
+                {idx < 2 && <ArrowRight size={16} className="text-white/25" />}
+              </div>
+
+              <div className="mt-3 text-white font-extrabold text-[12px] leading-snug">{f.title}</div>
+              <div className="mt-0.5 text-white/55 text-[11px] font-semibold leading-snug">{f.sub}</div>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      <div className="mt-3 text-white/45 text-[11px] font-semibold leading-relaxed">
+        Keep it calm. Low pressure = faster healing.
+      </div>
+    </div>
+  );
+}
+
+function FitnessSegmented({ value, onChange }: { value: HabitLearnTab; onChange: (v: HabitLearnTab) => void }) {
+  const items: { id: HabitLearnTab; label: string }[] = [
+    { id: "why", label: "Why" },
+    { id: "how", label: "10s" },
+    { id: "mistake", label: "Avoid" },
+  ];
+
+  return (
+    <div className="mt-4 rounded-full border border-white/10 bg-white/6 p-1 flex items-center gap-1">
+      {items.map((it) => (
+        <button
+          key={it.id}
+          type="button"
+          onClick={() => onChange(it.id)}
+          className={[
+            "relative flex-1 h-9 rounded-full font-extrabold text-[12px]",
+            "transition-colors",
+            value === it.id ? "text-white" : "text-white/55 hover:text-white/75",
+          ].join(" ")}
+        >
+          {value === it.id && (
+            <motion.div
+              layoutId="seg"
+              className="absolute inset-0 rounded-full bg-black/35 border border-white/10"
+              transition={{ duration: 0.22, ease: "easeOut" }}
+            />
+          )}
+          <span className="relative z-[2]">{it.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function HabitLearnSheet({
+  open,
+  onClose,
+  habit,
+  isDone,
+  onToggleDone,
+}: {
+  open: boolean;
+  onClose: () => void;
+  habit: HabitCard | null;
+  isDone: boolean;
+  onToggleDone: () => void;
+}) {
+  const [tab, setTab] = useState<HabitLearnTab>("why");
+
+  // tiny “practice” timer for the HOW tab
+  const [secondsLeft, setSecondsLeft] = useState<number>(0);
+  const timerRunning = secondsLeft > 0;
+
+  useEffect(() => {
+    if (!open) return;
+    setTab("why");
+    setSecondsLeft(0);
+  }, [open, habit?.id]);
+
+  useEffect(() => {
+    if (!timerRunning) return;
+    const id = window.setInterval(() => {
+      setSecondsLeft((s) => Math.max(0, s - 1));
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [timerRunning]);
+
+  // prevent background scroll while open (premium feel)
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  const headerIcon = habit?.id === "log_roll" ? BedDouble : Wind;
+  const Icon = headerIcon;
+
+  const cues = habit?.id === "log_roll" ? ["No sit-up", "Slow + controlled", "Arms help"] : ["Exhale first", "Ribs down", "No doming"];
+
+  return (
+    <AnimatePresence>
+      {open && habit && (
+        <motion.div
+          className="fixed inset-0 z-[170] bg-black/60 backdrop-blur-[2px] flex items-end justify-center sm:items-center sm:p-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          aria-hidden={!open}
+        >
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${habit.title} coaching`}
+            onClick={(e) => e.stopPropagation()}
+            className={[
+              "w-full sm:max-w-md",
+              "rounded-t-3xl sm:rounded-3xl",
+              "border border-white/12 bg-[#0F0F17]",
+              "shadow-[0_40px_140px_rgba(0,0,0,0.80)]",
+              "pb-[calc(env(safe-area-inset-bottom)+18px)]",
+            ].join(" ")}
+            initial={{ y: 28, opacity: 0, scale: 0.99 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: 28, opacity: 0, scale: 0.99 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            drag="y"
+            dragElastic={0.12}
+            dragConstraints={{ top: 0, bottom: 0 }}
+            onDragEnd={(_, info) => {
+              if (info.offset.y > 120) onClose();
+            }}
+          >
+            {/* Grab handle */}
+            <div className="pt-3 flex justify-center">
+              <div className="h-1.5 w-12 rounded-full bg-white/15" />
+            </div>
+
+            <div className="px-5 sm:px-6 pt-4">
+              {/* subtle hero glow */}
+              <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-b from-white/10 to-black/10 p-4">
+                <div className="absolute inset-0 pointer-events-none opacity-60">
+                  <div className="absolute -top-24 -left-24 w-64 h-64 rounded-full bg-[color:var(--pink)]/10 blur-3xl" />
+                  <div className="absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-white/8 blur-3xl" />
+                </div>
+
+                <div className="relative flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="w-12 h-12 rounded-3xl border border-white/10 bg-black/20 flex items-center justify-center shrink-0">
+                      <Icon size={20} className="text-[color:var(--pink)]" />
+                    </div>
+
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <div className="text-white font-extrabold text-[16px] truncate">{habit.title}</div>
+                        {isDone && (
+                          <span className="shrink-0 text-[10px] font-extrabold tracking-[0.18em] uppercase text-[color:var(--pink)]/90">
+                            Done
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-white/60 text-[12px] font-semibold mt-1 leading-snug">{habit.oneLiner}</div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="w-10 h-10 rounded-full bg-white/6 hover:bg-white/10 border border-white/10 flex items-center justify-center shrink-0"
+                    aria-label="Close"
+                  >
+                    <X size={18} className="text-white/85" />
+                  </button>
+                </div>
+
+                {/* Cue chips */}
+                <div className="relative mt-3 flex flex-wrap gap-2">
+                  {cues.map((c) => (
+                    <span
+                      key={c}
+                      className="px-3 h-8 rounded-full border border-white/10 bg-black/20 text-white/70 text-[11px] font-extrabold inline-flex items-center"
+                    >
+                      {c}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Mini diagram */}
+              <HabitMiniDiagram habit={habit} />
+
+              {/* Segmented tabs */}
+              <FitnessSegmented value={tab} onChange={setTab} />
+
+              {/* Content */}
+              <div className="mt-4">
+                <AnimatePresence mode="wait" initial={false}>
+                  {tab === "why" && (
+                    <motion.div
+                      key="why"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      transition={{ duration: 0.18, ease: "easeOut" }}
+                      className="rounded-3xl border border-white/10 bg-black/20 p-4"
+                    >
+                      <div className="text-white/85 font-extrabold text-[12px] tracking-[0.18em] uppercase">Why this matters</div>
+                      <div className="mt-2 text-white/70 text-[13px] font-semibold leading-relaxed">{habit.why}</div>
+
+                      <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 p-3">
+                        <div className="text-white font-extrabold text-[12px]">Coach cue</div>
+                        <div className="mt-1 text-white/65 text-[12px] font-semibold leading-relaxed">
+                          If you see <span className="text-white font-extrabold">doming</span>, slow down and breathe out. Healing loves low pressure.
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {tab === "how" && (
+                    <motion.div
+                      key="how"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      transition={{ duration: 0.18, ease: "easeOut" }}
+                      className="rounded-3xl border border-white/10 bg-black/20 p-4"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-white/85 font-extrabold text-[12px] tracking-[0.18em] uppercase">Do it in 10 seconds</div>
+                        <div className="text-white/45 text-[11px] font-semibold inline-flex items-center gap-2">
+                          <Timer size={14} className="text-white/35" />
+                          {timerRunning ? `${secondsLeft}s` : "10s practice"}
+                        </div>
+                      </div>
+
+                      <div className="mt-2 text-white/70 text-[13px] font-semibold leading-relaxed">{habit.how}</div>
+
+                      <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 p-3">
+                        <div className="text-white font-extrabold text-[12px]">Try it now</div>
+                        <div className="mt-1 text-white/65 text-[12px] font-semibold leading-relaxed">
+                          Hit start, do the habit once, then mark it done. This is how you build a healing day.
+                        </div>
+
+                        <div className="mt-3 flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setSecondsLeft(10)}
+                            className={[
+                              "flex-1 h-11 rounded-full border border-white/10",
+                              "bg-[color:var(--pink)] text-white font-extrabold",
+                              "active:scale-[0.985] transition-transform",
+                            ].join(" ")}
+                          >
+                            Start 10s
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setSecondsLeft(0)}
+                            className="h-11 px-4 rounded-full border border-white/10 bg-white/6 text-white/80 font-extrabold"
+                          >
+                            Reset
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {tab === "mistake" && (
+                    <motion.div
+                      key="mistake"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      transition={{ duration: 0.18, ease: "easeOut" }}
+                      className="rounded-3xl border border-white/10 bg-black/20 p-4"
+                    >
+                      <div className="text-white/85 font-extrabold text-[12px] tracking-[0.18em] uppercase">Common mistake</div>
+                      <div className="mt-2 text-white/70 text-[13px] font-semibold leading-relaxed">{habit.mistake}</div>
+
+                      <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 p-3">
+                        <div className="text-white font-extrabold text-[12px]">Fix it fast</div>
+                        <div className="mt-1 text-white/65 text-[12px] font-semibold leading-relaxed">
+                          If it happens, no guilt. Just correct your next rep. Consistency beats perfection.
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Bottom actions */}
+              <div className="mt-4 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={onToggleDone}
+                  className={[
+                    "flex-1 h-12 rounded-full border border-white/10",
+                    isDone
+                      ? "bg-white/6 text-white/80"
+                      : "bg-[color:var(--pink)] text-white shadow-[0_18px_60px_rgba(230,84,115,0.25)]",
+                    "font-extrabold active:scale-[0.985] transition-transform",
+                  ].join(" ")}
+                >
+                  {isDone ? "Marked ✅" : "Mark as done"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="h-12 px-5 rounded-full bg-white/6 text-white/80 font-extrabold border border-white/10"
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="mt-3 text-white/40 text-[11px] font-semibold leading-relaxed">
+                Low pressure today = faster healing tomorrow.
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+type ConfettiPiece = { id: string; x: number; y: number; r: number; s: number; d: number; variant: 0 | 1 | 2 };
+
+function HabitConfetti({ show, pieces }: { show: boolean; pieces: ConfettiPiece[] }) {
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.div className="pointer-events-none absolute inset-0 z-[5]" initial={{ opacity: 1 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          {pieces.map((p) => (
+            <motion.span
+              key={p.id}
+              className={[
+                "absolute left-1/2 top-[40%]",
+                p.variant === 0 ? "w-2.5 h-2.5 rounded-sm bg-[color:var(--pink)]/85" : "",
+                p.variant === 1 ? "w-2 h-2 rounded-full bg-white/80" : "",
+                p.variant === 2 ? "w-3 h-1.5 rounded-sm bg-[color:var(--pink)]/45 border border-white/15" : "",
+              ].join(" ")}
+              initial={{ x: 0, y: 0, rotate: 0, opacity: 0, scale: 0.9 }}
+              animate={{ x: p.x, y: p.y, rotate: p.r, opacity: [0, 1, 0], scale: p.s }}
+              transition={{ duration: p.d / 1000, ease: "easeOut" }}
+            />
+          ))}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/* -------------------------
+   ✅ PAGE
+-------------------------- */
+
 export default function DashboardTodayPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const autoplayParam = searchParams.get("autoplay");
   const searchParamsString = searchParams.toString();
-
-  // --- 1. THE "PELVI" METHOD: Reliable Conversion + URL Cleanup ---
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("plan") === "monthly") {
-        // @ts-ignore
-        if (window.gtag) {
-          // @ts-ignore
-          window.gtag("event", "conversion", {
-            send_to: "AW-17911323675",
-            value: 24.99,
-            currency: "USD",
-            transaction_id: Date.now(),
-          });
-          console.log("✅ Google Ads Conversion Fired");
-        }
-
-        setTimeout(() => {
-          const cleanUrl = window.location.pathname;
-          window.history.replaceState(null, "", cleanUrl);
-        }, 15000);
-      }
-    }
-  }, []);
 
   const user = useUserStore();
   const p = useMemo(() => getTodaysPrescription(user), [user]);
@@ -250,6 +638,7 @@ export default function DashboardTodayPage() {
 
   const isDoneToday = useMemo(() => dateSet.has(p.dateISO), [dateSet, p.dateISO]);
 
+  // live fill while watching (never decreases)
   const [watchPct, setWatchPct] = useState<number>(isDoneToday ? 100 : 0);
   useEffect(() => setWatchPct(isDoneToday ? 100 : 0), [isDoneToday]);
 
@@ -262,28 +651,108 @@ export default function DashboardTodayPage() {
 
   const streak = useMemo(() => computeStreakInfo(dateSet, p.dateISO), [dateSet, p.dateISO]);
 
-  const graph = useMemo(
-    () => buildGraphPoints(range, dateSet, isDoneToday ? 1 : ringPct / 100, p.dateISO),
-    [range, dateSet, ringPct, isDoneToday, p.dateISO]
-  );
+  const graph = useMemo(() => buildGraphPoints(range, dateSet, isDoneToday ? 1 : ringPct / 100, p.dateISO), [
+    range,
+    dateSet,
+    ringPct,
+    isDoneToday,
+    p.dateISO,
+  ]);
 
-  const habitItems = useMemo(
+  // -------------------------
+  // ✅ PREMIUM DAILY HABITS
+  // -------------------------
+  const habitItems = useMemo<HabitCard[]>(
     () => [
-      { id: "log_roll" as const, text: "Log roll out of bed (avoid a straight sit-up)." },
-      { id: "exhale_before_lift" as const, text: "Exhale before lifting (car seat, groceries, laundry)." },
+      {
+        id: "log_roll",
+        title: "Log roll out of bed",
+        oneLiner: "Protect your gap: no sit-up pressure getting up.",
+        why: "Sit-ups spike pressure straight into your midline. Log rolling keeps pressure low so your tissue can heal.",
+        how: "Roll to your side → drop your legs off the bed → push up with your arms. Slow and controlled.",
+        mistake: "Trying to “quick sit-up” when you’re tired. Even once a day adds unnecessary pressure.",
+      },
+      {
+        id: "exhale_before_lift",
+        title: "Exhale before every lift",
+        oneLiner: "Pressure spikes slow healing — breathe it out first.",
+        why: "Holding your breath turns your belly into a pressure balloon. Exhaling first protects your midline and stops doming.",
+        how: "Before you lift: gentle exhale → ribs down → then lift. Keep it calm, not forced.",
+        mistake: "Inhaling + bracing hard before the lift. That’s the fastest way to trigger doming.",
+      },
     ],
     []
   );
 
   const dayHabits = habits[p.dateISO] || {};
-  const habitsDoneCount = useMemo(
-    () => habitItems.reduce((acc, h) => acc + (dayHabits[h.id] ? 1 : 0), 0),
-    [dayHabits, habitItems]
-  );
-  const habitsPct = useMemo(
-    () => Math.round((habitsDoneCount / (habitItems.length || 1)) * 100),
-    [habitsDoneCount, habitItems.length]
-  );
+  const habitsDoneCount = useMemo(() => habitItems.reduce((acc, h) => acc + (dayHabits[h.id] ? 1 : 0), 0), [dayHabits, habitItems]);
+  const habitsPct = useMemo(() => Math.round((habitsDoneCount / (habitItems.length || 1)) * 100), [habitsDoneCount, habitItems.length]);
+  const allHabitsDone = habitItems.length > 0 && habitsDoneCount >= habitItems.length;
+
+  const [habitsExpanded, setHabitsExpanded] = useState(true);
+  const [learnHabit, setLearnHabit] = useState<HabitCard | null>(null);
+
+  const [showHabitCelebrate, setShowHabitCelebrate] = useState(false);
+  const [celebratePieces, setCelebratePieces] = useState<ConfettiPiece[]>([]);
+  const [showHabitToast, setShowHabitToast] = useState(false);
+
+  const hasCelebratedForDayRef = useRef(false);
+  const prevAllDoneRef = useRef(false);
+
+  // reset on day change
+  useEffect(() => {
+    hasCelebratedForDayRef.current = false;
+    prevAllDoneRef.current = false;
+    setShowHabitCelebrate(false);
+    setShowHabitToast(false);
+    setHabitsExpanded(true);
+    setLearnHabit(null);
+  }, [p.dateISO]);
+
+  // if not done, keep expanded (so it doesn't hide unfinished tasks)
+  useEffect(() => {
+    if (!allHabitsDone) setHabitsExpanded(true);
+  }, [allHabitsDone]);
+
+  const randInt = (min: number, max: number) => Math.floor(min + Math.random() * (max - min + 1));
+
+  // Celebration on transition to 100%
+  useEffect(() => {
+    if (!allHabitsDone) {
+      prevAllDoneRef.current = false;
+      return;
+    }
+    if (prevAllDoneRef.current) return;
+    prevAllDoneRef.current = true;
+
+    if (hasCelebratedForDayRef.current) return;
+    hasCelebratedForDayRef.current = true;
+
+    const pieces: ConfettiPiece[] = Array.from({ length: 14 }).map((_, i) => ({
+      id: `${Date.now()}-${i}`,
+      x: randInt(-140, 140),
+      y: randInt(-220, -120),
+      r: randInt(-220, 220),
+      s: randInt(90, 115) / 100,
+      d: randInt(520, 900),
+      variant: (i % 3) as 0 | 1 | 2,
+    }));
+
+    setCelebratePieces(pieces);
+    setShowHabitCelebrate(true);
+    setShowHabitToast(true);
+
+    // collapse for that "clean dashboard" feel
+    setHabitsExpanded(false);
+
+    const t1 = window.setTimeout(() => setShowHabitCelebrate(false), 950);
+    const t2 = window.setTimeout(() => setShowHabitToast(false), 3400);
+
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
+  }, [allHabitsDone]);
 
   // Plan tab -> Today click opens start modal
   useEffect(() => {
@@ -354,9 +823,7 @@ export default function DashboardTodayPage() {
         <DashboardHeader userName={userName} userGoal={userGoal} />
 
         <div className="min-w-0">
-          <div className="text-white/45 text-[10px] font-extrabold tracking-[0.22em] uppercase">
-            Today • {headerDate}
-          </div>
+          <div className="text-white/45 text-[10px] font-extrabold tracking-[0.22em] uppercase">Today • {headerDate}</div>
 
           <h1 className="mt-2 text-white text-[24px] sm:text-[26px] leading-[1.1] font-extrabold">
             Day {p.dayNumber}: <span className="text-white/90">{phaseNameDisplay}</span>
@@ -373,7 +840,6 @@ export default function DashboardTodayPage() {
           <ProgressRing
             pct={ringPct}
             labelTop={topLabel}
-            // ✅ shorter copy so it fits all screens
             labelBottom="Tap the preview to play — progress updates automatically."
             labelTopRight={
               <button
@@ -388,28 +854,10 @@ export default function DashboardTodayPage() {
             }
             center={
               hasVideos ? (
-                <LoopPreviewBubble
-                  src={videos[0].url}
-                  onClick={() => requestStart(videos[0].url)}
-                  size="ring"
-                  ariaLabel="Play today’s routine"
-                />
+                <LoopPreviewBubble src={videos[0].url} onClick={() => requestStart(videos[0].url)} size="ring" ariaLabel="Play today’s routine" />
               ) : undefined
             }
           />
-
-          {/* kept your old Why button code (hidden so nothing is removed) */}
-          <div className="mt-4 flex justify-end hidden">
-            <button
-              type="button"
-              onClick={() => setShowWhy((v) => !v)}
-              className="h-12 px-4 rounded-full border border-white/10 bg-white/8 text-white font-extrabold inline-flex items-center gap-2"
-              aria-expanded={showWhy}
-            >
-              Why
-              <ChevronDown className={["transition-transform", showWhy ? "rotate-180" : ""].join(" ")} size={18} />
-            </button>
-          </div>
 
           <AnimatePresence initial={false}>
             {showWhy && (
@@ -439,9 +887,7 @@ export default function DashboardTodayPage() {
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="text-white font-extrabold text-[16px]">Today’s Moves</div>
-              <div className="text-white/55 text-[12px] font-semibold mt-1">
-                Your player will run these one after another.
-              </div>
+              <div className="text-white/55 text-[12px] font-semibold mt-1">Your player will run these one after another.</div>
             </div>
           </div>
 
@@ -471,21 +917,22 @@ export default function DashboardTodayPage() {
                     </div>
                   </div>
 
-                  <div className="shrink-0 text-white/45 text-[11px] font-extrabold tracking-[0.16em] uppercase">
-                    Tap
-                  </div>
+                  <div className="shrink-0 text-white/45 text-[11px] font-extrabold tracking-[0.16em] uppercase">Tap</div>
                 </button>
               );
             })}
           </div>
         </Card>
 
-        <Card className="p-5">
+        {/* ✅ PREMIUM Daily Habits */}
+        <Card className="p-5 relative overflow-hidden">
+          <HabitConfetti show={showHabitCelebrate} pieces={celebratePieces} />
+
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="text-white font-extrabold text-[16px]">Daily Habits</div>
               <div className="text-white/55 text-[12px] font-semibold mt-1">
-                Small rules that protect your midline while it adapts.
+                Protect your healing between workouts — low pressure all day.
               </div>
             </div>
 
@@ -499,55 +946,169 @@ export default function DashboardTodayPage() {
             <div className="h-full bg-[color:var(--pink)] transition-all duration-300" style={{ width: `${habitsPct}%` }} />
           </div>
 
-          <div className="mt-4 flex flex-col gap-2">
-            {habitItems.map((h) => {
-              const done = !!dayHabits[h.id];
-              return (
-                <label
-                  key={h.id}
-                  className="group flex items-start gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    checked={done}
-                    onChange={(e) => setHabitDone?.(p.dateISO, h.id, e.target.checked)}
-                    className="sr-only"
-                    aria-label={h.text}
-                  />
+          {/* ✅ Premium celebration toast */}
+          <AnimatePresence>
+            {showHabitToast && (
+              <motion.div
+                initial={{ opacity: 0, y: 6, scale: 0.99 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 6, scale: 0.99 }}
+                transition={{ duration: 0.22, ease: "easeOut" }}
+                className="mt-4 rounded-2xl border border-[color:var(--pink)]/20 bg-[color:var(--pink)]/10 px-4 py-3"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="mt-[2px] w-9 h-9 rounded-2xl border border-white/10 bg-white/8 flex items-center justify-center shrink-0">
+                    <Sparkles size={18} className="text-[color:var(--pink)]" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-white font-extrabold text-[13px]">You protected your healing today ✅</div>
+                    <div className="mt-1 text-white/70 text-[12px] font-semibold leading-snug">
+                      Come back tomorrow — Day {p.dayNumber + 1} gets easier.
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-                  <div
-                    className={[
-                      "mt-0.5 w-6 h-6 rounded-full border flex items-center justify-center shrink-0",
-                      done ? "border-[color:var(--pink)]/40 bg-[color:var(--pink)]/15" : "border-white/15 bg-white/5",
-                    ].join(" ")}
+          {/* ✅ Collapse when completed */}
+          <div className="mt-4">
+            {allHabitsDone && !habitsExpanded ? (
+              <button
+                type="button"
+                onClick={() => setHabitsExpanded(true)}
+                className={[
+                  "w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-4",
+                  "flex items-center justify-between gap-3",
+                  "active:scale-[0.99] transition-transform",
+                ].join(" ")}
+                aria-label="Daily habits completed. Tap to review."
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-2xl border border-[color:var(--pink)]/30 bg-[color:var(--pink)]/12 flex items-center justify-center shrink-0">
+                    <CheckCircle2 size={18} className="text-[color:var(--pink)]" />
+                  </div>
+                  <div className="min-w-0 text-left">
+                    <div className="text-white font-extrabold text-[13px] truncate">Completed ✅</div>
+                    <div className="text-white/55 text-[11px] font-semibold truncate">Tap to review your protection habits</div>
+                  </div>
+                </div>
+                <div className="shrink-0 text-white/60 text-[11px] font-extrabold tracking-[0.16em] uppercase">Review</div>
+              </button>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div className="text-white/45 text-[10px] font-extrabold tracking-[0.22em] uppercase">Today’s protection</div>
+                {allHabitsDone && (
+                  <button
+                    type="button"
+                    onClick={() => setHabitsExpanded(false)}
+                    className="h-8 px-3 rounded-full border border-white/10 bg-white/6 text-white/75 font-extrabold text-[11px]"
                   >
-                    {done ? (
-                      <CheckCircle2 size={16} className="text-[color:var(--pink)]" />
-                    ) : (
-                      <div className="w-2 h-2 rounded-full bg-white/20" />
-                    )}
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <div
-                      className={[
-                        "text-[13px] font-semibold leading-relaxed break-words",
-                        done ? "text-white/85" : "text-white/75",
-                      ].join(" ")}
-                    >
-                      {h.text}
-                    </div>
-                    <div className="mt-1 text-white/35 text-[11px] font-semibold">
-                      {done ? "Done" : "Tap to mark as done"}
-                    </div>
-                  </div>
-                </label>
-              );
-            })}
+                    Hide
+                  </button>
+                )}
+              </div>
+            )}
           </div>
+
+          {/* Habit list */}
+          <AnimatePresence initial={false}>
+            {(!allHabitsDone || habitsExpanded) && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.22, ease: "easeOut" }}
+                className="overflow-hidden"
+              >
+                <div className="mt-3 flex flex-col gap-2">
+                  {habitItems.map((h) => {
+                    const done = !!dayHabits[h.id];
+
+                    const toggle = () => {
+                      setHabitDone?.(p.dateISO, h.id, !done);
+                    };
+
+                    return (
+                      <motion.div
+                        key={h.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={toggle}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            toggle();
+                          }
+                        }}
+                        whileTap={{ scale: 0.995 }}
+                        className={[
+                          "group rounded-2xl border border-white/10 bg-black/20 px-4 py-3",
+                          "flex items-start gap-3",
+                          "cursor-pointer select-none",
+                        ].join(" ")}
+                        aria-label={`${h.title}. ${done ? "Done." : "Not done."} Tap to toggle.`}
+                      >
+                        <div
+                          className={[
+                            "mt-0.5 w-7 h-7 rounded-full border flex items-center justify-center shrink-0",
+                            done ? "border-[color:var(--pink)]/40 bg-[color:var(--pink)]/15" : "border-white/15 bg-white/5",
+                          ].join(" ")}
+                        >
+                          <AnimatePresence initial={false} mode="wait">
+                            {done ? (
+                              <motion.div key="done" initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
+                                <CheckCircle2 size={16} className="text-[color:var(--pink)]" />
+                              </motion.div>
+                            ) : (
+                              <motion.div key="not" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}>
+                                <div className="w-2 h-2 rounded-full bg-white/20" />
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="text-white font-extrabold text-[13px] leading-snug">{h.title}</div>
+                          <div className={["mt-1 text-[11px] font-semibold leading-snug", done ? "text-white/45" : "text-white/55"].join(" ")}>
+                            {h.oneLiner}
+                          </div>
+                          <div className="mt-1 text-white/35 text-[10px] font-extrabold tracking-[0.18em] uppercase">
+                            {done ? "Done" : "Tap to mark done"}
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setLearnHabit(h);
+                          }}
+                          className={[
+                            "shrink-0 mt-0.5",
+                            "h-9 px-3 rounded-full border border-white/10 bg-white/6 hover:bg-white/10",
+                            "text-white/75 font-extrabold text-[11px] inline-flex items-center gap-2",
+                          ].join(" ")}
+                          aria-label={`Learn more about ${h.title}`}
+                        >
+                          <Info size={16} className="text-white/70" />
+                          Learn
+                        </button>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-3 text-white/45 text-[11px] font-semibold leading-relaxed">
+                  Small habits, big results: protect your midline all day.
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </Card>
       </div>
 
+      {/* Start modal */}
       <AnimatePresence>
         {startModalOpen && !isDoneToday && (
           <motion.div
@@ -598,6 +1159,19 @@ export default function DashboardTodayPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Habit Learn Sheet */}
+      <HabitLearnSheet
+        open={!!learnHabit}
+        habit={learnHabit}
+        onClose={() => setLearnHabit(null)}
+        isDone={learnHabit ? !!dayHabits[learnHabit.id] : false}
+        onToggleDone={() => {
+          if (!learnHabit) return;
+          const currentlyDone = !!dayHabits[learnHabit.id];
+          setHabitDone?.(p.dateISO, learnHabit.id, !currentlyDone);
+        }}
+      />
 
       {playerUrl && (
         <SafetyPlayer
