@@ -2823,7 +2823,15 @@ export default function OnboardingWrapper() {
   const showTopProgress = screen >= 2 && screen <= 11;
 
   return (
-    <main className="fixed inset-0 w-full h-[100dvh] min-h-0 flex flex-col bg-[color:var(--navy)] overflow-hidden md:p-8 md:items-center md:justify-center">
+    <main
+  className={[
+    // mobile app shell
+    "fixed inset-0 w-full h-[100dvh] overflow-hidden",
+    // desktop behaves like a page
+    "md:relative md:inset-auto md:h-auto md:min-h-[100dvh] md:overflow-y-auto",
+    "flex flex-col bg-[color:var(--navy)] md:p-8 md:items-center md:justify-center",
+  ].join(" ")}
+>
       {/* DESKTOP FRAME (mobile unchanged) */}
       <div className="relative w-full h-full min-h-0 overflow-hidden md:max-w-[720px] md:h-[calc(100dvh-64px)] md:max-h-[920px] md:rounded-[44px] md:border md:border-white/12 md:shadow-[0_40px_120px_rgba(0,0,0,0.65)]">
         {/* Background Layer */}
