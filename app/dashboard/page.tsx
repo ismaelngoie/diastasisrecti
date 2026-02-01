@@ -88,10 +88,7 @@ function computeStreakInfo(dateSet: Set<string>, todayISO: string) {
   return { current, best, total: dateSet.size };
 }
 
-/**
- * ✅ YOUR REQUEST: Graph MUST follow streak/completions.
- * If streak says today is done (dateSet has today), today bar must be 100% no matter what.
- */
+// ✅ UPDATED: your exact requested logic (forces today to 100% if streak/completions say done)
 function buildGraphPoints(
   range: GraphRange,
   dateSet: Set<string>,
@@ -177,12 +174,7 @@ function buildGraphPoints(
 
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div
-      className={[
-        "rounded-3xl border border-white/12 bg-white/6 backdrop-blur-xl shadow-soft",
-        className,
-      ].join(" ")}
-    >
+    <div className={["rounded-3xl border border-white/12 bg-white/6 backdrop-blur-xl shadow-soft", className].join(" ")}>
       {children}
     </div>
   );
@@ -192,7 +184,6 @@ export default function DashboardTodayPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // These are used for autoplay logic below
   const autoplayParam = searchParams.get("autoplay");
   const searchParamsString = searchParams.toString();
 
@@ -205,7 +196,7 @@ export default function DashboardTodayPage() {
         if (window.gtag) {
           // @ts-ignore
           window.gtag("event", "conversion", {
-            send_to: "AW-17883612588",
+            send_to: "AW-17911323675",
             value: 24.99,
             currency: "USD",
             transaction_id: Date.now(),
@@ -224,9 +215,7 @@ export default function DashboardTodayPage() {
   const user = useUserStore();
   const p = useMemo(() => getTodaysPrescription(user), [user]);
 
-  const userName = useUserStore(
-    (s: any) => s.profile?.name || s.userName || s.name || s.user?.name || "Friend"
-  );
+  const userName = useUserStore((s: any) => s.profile?.name || s.userName || s.name || s.user?.name || "Friend");
   const userGoal = useUserStore((s: any) => s.profile?.goal || s.userGoal || s.goal || "");
 
   const completions = useUserStore((s: any) => s.workoutCompletions || []);
@@ -261,7 +250,6 @@ export default function DashboardTodayPage() {
 
   const isDoneToday = useMemo(() => dateSet.has(p.dateISO), [dateSet, p.dateISO]);
 
-  // live fill while watching (never decreases)
   const [watchPct, setWatchPct] = useState<number>(isDoneToday ? 100 : 0);
   useEffect(() => setWatchPct(isDoneToday ? 100 : 0), [isDoneToday]);
 
@@ -275,8 +263,8 @@ export default function DashboardTodayPage() {
   const streak = useMemo(() => computeStreakInfo(dateSet, p.dateISO), [dateSet, p.dateISO]);
 
   const graph = useMemo(
-    () => buildGraphPoints(range, dateSet, ringPct / 100, p.dateISO),
-    [range, dateSet, ringPct, p.dateISO]
+    () => buildGraphPoints(range, dateSet, isDoneToday ? 1 : ringPct / 100, p.dateISO),
+    [range, dateSet, ringPct, isDoneToday, p.dateISO]
   );
 
   const habitItems = useMemo(
@@ -340,6 +328,7 @@ export default function DashboardTodayPage() {
   const onStartedAfter5s = useCallback(() => {
     if (isDoneToday) return;
 
+    // ✅ instantly “complete” UI even if store write is slow
     setOptimisticDoneISO(p.dateISO);
     setWatchPct(100);
 
@@ -384,7 +373,8 @@ export default function DashboardTodayPage() {
           <ProgressRing
             pct={ringPct}
             labelTop={topLabel}
-            labelBottom="Tap the preview video to play. Your progress updates automatically."
+            // ✅ shorter copy so it fits all screens
+            labelBottom="Tap the preview to play — progress updates automatically."
             labelTopRight={
               <button
                 type="button"
@@ -407,6 +397,19 @@ export default function DashboardTodayPage() {
               ) : undefined
             }
           />
+
+          {/* kept your old Why button code (hidden so nothing is removed) */}
+          <div className="mt-4 flex justify-end hidden">
+            <button
+              type="button"
+              onClick={() => setShowWhy((v) => !v)}
+              className="h-12 px-4 rounded-full border border-white/10 bg-white/8 text-white font-extrabold inline-flex items-center gap-2"
+              aria-expanded={showWhy}
+            >
+              Why
+              <ChevronDown className={["transition-transform", showWhy ? "rotate-180" : ""].join(" ")} size={18} />
+            </button>
+          </div>
 
           <AnimatePresence initial={false}>
             {showWhy && (
@@ -545,7 +548,6 @@ export default function DashboardTodayPage() {
         </Card>
       </div>
 
-      {/* Start message modal */}
       <AnimatePresence>
         {startModalOpen && !isDoneToday && (
           <motion.div
