@@ -696,7 +696,7 @@ export default function SafetyPlayer({
   const ui = (
     <div className="fixed inset-0 z-[99999] bg-black/85 backdrop-blur-sm">
       <div
-        className="w-full h-[100dvh] sm:h-[calc(100vh-3rem)] sm:max-w-4xl sm:mx-auto sm:my-6 sm:rounded-3xl overflow-hidden border border-white/12 bg-[#0F0F17] shadow-[0_40px_140px_rgba(0,0,0,0.7)] flex flex-col"
+        className="w-full h-[100dvh] sm:h-auto sm:max-h-[calc(100vh-3rem)] sm:max-w-4xl sm:mx-auto sm:my-6 sm:rounded-3xl sm:min-h-0 overflow-hidden border border-white/12 bg-[#0F0F17] shadow-[0_40px_140px_rgba(0,0,0,0.7)] flex flex-col"
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
@@ -741,7 +741,7 @@ export default function SafetyPlayer({
         </div>
 
         {/* Video stage */}
-        <div className="relative bg-black flex-1">
+        <div className="relative bg-black flex-1 sm:min-h-0">
           <BreathingPacer />
           <FormGuardToast />
 
