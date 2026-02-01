@@ -2132,7 +2132,7 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
         </div>
 
         <p className="text-white/60 text-sm mb-5 font-medium leading-relaxed">
-          Enter the email address you used at checkout. We’ll find your active plan and unlock your dashboard.
+          Enter the email address you used at checkout.
         </p>
 
         <form onSubmit={handleRestoreSubmit} className="flex flex-col gap-4">
