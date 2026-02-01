@@ -244,10 +244,6 @@ function HabitMiniDiagram({ habit }: { habit: HabitCard }) {
           );
         })}
       </div>
-
-      <div className="mt-3 text-white/45 text-[11px] font-semibold leading-relaxed">
-        Keep it calm. Low pressure = faster healing.
-      </div>
     </div>
   );
 }
