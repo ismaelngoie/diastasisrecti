@@ -15,6 +15,8 @@ import {
   Rewind,
   FastForward,
   ArrowRight,
+  Loader2,
+  Gauge,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { VideoItem } from "@/lib/videoCatalog";
@@ -22,13 +24,8 @@ import { useUserStore } from "@/lib/store/useUserStore";
 
 function BreathingPacer() {
   return (
-    <div
-      className="absolute top-[calc(env(safe-area-inset-top)+10px)] left-4 z-20"
-      aria-hidden="true"
-    >
-      <div className="text-white/60 text-[10px] font-extrabold tracking-widest uppercase mb-2">
-        Exhale on Effort
-      </div>
+    <div className="absolute top-[calc(env(safe-area-inset-top)+10px)] left-4 z-20" aria-hidden="true">
+      <div className="text-white/60 text-[10px] font-extrabold tracking-widest uppercase mb-2">Exhale on Effort</div>
       <div className="relative w-12 h-12">
         <div className="absolute inset-0 rounded-full bg-white/8 border border-white/10" />
         <div className="absolute inset-0 rounded-full bg-[color:var(--pink)]/25 animate-[pacer_10s_ease-in-out_infinite]" />
@@ -46,10 +43,7 @@ function BreathingPacer() {
 
 function FormGuardToast() {
   return (
-    <div
-      className="absolute top-[calc(env(safe-area-inset-top)+10px)] right-4 z-20 max-w-[240px]"
-      aria-hidden="true"
-    >
+    <div className="absolute top-[calc(env(safe-area-inset-top)+10px)] right-4 z-20 max-w-[240px]" aria-hidden="true">
       <div className="rounded-2xl border border-white/12 bg-black/45 backdrop-blur-xl px-3 py-2 shadow-soft">
         <div className="text-white text-[12px] font-extrabold">⚠️ Watch for doming</div>
         <div className="text-white/70 text-[11px] font-semibold mt-1 leading-snug">
@@ -81,12 +75,180 @@ function getFocusable(root: HTMLElement | null) {
 
 type RepeatMode = "off" | "all" | "one";
 
+function clamp01(n: number) {
+  return Math.max(0, Math.min(1, n));
+}
+
 function formatTime(sec: number) {
   if (!Number.isFinite(sec) || sec <= 0) return "0:00";
   const s = Math.floor(sec);
   const m = Math.floor(s / 60);
   const r = s % 60;
   return `${m}:${String(r).padStart(2, "0")}`;
+}
+
+function getBufferedEnd01(v: HTMLVideoElement, duration: number) {
+  if (!duration || !Number.isFinite(duration)) return 0;
+  const b = v.buffered;
+  if (!b || b.length === 0) return 0;
+
+  // choose the furthest buffered end
+  let end = 0;
+  for (let i = 0; i < b.length; i++) {
+    try {
+      end = Math.max(end, b.end(i));
+    } catch {}
+  }
+  return clamp01(end / duration);
+}
+
+function StatePill({
+  isBuffering,
+  isPlaying,
+}: {
+  isBuffering: boolean;
+  isPlaying: boolean;
+}) {
+  const label = isBuffering ? "Buffering" : isPlaying ? "Playing" : "Paused";
+  return (
+    <div className="inline-flex items-center gap-2 px-3 h-7 rounded-full border border-white/10 bg-white/6">
+      {isBuffering ? <Loader2 size={14} className="text-white/70 animate-spin" /> : <div className="w-2 h-2 rounded-full bg-white/25" />}
+      <span className="text-white/60 text-[10px] font-extrabold tracking-[0.18em] uppercase">{label}</span>
+    </div>
+  );
+}
+
+function ProgressBar({
+  progress01,
+  buffered01,
+  currentTime,
+  duration,
+  onSeekTo01,
+}: {
+  progress01: number;
+  buffered01: number;
+  currentTime: number;
+  duration: number;
+  onSeekTo01: (pct01: number) => void;
+}) {
+  const barRef = useRef<HTMLDivElement | null>(null);
+  const [scrubbing, setScrubbing] = useState(false);
+  const [scrub01, setScrub01] = useState(progress01);
+
+  useEffect(() => {
+    if (!scrubbing) setScrub01(progress01);
+  }, [progress01, scrubbing]);
+
+  const pct = scrubbing ? scrub01 : progress01;
+
+  const computePctFromClientX = (clientX: number) => {
+    const el = barRef.current;
+    if (!el) return progress01;
+    const rect = el.getBoundingClientRect();
+    const raw = (clientX - rect.left) / Math.max(1, rect.width);
+    return clamp01(raw);
+  };
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    setScrubbing(true);
+    const p = computePctFromClientX(e.clientX);
+    setScrub01(p);
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!scrubbing) return;
+    const p = computePctFromClientX(e.clientX);
+    setScrub01(p);
+  };
+
+  const onPointerUp = (e: React.PointerEvent) => {
+    if (!scrubbing) return;
+    const p = computePctFromClientX(e.clientX);
+    setScrubbing(false);
+    onSeekTo01(p);
+  };
+
+  const bubbleTime = scrubbing ? formatTime(scrub01 * (duration || 0)) : null;
+
+  return (
+    <div className="mt-2">
+      <div className="flex items-center justify-between text-white/45 text-[11px] font-semibold">
+        <span>{formatTime(currentTime)}</span>
+        <span>{formatTime(duration)}</span>
+      </div>
+
+      <div
+        ref={barRef}
+        className="relative mt-2 h-3 rounded-full bg-white/10 overflow-hidden cursor-pointer select-none"
+        role="slider"
+        aria-label="Seek"
+        aria-valuemin={0}
+        aria-valuemax={Math.max(1, Math.floor(duration || 1))}
+        aria-valuenow={Math.floor((pct || 0) * (duration || 0))}
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (!duration) return;
+          if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            onSeekTo01(clamp01(progress01 - 5 / duration));
+          }
+          if (e.key === "ArrowRight") {
+            e.preventDefault();
+            onSeekTo01(clamp01(progress01 + 5 / duration));
+          }
+        }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={() => setScrubbing(false)}
+      >
+        {/* buffered */}
+        <div
+          className="absolute inset-y-0 left-0 bg-white/12"
+          style={{ width: `${buffered01 * 100}%` }}
+          aria-hidden="true"
+        />
+
+        {/* progress */}
+        <div
+          className="absolute inset-y-0 left-0 bg-[color:var(--pink)] transition-[width] duration-150"
+          style={{ width: `${pct * 100}%` }}
+          aria-hidden="true"
+        />
+
+        {/* thumb */}
+        <motion.div
+          className="absolute top-1/2 -translate-y-1/2"
+          style={{ left: `${pct * 100}%` }}
+          aria-hidden="true"
+          animate={{ scale: scrubbing ? 1.08 : 1 }}
+          transition={{ duration: 0.12 }}
+        >
+          <div className="w-4 h-4 rounded-full bg-white shadow-[0_10px_30px_rgba(0,0,0,0.45)] border border-black/20 -translate-x-1/2" />
+        </motion.div>
+
+        {/* time bubble */}
+        <AnimatePresence>
+          {bubbleTime && (
+            <motion.div
+              initial={{ opacity: 0, y: 6, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 6, scale: 0.98 }}
+              transition={{ duration: 0.14, ease: "easeOut" }}
+              className="absolute -top-10"
+              style={{ left: `${pct * 100}%` }}
+              aria-hidden="true"
+            >
+              <div className="px-3 h-8 rounded-full border border-white/12 bg-black/60 backdrop-blur-xl text-white/85 text-[12px] font-extrabold flex items-center -translate-x-1/2">
+                {bubbleTime}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
 }
 
 export default function SafetyPlayer({
@@ -131,12 +293,44 @@ export default function SafetyPlayer({
 
   const [index, setIndex] = useState(initialIndex);
   const [repeatMode, setRepeatMode] = useState<RepeatMode>("all");
+
+  // ✅ premium playback state (reliable)
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(false);
+  const [isSeeking, setIsSeeking] = useState(false);
+
   const [showPainModal, setShowPainModal] = useState(false);
   const [showList, setShowList] = useState(false);
 
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [buffered01, setBuffered01] = useState(0);
+
+  const [playbackRate, setPlaybackRate] = useState<0.75 | 1 | 1.25>(1);
+
+  // refs for stable event handlers
+  const repeatModeRef = useRef<RepeatMode>("all");
+  const indexRef = useRef<number>(0);
+  const poolRef = useRef<VideoItem[]>(pool);
+  const isPlayingRef = useRef<boolean>(false);
+  const wantPlayRef = useRef<boolean>(false);
+  const wasPlayingBeforeScrubRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    repeatModeRef.current = repeatMode;
+  }, [repeatMode]);
+
+  useEffect(() => {
+    indexRef.current = index;
+  }, [index]);
+
+  useEffect(() => {
+    poolRef.current = pool;
+  }, [pool]);
+
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
 
   const hasFiredStartedRef = useRef(false);
   const peakPctRef = useRef(0);
@@ -173,7 +367,6 @@ export default function SafetyPlayer({
   useEffect(() => {
     lastFocusRef.current = document.activeElement as HTMLElement | null;
     closeBtnRef.current?.focus();
-
     return () => {
       try {
         lastFocusRef.current?.focus?.();
@@ -228,111 +421,270 @@ export default function SafetyPlayer({
     }
   };
 
-  // Load new video on index change (and keep play state)
+  // ✅ RAF loop (smooth + reliable progress)
+  const rafRef = useRef<number | null>(null);
+
+  const stopRAF = useCallback(() => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = null;
+  }, []);
+
+  const syncFromVideo = useCallback(() => {
+    const v = videoRef.current;
+    if (!v) return;
+
+    const d = Number.isFinite(v.duration) ? v.duration : 0;
+    const t = Number.isFinite(v.currentTime) ? v.currentTime : 0;
+
+    // duration & time
+    setDuration(d);
+    setCurrentTime(t);
+
+    // buffer
+    setBuffered01(getBufferedEnd01(v, d));
+
+    // buffering heuristics
+    const buffering =
+      !v.paused &&
+      (v.readyState < 3 || (Number.isFinite(v.playbackRate) && v.playbackRate > 0 && v.seeking));
+    setIsBuffering(buffering);
+
+    // play state (fallback if events miss)
+    setIsPlaying(!v.paused && !v.ended);
+
+    // drive ring/graph fill (never decreases)
+    const pct = hasFiredStartedRef.current ? 100 : Math.min(100, (t / 5) * 100);
+    peakPctRef.current = Math.max(peakPctRef.current, pct);
+    onProgressPct?.(peakPctRef.current);
+
+    // internal “counted” milestone (hidden)
+    if (!hasFiredStartedRef.current && t >= 5) {
+      hasFiredStartedRef.current = true;
+      peakPctRef.current = 100;
+      onProgressPct?.(100);
+      onStartedAfter5s?.();
+    }
+  }, [onProgressPct, onStartedAfter5s]);
+
+  const startRAF = useCallback(() => {
+    stopRAF();
+    const tick = () => {
+      syncFromVideo();
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+  }, [stopRAF, syncFromVideo]);
+
+  // Attach core media listeners ONCE (stable, no dependency weirdness)
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
 
-    try {
-      v.load();
-    } catch {}
-
-    setCurrentTime(0);
-
-    requestAnimationFrame(() => {
-      if (!v) return;
-      v.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
-    });
-  }, [url]);
-
-  // Track playback state + timeline
-  useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
-
-    const onLoaded = () => setDuration(Number.isFinite(v.duration) ? v.duration : 0);
-    const onTime = () => {
-      const t = v.currentTime || 0;
-      setCurrentTime(t);
-
-      // drive ring/graph fill (never decreases)
-      const pct = hasFiredStartedRef.current ? 100 : Math.min(100, (t / 5) * 100);
-      peakPctRef.current = Math.max(peakPctRef.current, pct);
-      onProgressPct?.(peakPctRef.current);
-
-      // internal “counted” milestone (hidden)
-      if (!hasFiredStartedRef.current && t >= 5) {
-        hasFiredStartedRef.current = true;
-        peakPctRef.current = 100;
-        onProgressPct?.(100);
-        onStartedAfter5s?.();
-      }
+    const onLoaded = () => {
+      setIsBuffering(false);
+      syncFromVideo();
     };
 
-    const onPlay = () => setIsPlaying(true);
-    const onPause = () => setIsPlaying(false);
+    const onTime = () => {
+      // keep in sync even if RAF is off
+      syncFromVideo();
+    };
+
+    const onDurationChange = () => syncFromVideo();
+    const onProgress = () => syncFromVideo();
+
+    const onPlay = () => {
+      setIsPlaying(true);
+      setIsBuffering(false);
+      startRAF();
+    };
+
+    const onPlaying = () => {
+      setIsPlaying(true);
+      setIsBuffering(false);
+      startRAF();
+    };
+
+    const onPause = () => {
+      setIsPlaying(false);
+      setIsBuffering(false);
+      stopRAF();
+      syncFromVideo();
+    };
+
+    const onWaiting = () => {
+      setIsBuffering(true);
+    };
+
+    const onSeeking = () => setIsSeeking(true);
+    const onSeeked = () => {
+      setIsSeeking(false);
+      syncFromVideo();
+    };
 
     const onEnded = () => {
-      if (repeatMode === "one") {
+      stopRAF();
+      setIsPlaying(false);
+      setIsBuffering(false);
+
+      const rm = repeatModeRef.current;
+      const poolNow = poolRef.current;
+      const i = indexRef.current;
+
+      if (!v) return;
+
+      if (rm === "one") {
+        wantPlayRef.current = true;
         v.currentTime = 0;
         v.play().catch(() => {});
         return;
       }
 
-      if (index < pool.length - 1) {
-        setIndex((i) => Math.min(pool.length - 1, i + 1));
+      if (i < poolNow.length - 1) {
+        wantPlayRef.current = true;
+        setIndex((cur) => Math.min(poolNow.length - 1, cur + 1));
         return;
       }
 
-      if (repeatMode === "all" && pool.length > 1) {
+      if (rm === "all" && poolNow.length > 1) {
+        wantPlayRef.current = true;
         setIndex(0);
         return;
       }
 
-      setIsPlaying(false);
+      wantPlayRef.current = false;
     };
 
     v.addEventListener("loadedmetadata", onLoaded);
+    v.addEventListener("durationchange", onDurationChange);
     v.addEventListener("timeupdate", onTime);
+    v.addEventListener("progress", onProgress);
     v.addEventListener("play", onPlay);
+    v.addEventListener("playing", onPlaying);
     v.addEventListener("pause", onPause);
+    v.addEventListener("waiting", onWaiting);
+    v.addEventListener("seeking", onSeeking);
+    v.addEventListener("seeked", onSeeked);
     v.addEventListener("ended", onEnded);
 
+    // initial sync
+    syncFromVideo();
+
     return () => {
+      stopRAF();
       v.removeEventListener("loadedmetadata", onLoaded);
+      v.removeEventListener("durationchange", onDurationChange);
       v.removeEventListener("timeupdate", onTime);
+      v.removeEventListener("progress", onProgress);
       v.removeEventListener("play", onPlay);
+      v.removeEventListener("playing", onPlaying);
       v.removeEventListener("pause", onPause);
+      v.removeEventListener("waiting", onWaiting);
+      v.removeEventListener("seeking", onSeeking);
+      v.removeEventListener("seeked", onSeeked);
       v.removeEventListener("ended", onEnded);
     };
-  }, [onStartedAfter5s, onProgressPct, repeatMode, index, pool.length]);
+  }, [startRAF, stopRAF, syncFromVideo]);
+
+  // Load new video on url change, keep play intent
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+
+    setIsBuffering(true);
+    setCurrentTime(0);
+    setDuration(0);
+    setBuffered01(0);
+
+    // apply playback rate every time
+    v.playbackRate = playbackRate;
+
+    try {
+      // force reload
+      v.load();
+    } catch {}
+
+    // If user intended to play (or was playing), resume automatically
+    requestAnimationFrame(() => {
+      if (!v) return;
+      if (!wantPlayRef.current) {
+        syncFromVideo();
+        setIsBuffering(false);
+        return;
+      }
+      v.play()
+        .then(() => {
+          setIsPlaying(true);
+          startRAF();
+        })
+        .catch(() => {
+          setIsPlaying(false);
+          setIsBuffering(false);
+        });
+    });
+  }, [url, playbackRate, startRAF, syncFromVideo]);
 
   const togglePlay = () => {
     const v = videoRef.current;
     if (!v) return;
-    if (v.paused) v.play().catch(() => {});
-    else v.pause();
+
+    // ✅ optimistic UI (immediate millionaire feel)
+    if (v.paused || v.ended) {
+      wantPlayRef.current = true;
+      setIsPlaying(true);
+      setIsBuffering(true);
+
+      v.play()
+        .then(() => {
+          setIsBuffering(false);
+          setIsPlaying(true);
+          startRAF();
+        })
+        .catch(() => {
+          wantPlayRef.current = false;
+          setIsBuffering(false);
+          setIsPlaying(false);
+        });
+
+      return;
+    }
+
+    // pause
+    wantPlayRef.current = false;
+    try {
+      v.pause();
+    } catch {}
+    setIsPlaying(false);
+    setIsBuffering(false);
+    stopRAF();
   };
 
-  const seekToPct = (pct01: number) => {
+  const seekTo01 = (pct01: number) => {
     const v = videoRef.current;
     if (!v || !duration) return;
-    v.currentTime = Math.max(0, Math.min(duration, pct01 * duration));
+
+    const t = Math.max(0, Math.min(duration, pct01 * duration));
+    v.currentTime = t;
+    syncFromVideo();
   };
 
   const skip = (delta: number) => {
     const v = videoRef.current;
     if (!v) return;
-    v.currentTime = Math.max(0, v.currentTime + delta);
+    const t = Math.max(0, (v.currentTime || 0) + delta);
+    v.currentTime = t;
+    syncFromVideo();
   };
 
   const prev = () => {
     if (pool.length <= 1) return;
+    wantPlayRef.current = isPlayingRef.current; // keep intent
     setIndex((i) => Math.max(0, i - 1));
   };
 
   const next = () => {
     if (pool.length <= 1) return;
+    wantPlayRef.current = isPlayingRef.current; // keep intent
     setIndex((i) => Math.min(pool.length - 1, i + 1));
   };
 
@@ -340,10 +692,18 @@ export default function SafetyPlayer({
     setRepeatMode((m) => (m === "off" ? "all" : m === "all" ? "one" : "off"));
   };
 
+  const cycleSpeed = () => {
+    const nextRate: 0.75 | 1 | 1.25 = playbackRate === 1 ? 1.25 : playbackRate === 1.25 ? 0.75 : 1;
+    setPlaybackRate(nextRate);
+    const v = videoRef.current;
+    if (v) v.playbackRate = nextRate;
+  };
+
   const onPain = () => {
     try {
       videoRef.current?.pause();
     } catch {}
+    wantPlayRef.current = false;
     setShowPainModal(true);
   };
 
@@ -362,13 +722,14 @@ export default function SafetyPlayer({
     } catch {}
 
     const nextIndex = pool.findIndex((x) => x.url === pick.url);
+    wantPlayRef.current = true;
     setIndex(nextIndex >= 0 ? nextIndex : 0);
     setShowPainModal(false);
 
     requestAnimationFrame(() => videoRef.current?.play().catch(() => {}));
   };
 
-  const progress01 = duration ? Math.min(1, currentTime / duration) : 0;
+  const progress01 = duration ? clamp01(currentTime / duration) : 0;
 
   const nextUpIndex = useMemo(() => {
     if (pool.length <= 1) return null;
@@ -384,6 +745,17 @@ export default function SafetyPlayer({
     if (!item) return null;
     return { index: nextUpIndex, title: item.title || "Next exercise" };
   }, [nextUpIndex, pool]);
+
+  // NOTE: if user scrubs, pause then resume if it was playing
+  const onSeekTo01 = (pct01: number) => {
+    const v = videoRef.current;
+    if (!v || !duration) return;
+
+    // (optional premium: pause while scrubbing—handled by ProgressBar, but we support resume)
+    if (isSeeking) return;
+    v.currentTime = Math.max(0, Math.min(duration, pct01 * duration));
+    syncFromVideo();
+  };
 
   if (!mounted) return null;
 
@@ -404,8 +776,9 @@ export default function SafetyPlayer({
             <div id={titleId} className="text-white font-extrabold text-[14px] truncate">
               {currentTitle}
             </div>
-            <div className="text-white/45 text-[11px] font-semibold mt-0.5">
-              {pool.length > 1 ? `Move ${index + 1} of ${pool.length}` : "Today’s routine"}
+            <div className="text-white/45 text-[11px] font-semibold mt-0.5 flex items-center gap-2">
+              <span>{pool.length > 1 ? `Move ${index + 1} of ${pool.length}` : "Today’s routine"}</span>
+              <StatePill isBuffering={isBuffering || isSeeking} isPlaying={isPlaying} />
             </div>
           </div>
 
@@ -433,10 +806,32 @@ export default function SafetyPlayer({
           </div>
         </div>
 
-        {/* Video stage (no progress overlay on top of it) */}
+        {/* Video stage */}
         <div className="relative bg-black flex-1">
           <BreathingPacer />
           <FormGuardToast />
+
+          {/* Optional premium overlay when paused */}
+          <AnimatePresence>
+            {!isPlaying && !showList && !showPainModal && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 pointer-events-none flex items-center justify-center"
+                aria-hidden="true"
+              >
+                <div className="rounded-3xl border border-white/10 bg-black/35 backdrop-blur-xl px-5 py-4 shadow-soft">
+                  <div className="text-white font-extrabold text-[13px] text-center">
+                    {isBuffering ? "Loading…" : "Tap Play to continue"}
+                  </div>
+                  <div className="mt-1 text-white/60 text-[11px] font-semibold text-center">
+                    Slow + controlled • exhale on effort • stop if pain
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <video
             ref={videoRef}
@@ -444,10 +839,15 @@ export default function SafetyPlayer({
             playsInline
             preload="metadata"
             className="w-full h-full bg-black object-contain"
+            // keep state even if browser misses events:
+            onClick={() => {
+              // optional: tapping video toggles play (very Apple-like)
+              togglePlay();
+            }}
           />
         </div>
 
-        {/* Bottom dock (the “dark” area) */}
+        {/* Bottom dock */}
         <div
           className={[
             "border-t border-white/10 bg-[#0F0F17]",
@@ -455,11 +855,14 @@ export default function SafetyPlayer({
             "sm:p-4",
           ].join(" ")}
         >
-          {/* Up next lives in the dock (not over the video) */}
+          {/* Up next */}
           {nextUp && (
             <button
               type="button"
-              onClick={() => setIndex(nextUp.index)}
+              onClick={() => {
+                wantPlayRef.current = isPlayingRef.current;
+                setIndex(nextUp.index);
+              }}
               className={[
                 "w-full rounded-2xl border border-white/12 bg-white/6 backdrop-blur-xl",
                 "px-4 py-3 text-left",
@@ -469,15 +872,9 @@ export default function SafetyPlayer({
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="text-white/55 text-[10px] font-extrabold tracking-[0.22em] uppercase">
-                    Up Next
-                  </div>
-                  <div className="mt-1 text-white font-extrabold text-[13px] truncate">
-                    {nextUp.title}
-                  </div>
-                  <div className="mt-1 text-white/45 text-[11px] font-semibold">
-                    Tap to skip
-                  </div>
+                  <div className="text-white/55 text-[10px] font-extrabold tracking-[0.22em] uppercase">Up Next</div>
+                  <div className="mt-1 text-white font-extrabold text-[13px] truncate">{nextUp.title}</div>
+                  <div className="mt-1 text-white/45 text-[11px] font-semibold">Tap to skip</div>
                 </div>
 
                 <div className="shrink-0 w-10 h-10 rounded-2xl border border-white/10 bg-black/20 flex items-center justify-center">
@@ -487,35 +884,41 @@ export default function SafetyPlayer({
             </button>
           )}
 
-          {/* progress bar (in dock, not on video) */}
-          <div className="mt-3">
-            <div className="flex items-center justify-between text-white/45 text-[11px] font-semibold">
-              <span>{formatTime(currentTime)}</span>
-              <span>{formatTime(duration)}</span>
-            </div>
+          {/* ✅ premium progress bar (smooth + scrub + buffered) */}
+          <ProgressBar
+            progress01={progress01}
+            buffered01={buffered01}
+            currentTime={currentTime}
+            duration={duration}
+            onSeekTo01={(p01) => {
+              // pause while scrubbing, resume if needed
+              const v = videoRef.current;
+              if (!v || !duration) return;
 
-            <div
-              className="mt-2 h-2 rounded-full bg-white/10 overflow-hidden cursor-pointer"
-              onClick={(e) => {
-                const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-                const pct = (e.clientX - rect.left) / Math.max(1, rect.width);
-                seekToPct(pct);
-              }}
-              role="button"
-              aria-label="Seek"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  seekToPct(progress01);
-                }
-              }}
-            >
-              <div
-                className="h-full bg-[color:var(--pink)] transition-all duration-200"
-                style={{ width: `${progress01 * 100}%` }}
-              />
-            </div>
-          </div>
+              wasPlayingBeforeScrubRef.current = !v.paused;
+              try {
+                v.pause();
+              } catch {}
+              wantPlayRef.current = wasPlayingBeforeScrubRef.current;
+
+              seekTo01(p01);
+
+              if (wasPlayingBeforeScrubRef.current) {
+                requestAnimationFrame(() => {
+                  v.play()
+                    .then(() => {
+                      setIsPlaying(true);
+                      setIsBuffering(false);
+                      startRAF();
+                    })
+                    .catch(() => {
+                      setIsPlaying(false);
+                      setIsBuffering(false);
+                    });
+                });
+              }
+            }}
+          />
 
           {/* transport */}
           <div className="mt-3 flex items-center justify-between gap-3">
@@ -542,14 +945,37 @@ export default function SafetyPlayer({
                 <SkipBack size={18} />
               </button>
 
-              <button
+              <motion.button
                 type="button"
                 onClick={togglePlay}
-                className="w-12 h-12 rounded-2xl bg-[color:var(--pink)] text-white flex items-center justify-center shadow-[0_18px_60px_rgba(230,84,115,0.22)] active:scale-[0.985] transition-transform"
+                whileTap={{ scale: 0.985 }}
+                className="w-12 h-12 rounded-2xl bg-[color:var(--pink)] text-white flex items-center justify-center shadow-[0_18px_60px_rgba(230,84,115,0.22)]"
                 aria-label={isPlaying ? "Pause" : "Play"}
               >
-                {isPlaying ? <Pause size={20} /> : <Play size={20} />}
-              </button>
+                <AnimatePresence mode="wait" initial={false}>
+                  {isPlaying ? (
+                    <motion.span
+                      key="pause"
+                      initial={{ opacity: 0, scale: 0.92 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.92 }}
+                      transition={{ duration: 0.12 }}
+                    >
+                      <Pause size={20} />
+                    </motion.span>
+                  ) : (
+                    <motion.span
+                      key="play"
+                      initial={{ opacity: 0, scale: 0.92 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.92 }}
+                      transition={{ duration: 0.12 }}
+                    >
+                      <Play size={20} />
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </motion.button>
 
               <button
                 type="button"
@@ -574,19 +1000,34 @@ export default function SafetyPlayer({
               </button>
             </div>
 
-            <button
-              type="button"
-              onClick={cycleRepeat}
-              className="px-3 h-10 rounded-2xl bg-white/8 border border-white/10 text-white/85 flex items-center gap-2"
-              aria-label="Repeat mode"
-              title={repeatMode === "off" ? "Repeat off" : repeatMode === "all" ? "Repeat all" : "Repeat one"}
-            >
-              {repeatMode === "one" ? <Repeat1 size={16} /> : <Repeat size={16} />}
-              <span className="text-[11px] font-extrabold tracking-[0.18em] uppercase">{repeatMode}</span>
-            </button>
+            <div className="flex items-center gap-2">
+              {/* speed control (premium) */}
+              <button
+                type="button"
+                onClick={cycleSpeed}
+                className="px-3 h-10 rounded-2xl bg-white/8 border border-white/10 text-white/85 flex items-center gap-2"
+                aria-label="Playback speed"
+                title="Playback speed"
+              >
+                <Gauge size={16} />
+                <span className="text-[11px] font-extrabold tracking-[0.18em] uppercase">{playbackRate}x</span>
+              </button>
+
+              {/* repeat */}
+              <button
+                type="button"
+                onClick={cycleRepeat}
+                className="px-3 h-10 rounded-2xl bg-white/8 border border-white/10 text-white/85 flex items-center gap-2"
+                aria-label="Repeat mode"
+                title={repeatMode === "off" ? "Repeat off" : repeatMode === "all" ? "Repeat all" : "Repeat one"}
+              >
+                {repeatMode === "one" ? <Repeat1 size={16} /> : <Repeat size={16} />}
+                <span className="text-[11px] font-extrabold tracking-[0.18em] uppercase">{repeatMode}</span>
+              </button>
+            </div>
           </div>
 
-          {/* pain button (always visible, inside the dock) */}
+          {/* pain button */}
           <button
             onClick={onPain}
             type="button"
@@ -643,21 +1084,20 @@ export default function SafetyPlayer({
                       key={`${v.url}-${i}`}
                       type="button"
                       onClick={() => {
+                        wantPlayRef.current = isPlayingRef.current; // keep intent
                         setIndex(i);
                         setShowList(false);
                       }}
                       className={[
                         "w-full text-left rounded-2xl border px-4 py-3 mt-2",
-                        active
-                          ? "border-[color:var(--pink)]/30 bg-[color:var(--pink)]/10"
-                          : "border-white/10 bg-black/20",
+                        active ? "border-[color:var(--pink)]/30 bg-[color:var(--pink)]/10" : "border-white/10 bg-black/20",
                       ].join(" ")}
                     >
                       <div className="text-white/90 text-[13px] font-extrabold truncate">
                         {i + 1}. {v.title || "Exercise"}
                       </div>
                       <div className="text-white/45 text-[11px] font-semibold mt-0.5 truncate">
-                        Tap to play
+                        {active ? "Now playing" : "Tap to play"}
                       </div>
                     </button>
                   );
