@@ -338,7 +338,7 @@ function HabitLearnSheet({
     <AnimatePresence>
       {open && habit && (
         <motion.div
-          className="fixed inset-0 z-[170] bg-black/60 backdrop-blur-[2px] flex items-end justify-center sm:items-center sm:p-6"
+          className="fixed inset-0 z-[170] bg-black/60 backdrop-blur-[2px] flex items-center justify-center p-4 sm:p-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -352,10 +352,12 @@ function HabitLearnSheet({
             onClick={(e) => e.stopPropagation()}
             className={[
               "w-full sm:max-w-md",
-              "rounded-t-3xl sm:rounded-3xl",
+              "rounded-3xl",
               "border border-white/12 bg-[#0F0F17]",
               "shadow-[0_40px_140px_rgba(0,0,0,0.80)]",
-              "pb-[calc(env(safe-area-inset-bottom)+18px)]",
+              "max-h-[88dvh]",
+              "overflow-hidden",
+              "flex flex-col",
             ].join(" ")}
             initial={{ y: 28, opacity: 0, scale: 0.99 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
@@ -369,11 +371,12 @@ function HabitLearnSheet({
             }}
           >
             {/* Grab handle */}
-            <div className="pt-3 flex justify-center">
+            <div className="pt-3 flex justify-center shrink-0">
               <div className="h-1.5 w-12 rounded-full bg-white/15" />
             </div>
 
-            <div className="px-5 sm:px-6 pt-4">
+            {/* ✅ Scrollable content area so sheet fits on mobile */}
+            <div className="px-5 sm:px-6 pt-4 overflow-y-auto min-h-0 flex-1">
               {/* subtle hero glow */}
               <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-b from-white/10 to-black/10 p-4">
                 <div className="absolute inset-0 pointer-events-none opacity-60">
@@ -526,8 +529,13 @@ function HabitLearnSheet({
                 </AnimatePresence>
               </div>
 
-              {/* Bottom actions */}
-              <div className="mt-4 flex items-center gap-2">
+              {/* keep this spacing so content never hugs the footer */}
+              <div className="h-4" />
+            </div>
+
+            {/* ✅ Bottom actions pinned + safe-area padding so buttons are always visible */}
+            <div className="px-5 sm:px-6 pt-3 border-t border-white/10 bg-[#0F0F17] shrink-0 pb-[calc(env(safe-area-inset-bottom)+18px)]">
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={onToggleDone}
