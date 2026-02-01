@@ -820,7 +820,7 @@ export default function DashboardTodayPage() {
   const topLabel = isDoneToday ? "Today is done ✅" : ringPct > 0 ? "Nice — keep going" : "Tap to start";
 
   return (
-    <main className="w-full max-w-2xl min-[960px]:max-w-6xl mx-auto px-4 sm:px-6 min-[960px]:px-10 py-6 min-[960px]:py-10">
+    <main className="relative w-full px-4 sm:px-6 lg:px-10 py-6 lg:py-10">
       <div className="absolute inset-0 -z-10 bg-[color:var(--navy)]" />
       <div className="absolute inset-0 -z-10 pointer-events-none opacity-[0.22] blur-[0.6px]">
         <ButterflyBackground />
