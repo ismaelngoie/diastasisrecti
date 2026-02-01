@@ -53,6 +53,19 @@ import {
 } from "@/lib/store/useUserStore";
 
 // ==========================================
+// TYPESCRIPT DEFINITION FOR GOOGLE ADS
+// ==========================================
+declare global {
+  interface Window {
+    gtag: (
+      command: string,
+      action: string,
+      params?: Record<string, any>
+    ) => void;
+  }
+}
+
+// ==========================================
 // SHARED TYPES
 // ==========================================
 export type ToastTone = "success" | "info" | "warning" | "danger";
@@ -1919,7 +1932,7 @@ const CheckoutForm = ({ onClose, dateString, customerId }: { onClose: () => void
     if (!stripe || !elements) return;
     setIsLoading(true);
 
-    // --- CRITICAL FIX: Save email to backend customer record ---
+    // --- Save email to backend customer record ---
     if (customerId && email) {
       await fetch("/api/create-payment-intent", {
         method: "POST",
@@ -1943,14 +1956,38 @@ const CheckoutForm = ({ onClose, dateString, customerId }: { onClose: () => void
     }
 
     if (paymentIntent && paymentIntent.status === "succeeded") {
+      // ========================================================
+      // GOOGLE ADS CONVERSION TRACKING (DYNAMIC + ENHANCED)
+      // ========================================================
+      if (typeof window !== "undefined" && window.gtag) {
+        
+        // 1. Enhanced Conversions: Send user data (Email) for better matching
+        // Google will automatically hash this for privacy before sending.
+        window.gtag('set', 'user_data', {
+          email: email
+        });
+
+        // 2. Dynamic Value: Calculate real price from Stripe
+        // Stripe sends amount in cents (e.g., 2499), so we divide by 100.
+        const realValue = paymentIntent.amount / 100; 
+
+        window.gtag('event', 'conversion', {
+          'send_to': 'AW-17883612588/XQ6LCNC3xfAbEKyLyc9C',
+          'value': realValue,          // Uses actual amount charged (e.g. 24.99)
+          'currency': paymentIntent.currency.toUpperCase(), // Uses actual currency (e.g. 'USD')
+          'transaction_id': paymentIntent.id, // Prevents duplicate counting
+          'new_customer': true        // Assuming this flow is for new signups
+        });
+      }
+      // ========================================================
+
       setPaymentSuccess(true);
       setTimeout(() => {
         setPremium(true);
         setJoinDate(new Date().toISOString());
         const symptoms = useUserData.getState().symptoms || [];
         
-        // --- 1. HARD REDIRECT WITH PARAMS (The Pelvi Method) ---
-        // This ensures Google Ads sees the URL before any React router cleaning happens.
+        // Hard Redirect to ensure tracking pixels have time to fire
         window.location.href = "/dashboard?plan=monthly";
       }, 2500);
       return;
@@ -2529,17 +2566,6 @@ useEffect(() => {
     } catch {}
     setCheckedPremium(true);
   }, [router]);
-
-  // --- 2. THE FIX: IGNORE REDIRECT IF WE ARE ON PAYWALL STEP (14) ---
-  useEffect(() => {
-    if (!checkedPremium) return;
-    
-    // If the user is on the paywall screen (step 14), DO NOT redirect them yet.
-    // Let the CheckoutForm handle the redirect logic (Pelvi Method).
-    if (onboardingStep === 14) return;
-
-    if (isPremium) router.replace("/dashboard");
-  }, [checkedPremium, isPremium, router, onboardingStep]);
 
   useEffect(() => {
     if (screen !== 3) return;
