@@ -244,6 +244,10 @@ function HabitMiniDiagram({ habit }: { habit: HabitCard }) {
           );
         })}
       </div>
+
+      <div className="mt-3 text-white/45 text-[11px] font-semibold leading-relaxed">
+        Keep it calm. Low pressure = faster healing.
+      </div>
     </div>
   );
 }
@@ -554,6 +558,10 @@ function HabitLearnSheet({
                   Close
                 </button>
               </div>
+
+              <div className="mt-3 text-white/40 text-[11px] font-semibold leading-relaxed">
+                Low pressure today = faster healing tomorrow.
+              </div>
             </div>
           </motion.div>
         </motion.div>
@@ -812,7 +820,7 @@ export default function DashboardTodayPage() {
   const topLabel = isDoneToday ? "Today is done ✅" : ringPct > 0 ? "Nice — keep going" : "Tap to start";
 
   return (
-    <main className="w-full max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <main className="w-full max-w-2xl lg:max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-6 lg:py-10">
       <div className="absolute inset-0 -z-10 bg-[color:var(--navy)]" />
       <div className="absolute inset-0 -z-10 pointer-events-none opacity-[0.22] blur-[0.6px]">
         <ButterflyBackground />
@@ -825,7 +833,7 @@ export default function DashboardTodayPage() {
         <div className="min-w-0">
           <div className="text-white/45 text-[10px] font-extrabold tracking-[0.22em] uppercase">Today • {headerDate}</div>
 
-          <h1 className="mt-2 text-white text-[24px] sm:text-[26px] leading-[1.1] font-extrabold">
+          <h1 className="mt-2 text-white text-[24px] sm:text-[26px] lg:text-[32px] leading-[1.1] font-extrabold">
             Day {p.dayNumber}: <span className="text-white/90">{phaseNameDisplay}</span>
           </h1>
 
@@ -836,276 +844,285 @@ export default function DashboardTodayPage() {
           )}
         </div>
 
-        <Card className="p-5">
-          <ProgressRing
-            pct={ringPct}
-            labelTop={topLabel}
-            labelBottom="Tap the preview to play — progress updates automatically."
-            labelTopRight={
-              <button
-                type="button"
-                onClick={() => setShowWhy((v) => !v)}
-                className="h-9 px-3 rounded-full border border-white/10 bg-white/8 text-white/90 font-extrabold inline-flex items-center gap-2"
-                aria-expanded={showWhy}
-              >
-                Why
-                <ChevronDown className={["transition-transform", showWhy ? "rotate-180" : ""].join(" ")} size={16} />
-              </button>
-            }
-            center={
-              hasVideos ? (
-                <LoopPreviewBubble src={videos[0].url} onClick={() => requestStart(videos[0].url)} size="ring" ariaLabel="Play today’s routine" />
-              ) : undefined
-            }
-          />
-
-          <AnimatePresence initial={false}>
-            {showWhy && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.25, ease: "easeOut" }}
-                className="overflow-hidden"
-              >
-                <div className="mt-4 text-white/70 text-[13px] font-semibold leading-relaxed">
-                  {whyDisplay}
-                  <div className="mt-2 text-white/45 text-[11px] font-semibold">
-                    If anything feels painful or wrong, stop and switch or rest.
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </Card>
-
-        <StreakCard current={streak.current} best={streak.best} total={streak.total} />
-
-        <ProgressGraph range={range} title={graph.title} points={graph.points} onRangeChange={setRange} />
-
-        <Card className="p-5">
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <div className="text-white font-extrabold text-[16px]">Today’s Moves</div>
-              <div className="text-white/55 text-[12px] font-semibold mt-1">Your player will run these one after another.</div>
-            </div>
-          </div>
-
-          <div className="mt-4 flex flex-col gap-2">
-            {videos.map((v, idx) => {
-              const t = sanitizeCopy(v.title) || v.title || `Exercise ${idx + 1}`;
-              return (
-                <button
-                  type="button"
-                  key={`${v.url}-${idx}`}
-                  onClick={() => requestStart(v.url)}
-                  className={[
-                    "w-full text-left rounded-2xl border border-white/10 bg-black/20",
-                    "px-4 py-3",
-                    "flex items-center gap-3",
-                    "active:scale-[0.99] transition-transform",
-                  ].join(" ")}
-                >
-                  <div className="shrink-0 w-9 h-9 rounded-xl border border-white/10 bg-white/6 flex items-center justify-center">
-                    <div className="text-white/85 font-extrabold text-[13px] tabular-nums">{idx + 1}</div>
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="text-white/90 text-[13px] font-extrabold truncate">{t}</div>
-                    <div className="text-white/45 text-[11px] font-semibold mt-0.5 truncate">
-                      Slow + controlled • exhale on effort • stop if pain
-                    </div>
-                  </div>
-
-                  <div className="shrink-0 text-white/45 text-[11px] font-extrabold tracking-[0.16em] uppercase">Tap</div>
-                </button>
-              );
-            })}
-          </div>
-        </Card>
-
-        {/* ✅ PREMIUM Daily Habits */}
-        <Card className="p-5 relative overflow-hidden">
-          <HabitConfetti show={showHabitCelebrate} pieces={celebratePieces} />
-
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <div className="text-white font-extrabold text-[16px]">Daily Habits</div>
-              <div className="text-white/55 text-[12px] font-semibold mt-1">
-                Protect your healing between workouts — low pressure all day.
-              </div>
-            </div>
-
-            <div className="shrink-0 text-right">
-              <div className="text-white/45 text-[10px] font-extrabold tracking-[0.22em] uppercase">Progress</div>
-              <div className="mt-1 text-white font-extrabold text-[14px] tabular-nums">{habitsPct}%</div>
-            </div>
-          </div>
-
-          <div className="mt-4 h-2 rounded-full bg-white/8 overflow-hidden">
-            <div className="h-full bg-[color:var(--pink)] transition-all duration-300" style={{ width: `${habitsPct}%` }} />
-          </div>
-
-          {/* ✅ Premium celebration toast */}
-          <AnimatePresence>
-            {showHabitToast && (
-              <motion.div
-                initial={{ opacity: 0, y: 6, scale: 0.99 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 6, scale: 0.99 }}
-                transition={{ duration: 0.22, ease: "easeOut" }}
-                className="mt-4 rounded-2xl border border-[color:var(--pink)]/20 bg-[color:var(--pink)]/10 px-4 py-3"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="mt-[2px] w-9 h-9 rounded-2xl border border-white/10 bg-white/8 flex items-center justify-center shrink-0">
-                    <Sparkles size={18} className="text-[color:var(--pink)]" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-white font-extrabold text-[13px]">You protected your healing today ✅</div>
-                    <div className="mt-1 text-white/70 text-[12px] font-semibold leading-snug">
-                      Come back tomorrow — Day {p.dayNumber + 1} gets easier.
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* ✅ Collapse when completed */}
-          <div className="mt-4">
-            {allHabitsDone && !habitsExpanded ? (
-              <button
-                type="button"
-                onClick={() => setHabitsExpanded(true)}
-                className={[
-                  "w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-4",
-                  "flex items-center justify-between gap-3",
-                  "active:scale-[0.99] transition-transform",
-                ].join(" ")}
-                aria-label="Daily habits completed. Tap to review."
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-2xl border border-[color:var(--pink)]/30 bg-[color:var(--pink)]/12 flex items-center justify-center shrink-0">
-                    <CheckCircle2 size={18} className="text-[color:var(--pink)]" />
-                  </div>
-                  <div className="min-w-0 text-left">
-                    <div className="text-white font-extrabold text-[13px] truncate">Completed ✅</div>
-                    <div className="text-white/55 text-[11px] font-semibold truncate">Tap to review your protection habits</div>
-                  </div>
-                </div>
-                <div className="shrink-0 text-white/60 text-[11px] font-extrabold tracking-[0.16em] uppercase">Review</div>
-              </button>
-            ) : (
-              <div className="flex items-center justify-between">
-                <div className="text-white/45 text-[10px] font-extrabold tracking-[0.22em] uppercase">Today’s protection</div>
-                {allHabitsDone && (
+        {/* ✅ Desktop: premium "dashboard grid" without changing mobile order */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <div className="lg:col-span-7">
+            <Card className="p-5 lg:p-6">
+              <ProgressRing
+                pct={ringPct}
+                labelTop={topLabel}
+                labelBottom="Tap the preview to play — progress updates automatically."
+                labelTopRight={
                   <button
                     type="button"
-                    onClick={() => setHabitsExpanded(false)}
-                    className="h-8 px-3 rounded-full border border-white/10 bg-white/6 text-white/75 font-extrabold text-[11px]"
+                    onClick={() => setShowWhy((v) => !v)}
+                    className="h-9 px-3 rounded-full border border-white/10 bg-white/8 text-white/90 font-extrabold inline-flex items-center gap-2"
+                    aria-expanded={showWhy}
                   >
-                    Hide
+                    Why
+                    <ChevronDown className={["transition-transform", showWhy ? "rotate-180" : ""].join(" ")} size={16} />
                   </button>
+                }
+                center={
+                  hasVideos ? (
+                    <LoopPreviewBubble src={videos[0].url} onClick={() => requestStart(videos[0].url)} size="ring" ariaLabel="Play today’s routine" />
+                  ) : undefined
+                }
+              />
+
+              <AnimatePresence initial={false}>
+                {showWhy && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.25, ease: "easeOut" }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-4 text-white/70 text-[13px] font-semibold leading-relaxed">
+                      {whyDisplay}
+                      <div className="mt-2 text-white/45 text-[11px] font-semibold">
+                        If anything feels painful or wrong, stop and switch or rest.
+                      </div>
+                    </div>
+                  </motion.div>
                 )}
-              </div>
-            )}
+              </AnimatePresence>
+            </Card>
           </div>
 
-          {/* Habit list */}
-          <AnimatePresence initial={false}>
-            {(!allHabitsDone || habitsExpanded) && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.22, ease: "easeOut" }}
-                className="overflow-hidden"
-              >
-                <div className="mt-3 flex flex-col gap-2">
-                  {habitItems.map((h) => {
-                    const done = !!dayHabits[h.id];
+          <div className="lg:col-span-5 flex flex-col gap-5">
+            <StreakCard current={streak.current} best={streak.best} total={streak.total} />
+            <ProgressGraph range={range} title={graph.title} points={graph.points} onRangeChange={setRange} />
+          </div>
+        </div>
 
-                    const toggle = () => {
-                      setHabitDone?.(p.dateISO, h.id, !done);
-                    };
+        {/* ✅ Desktop: 2-column content area (mobile stays stacked) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <Card className="p-5 lg:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="text-white font-extrabold text-[16px]">Today’s Moves</div>
+                <div className="text-white/55 text-[12px] font-semibold mt-1">Your player will run these one after another.</div>
+              </div>
+            </div>
 
-                    return (
-                      <motion.div
-                        key={h.id}
-                        role="button"
-                        tabIndex={0}
-                        onClick={toggle}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            toggle();
-                          }
-                        }}
-                        whileTap={{ scale: 0.995 }}
-                        className={[
-                          "group rounded-2xl border border-white/10 bg-black/20 px-4 py-3",
-                          "flex items-start gap-3",
-                          "cursor-pointer select-none",
-                        ].join(" ")}
-                        aria-label={`${h.title}. ${done ? "Done." : "Not done."} Tap to toggle.`}
-                      >
-                        <div
-                          className={[
-                            "mt-0.5 w-7 h-7 rounded-full border flex items-center justify-center shrink-0",
-                            done ? "border-[color:var(--pink)]/40 bg-[color:var(--pink)]/15" : "border-white/15 bg-white/5",
-                          ].join(" ")}
-                        >
-                          <AnimatePresence initial={false} mode="wait">
-                            {done ? (
-                              <motion.div key="done" initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
-                                <CheckCircle2 size={16} className="text-[color:var(--pink)]" />
-                              </motion.div>
-                            ) : (
-                              <motion.div key="not" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}>
-                                <div className="w-2 h-2 rounded-full bg-white/20" />
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
+            <div className="mt-4 flex flex-col gap-2">
+              {videos.map((v, idx) => {
+                const t = sanitizeCopy(v.title) || v.title || `Exercise ${idx + 1}`;
+                return (
+                  <button
+                    type="button"
+                    key={`${v.url}-${idx}`}
+                    onClick={() => requestStart(v.url)}
+                    className={[
+                      "w-full text-left rounded-2xl border border-white/10 bg-black/20",
+                      "px-4 py-3",
+                      "flex items-center gap-3",
+                      "active:scale-[0.99] transition-transform",
+                    ].join(" ")}
+                  >
+                    <div className="shrink-0 w-9 h-9 rounded-xl border border-white/10 bg-white/6 flex items-center justify-center">
+                      <div className="text-white/85 font-extrabold text-[13px] tabular-nums">{idx + 1}</div>
+                    </div>
 
-                        <div className="min-w-0 flex-1">
-                          <div className="text-white font-extrabold text-[13px] leading-snug">{h.title}</div>
-                          <div className={["mt-1 text-[11px] font-semibold leading-snug", done ? "text-white/45" : "text-white/55"].join(" ")}>
-                            {h.oneLiner}
-                          </div>
-                          <div className="mt-1 text-white/35 text-[10px] font-extrabold tracking-[0.18em] uppercase">
-                            {done ? "Done" : "Tap to mark done"}
-                          </div>
-                        </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-white/90 text-[13px] font-extrabold truncate">{t}</div>
+                      <div className="text-white/45 text-[11px] font-semibold mt-0.5 truncate">
+                        Slow + controlled • exhale on effort • stop if pain
+                      </div>
+                    </div>
 
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setLearnHabit(h);
+                    <div className="shrink-0 text-white/45 text-[11px] font-extrabold tracking-[0.16em] uppercase">Tap</div>
+                  </button>
+                );
+              })}
+            </div>
+          </Card>
+
+          {/* ✅ PREMIUM Daily Habits */}
+          <Card className="p-5 lg:p-6 relative overflow-hidden">
+            <HabitConfetti show={showHabitCelebrate} pieces={celebratePieces} />
+
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="text-white font-extrabold text-[16px]">Daily Habits</div>
+                <div className="text-white/55 text-[12px] font-semibold mt-1">
+                  Protect your healing between workouts — low pressure all day.
+                </div>
+              </div>
+
+              <div className="shrink-0 text-right">
+                <div className="text-white/45 text-[10px] font-extrabold tracking-[0.22em] uppercase">Progress</div>
+                <div className="mt-1 text-white font-extrabold text-[14px] tabular-nums">{habitsPct}%</div>
+              </div>
+            </div>
+
+            <div className="mt-4 h-2 rounded-full bg-white/8 overflow-hidden">
+              <div className="h-full bg-[color:var(--pink)] transition-all duration-300" style={{ width: `${habitsPct}%` }} />
+            </div>
+
+            {/* ✅ Premium celebration toast */}
+            <AnimatePresence>
+              {showHabitToast && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6, scale: 0.99 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 6, scale: 0.99 }}
+                  transition={{ duration: 0.22, ease: "easeOut" }}
+                  className="mt-4 rounded-2xl border border-[color:var(--pink)]/20 bg-[color:var(--pink)]/10 px-4 py-3"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="mt-[2px] w-9 h-9 rounded-2xl border border-white/10 bg-white/8 flex items-center justify-center shrink-0">
+                      <Sparkles size={18} className="text-[color:var(--pink)]" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-white font-extrabold text-[13px]">You protected your healing today ✅</div>
+                      <div className="mt-1 text-white/70 text-[12px] font-semibold leading-snug">
+                        Come back tomorrow — Day {p.dayNumber + 1} gets easier.
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* ✅ Collapse when completed */}
+            <div className="mt-4">
+              {allHabitsDone && !habitsExpanded ? (
+                <button
+                  type="button"
+                  onClick={() => setHabitsExpanded(true)}
+                  className={[
+                    "w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-4",
+                    "flex items-center justify-between gap-3",
+                    "active:scale-[0.99] transition-transform",
+                  ].join(" ")}
+                  aria-label="Daily habits completed. Tap to review."
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-2xl border border-[color:var(--pink)]/30 bg-[color:var(--pink)]/12 flex items-center justify-center shrink-0">
+                      <CheckCircle2 size={18} className="text-[color:var(--pink)]" />
+                    </div>
+                    <div className="min-w-0 text-left">
+                      <div className="text-white font-extrabold text-[13px] truncate">Completed ✅</div>
+                      <div className="text-white/55 text-[11px] font-semibold truncate">Tap to review your protection habits</div>
+                    </div>
+                  </div>
+                  <div className="shrink-0 text-white/60 text-[11px] font-extrabold tracking-[0.16em] uppercase">Review</div>
+                </button>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <div className="text-white/45 text-[10px] font-extrabold tracking-[0.22em] uppercase">Today’s protection</div>
+                  {allHabitsDone && (
+                    <button
+                      type="button"
+                      onClick={() => setHabitsExpanded(false)}
+                      className="h-8 px-3 rounded-full border border-white/10 bg-white/6 text-white/75 font-extrabold text-[11px]"
+                    >
+                      Hide
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Habit list */}
+            <AnimatePresence initial={false}>
+              {(!allHabitsDone || habitsExpanded) && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.22, ease: "easeOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-3 flex flex-col gap-2">
+                    {habitItems.map((h) => {
+                      const done = !!dayHabits[h.id];
+
+                      const toggle = () => {
+                        setHabitDone?.(p.dateISO, h.id, !done);
+                      };
+
+                      return (
+                        <motion.div
+                          key={h.id}
+                          role="button"
+                          tabIndex={0}
+                          onClick={toggle}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              toggle();
+                            }
                           }}
+                          whileTap={{ scale: 0.995 }}
                           className={[
-                            "shrink-0 mt-0.5",
-                            "h-9 px-3 rounded-full border border-white/10 bg-white/6 hover:bg-white/10",
-                            "text-white/75 font-extrabold text-[11px] inline-flex items-center gap-2",
+                            "group rounded-2xl border border-white/10 bg-black/20 px-4 py-3",
+                            "flex items-start gap-3",
+                            "cursor-pointer select-none",
                           ].join(" ")}
-                          aria-label={`Learn more about ${h.title}`}
+                          aria-label={`${h.title}. ${done ? "Done." : "Not done."} Tap to toggle.`}
                         >
-                          <Info size={16} className="text-white/70" />
-                          Learn
-                        </button>
-                      </motion.div>
-                    );
-                  })}
-                </div>
+                          <div
+                            className={[
+                              "mt-0.5 w-7 h-7 rounded-full border flex items-center justify-center shrink-0",
+                              done ? "border-[color:var(--pink)]/40 bg-[color:var(--pink)]/15" : "border-white/15 bg-white/5",
+                            ].join(" ")}
+                          >
+                            <AnimatePresence initial={false} mode="wait">
+                              {done ? (
+                                <motion.div key="done" initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
+                                  <CheckCircle2 size={16} className="text-[color:var(--pink)]" />
+                                </motion.div>
+                              ) : (
+                                <motion.div key="not" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}>
+                                  <div className="w-2 h-2 rounded-full bg-white/20" />
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
 
-                <div className="mt-3 text-white/45 text-[11px] font-semibold leading-relaxed">
-                  Small habits, big results: protect your midline all day.
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </Card>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-white font-extrabold text-[13px] leading-snug">{h.title}</div>
+                            <div className={["mt-1 text-[11px] font-semibold leading-snug", done ? "text-white/45" : "text-white/55"].join(" ")}>
+                              {h.oneLiner}
+                            </div>
+                            <div className="mt-1 text-white/35 text-[10px] font-extrabold tracking-[0.18em] uppercase">
+                              {done ? "Done" : "Tap to mark done"}
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLearnHabit(h);
+                            }}
+                            className={[
+                              "shrink-0 mt-0.5",
+                              "h-9 px-3 rounded-full border border-white/10 bg-white/6 hover:bg-white/10",
+                              "text-white/75 font-extrabold text-[11px] inline-flex items-center gap-2",
+                            ].join(" ")}
+                            aria-label={`Learn more about ${h.title}`}
+                          >
+                            <Info size={16} className="text-white/70" />
+                            Learn
+                          </button>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-3 text-white/45 text-[11px] font-semibold leading-relaxed">
+                    Small habits, big results: protect your midline all day.
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Card>
+        </div>
       </div>
 
       {/* Start modal */}
