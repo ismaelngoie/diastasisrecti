@@ -727,7 +727,7 @@ function Step05FingerTest({
   };
 
   return (
-    <div className="w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto flex flex-col h-full min-h-0 px-6 pt-4 pb-6">
+    <div className="w-full max-w-md mx-auto flex flex-col h-full min-h-0 px-6 pt-4 pb-6">
       <div className="mt-2 shrink-0">
         <h1
           className="text-white font-extrabold text-[30px] leading-[1.08]"
@@ -736,9 +736,8 @@ function Step05FingerTest({
           Finger-width check.
         </h1>
         <p className="text-white/65 mt-3 text-[14px] leading-relaxed">
-          Lie on your back with knees bent. Place fingers just above your belly
-          button and gently lift your head. How many finger widths fit in the
-          gap?
+          Lie on your back with knees bent. Place fingers just above your belly button and gently lift your head.
+          How many finger widths fit in the gap?
         </p>
       </div>
 
@@ -883,7 +882,7 @@ function Step06TissueDepth({
   };
 
   return (
-    <div className="w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto flex flex-col h-full min-h-0 px-6 pt-4 pb-6">
+    <div className="w-full max-w-md mx-auto flex flex-col h-full min-h-0 px-6 pt-4 pb-6">
       <div className="mt-2 shrink-0">
         <h1
           className="text-white font-extrabold text-[30px] leading-[1.08]"
@@ -1026,7 +1025,7 @@ function Step07SabotageCheck({
   };
 
   return (
-    <div className="w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto flex flex-col h-full min-h-0 px-6 pt-4 pb-6 relative">
+    <div className="w-full max-w-md mx-auto flex flex-col h-full min-h-0 px-6 pt-4 pb-6 relative">
       <AnimatePresence>
         {flash && (
           <motion.div
@@ -1109,11 +1108,9 @@ function Step07SabotageCheck({
                     Pause these movements.
                   </div>
                   <div className="text-white/70 text-[13px] font-semibold mt-1 leading-relaxed">
-                    These can increase intra-abdominal pressure and make doming
-                    worse. We are marking them as{" "}
-                    <span className="text-white font-extrabold">
-                      NOT RECOMMENDED
-                    </span>{" "}
+                    These can increase intra-abdominal pressure and make doming worse.
+                    We are marking them as{" "}
+                    <span className="text-white font-extrabold">NOT RECOMMENDED</span>{" "}
                     in your plan right now.
                   </div>
                 </div>
@@ -1215,7 +1212,7 @@ function Step08Symptoms({
   };
 
   return (
-    <div className="w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto flex flex-col h-full min-h-0 px-6 pt-4 pb-6">
+    <div className="w-full max-w-md mx-auto flex flex-col h-full min-h-0 px-6 pt-4 pb-6">
       <div className="mt-2 shrink-0">
         <h1
           className="text-white font-extrabold text-[30px] leading-[1.08]"
@@ -1289,17 +1286,13 @@ function Step09Timeline({
     setSelected(id);
     setPostpartum(id);
     if (id === "3+") {
-      toast.show(
-        "success",
-        "It is never too late. We have fixed gaps 10 years postpartum.",
-        5200
-      );
+      toast.show("success", "It is never too late. We have fixed gaps 10 years postpartum.", 5200);
     } else {
       toast.hide();
     }
   };
   return (
-    <div className="w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto flex flex-col h-full min-h-0 px-6 pt-4 pb-6">
+    <div className="w-full max-w-md mx-auto flex flex-col h-full min-h-0 px-6 pt-4 pb-6">
       <div className="mt-2 shrink-0">
         <h1
           className="text-white font-extrabold text-[30px] leading-[1.08]"
@@ -1414,7 +1407,7 @@ function Step10Navel({
   };
 
   return (
-    <div className="w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto flex flex-col h-full min-h-0 px-6 pt-4 pb-6">
+    <div className="w-full max-w-md mx-auto flex flex-col h-full min-h-0 px-6 pt-4 pb-6">
       <div className="mt-2 shrink-0">
         <h1
           className="text-white font-extrabold text-[30px] leading-[1.08]"
@@ -1489,11 +1482,7 @@ const step11Options: Array<{
   label: string;
   badge?: string;
 }> = [
-  {
-    id: "5-7",
-    label: "5–7 minutes",
-    badge: "Most common • Clinician recommended",
-  },
+  { id: "5-7", label: "5–7 minutes", badge: "Most common • Clinician recommended" },
   { id: "15", label: "15 minutes" },
   { id: "30", label: "30 minutes" },
 ];
@@ -1531,7 +1520,7 @@ function Step11Commitment({
   };
 
   return (
-    <div className="w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto flex flex-col h-full min-h-0 px-6 pt-4 pb-6">
+    <div className="w-full max-w-md mx-auto flex flex-col h-full min-h-0 px-6 pt-4 pb-6">
       <div className="mt-2 shrink-0">
         <h1
           className="text-white font-extrabold text-[30px] leading-[1.08]"
@@ -1687,7 +1676,7 @@ function Step12Analysis({ onDone }: { onDone: () => void }) {
       <div className="mb-10">
         <AICoreView />
       </div>
-      <div className="max-w-md md:max-w-lg">
+      <div className="max-w-md">
         <div className="text-white/60 text-xs font-extrabold tracking-widest uppercase mb-3">
           Clinical-style analysis
         </div>
@@ -1749,14 +1738,7 @@ function HolographicTimeline() {
         >
           Today
         </text>
-        <circle
-          cx="180"
-          cy="74"
-          r="6"
-          fill="#F59E0B"
-          stroke="white"
-          strokeWidth="2"
-        />
+        <circle cx="180" cy="74" r="6" fill="#F59E0B" stroke="white" strokeWidth="2" />
         <text
           x="180"
           y="56"
@@ -1767,14 +1749,7 @@ function HolographicTimeline() {
         >
           ~6 Weeks
         </text>
-        <circle
-          cx="326"
-          cy="28"
-          r="7"
-          fill="#33B373"
-          stroke="white"
-          strokeWidth="2"
-        />
+        <circle cx="326" cy="28" r="7" fill="#33B373" stroke="white" strokeWidth="2" />
         <text
           x="312"
           y="16"
@@ -1790,46 +1765,29 @@ function HolographicTimeline() {
   );
 }
 
-function Step13PlanReveal({
-  onNext,
-  onBack,
-}: {
-  onNext: () => void;
-  onBack: () => void;
-}) {
+function Step13PlanReveal({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
   const name = useUserStore((s) => s.name) || "there";
   const age = useUserStore((s) => s.age);
   const fingerGap = useUserStore((s) => s.fingerGap);
   const commitment = useUserStore((s) => s.commitment);
   const sabotage = useUserStore((s) => s.sabotageExercises);
-  const gapLabel =
-    fingerGap === 4 ? "4+ finger-width gap" : `${fingerGap ?? "?"} finger-width gap`;
+  const gapLabel = fingerGap === 4 ? "4+ finger-width gap" : `${fingerGap ?? "?"} finger-width gap`;
 
   const insights = useMemo(() => {
     const list: string[] = [];
     list.push(`Based on your age (${age}), we focus on collagen production.`);
-    if ((sabotage || []).includes("planks"))
-      list.push(
-        "Planks are removed for now to reduce pressure and protect your back."
-      );
-    if ((sabotage || []).includes("crunches"))
-      list.push(
-        "Crunches/sit-ups are removed for now to reduce doming and pressure."
-      );
+    if ((sabotage || []).includes("planks")) list.push("Planks are removed for now to reduce pressure and protect your back.");
+    if ((sabotage || []).includes("crunches")) list.push("Crunches/sit-ups are removed for now to reduce doming and pressure.");
     list.push(
       `Your daily commitment: ${
-        commitment === "5-7"
-          ? "5–7 minutes"
-          : commitment === "15"
-          ? "15 minutes"
-          : "30 minutes"
+        commitment === "5-7" ? "5–7 minutes" : commitment === "15" ? "15 minutes" : "30 minutes"
       }.`
     );
     return list;
   }, [age, commitment, sabotage]);
 
   return (
-    <div className="w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto flex flex-col h-full min-h-0 px-6 pt-4 pb-6">
+    <div className="w-full max-w-md mx-auto flex flex-col h-full min-h-0 px-6 pt-4 pb-6">
       <div className="mt-2 text-center shrink-0">
         <h1
           className="text-white font-extrabold text-[30px] leading-[1.08]"
@@ -1853,22 +1811,12 @@ function Step13PlanReveal({
         </div>
 
         <div className="mt-6">
-          <div className="text-white font-extrabold text-[16px] mb-3">
-            Your Personal Insights
-          </div>
+          <div className="text-white font-extrabold text-[16px] mb-3">Your Personal Insights</div>
           <div className="flex flex-col gap-3">
             {insights.map((t, i) => (
-              <div
-                key={i}
-                className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4"
-              >
-                <Sparkles
-                  className="text-[color:var(--pink)] shrink-0 mt-0.5"
-                  size={18}
-                />
-                <div className="text-white/85 text-[13px] font-semibold leading-relaxed">
-                  {t}
-                </div>
+              <div key={i} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+                <Sparkles className="text-[color:var(--pink)] shrink-0 mt-0.5" size={18} />
+                <div className="text-white/85 text-[13px] font-semibold leading-relaxed">{t}</div>
               </div>
             ))}
           </div>
@@ -1957,51 +1905,19 @@ function SuccessOverlay() {
   );
 }
 
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
-);
-const REVIEW_IMAGES = [
-  "/review9.png",
-  "/review1.png",
-  "/review5.png",
-  "/review4.png",
-  "/review2.png",
-];
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+const REVIEW_IMAGES = ["/review9.png", "/review1.png", "/review5.png", "/review4.png", "/review2.png"];
 const REVIEWS = [
-  {
-    name: "Sarah W.",
-    text: "I closed my 3-finger gap in 9 weeks. No surgery.",
-    image: "/review9.png",
-  },
-  {
-    name: "Michelle T.",
-    text: "The 'coning' stopped after 12 days. Finally safe.",
-    image: "/review1.png",
-  },
-  {
-    name: "Chloe N.",
-    text: "My back pain vanished when my core reconnected.",
-    image: "/review5.png",
-  },
-  {
-    name: "Olivia G.",
-    text: "Better than my $150 physio visits. Truly.",
-    image: "/review4.png",
-  },
+  { name: "Sarah W.", text: "I closed my 3-finger gap in 9 weeks. No surgery.", image: "/review9.png" },
+  { name: "Michelle T.", text: "The 'coning' stopped after 12 days. Finally safe.", image: "/review1.png" },
+  { name: "Chloe N.", text: "My back pain vanished when my core reconnected.", image: "/review5.png" },
+  { name: "Olivia G.", text: "Better than my $150 physio visits. Truly.", image: "/review4.png" },
   { name: "Jess P.", text: "I can lift my baby without fear now.", image: "/review2.png" },
 ];
 const DASHBOARD_PATH = "/dashboard?plan=monthly";
 
 // CHANGED: Accept customerId so we can send the email update
-const CheckoutForm = ({
-  onClose,
-  dateString,
-  customerId,
-}: {
-  onClose: () => void;
-  dateString: string;
-  customerId: string;
-}) => {
+const CheckoutForm = ({ onClose, dateString, customerId }: { onClose: () => void; dateString: string; customerId: string }) => {
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
@@ -2022,7 +1938,7 @@ const CheckoutForm = ({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ customerId, email }),
-      }).catch((err) => console.error("Failed to update email", err));
+      }).catch(err => console.error("Failed to update email", err));
     }
     // -----------------------------------------------------------
 
@@ -2044,22 +1960,23 @@ const CheckoutForm = ({
       // GOOGLE ADS CONVERSION TRACKING (DYNAMIC + ENHANCED)
       // ========================================================
       if (typeof window !== "undefined" && window.gtag) {
+        
         // 1. Enhanced Conversions: Send user data (Email) for better matching
         // Google will automatically hash this for privacy before sending.
-        window.gtag("set", "user_data", {
-          email: email,
+        window.gtag('set', 'user_data', {
+          email: email
         });
 
         // 2. Dynamic Value: Calculate real price from Stripe
         // Stripe sends amount in cents (e.g., 2499), so we divide by 100.
-        const realValue = paymentIntent.amount / 100;
+        const realValue = paymentIntent.amount / 100; 
 
-        window.gtag("event", "conversion", {
-          send_to: "AW-17883612588/XQ6LCNC3xfAbEKyLyc9C",
-          value: realValue, // Uses actual amount charged (e.g. 24.99)
-          currency: paymentIntent.currency.toUpperCase(), // Uses actual currency (e.g. 'USD')
-          transaction_id: paymentIntent.id, // Prevents duplicate counting
-          new_customer: true, // Assuming this flow is for new signups
+        window.gtag('event', 'conversion', {
+          'send_to': 'AW-17883612588/XQ6LCNC3xfAbEKyLyc9C',
+          'value': realValue,          // Uses actual amount charged (e.g. 24.99)
+          'currency': paymentIntent.currency.toUpperCase(), // Uses actual currency (e.g. 'USD')
+          'transaction_id': paymentIntent.id, // Prevents duplicate counting
+          'new_customer': true        // Assuming this flow is for new signups
         });
       }
       // ========================================================
@@ -2069,7 +1986,7 @@ const CheckoutForm = ({
         setPremium(true);
         setJoinDate(new Date().toISOString());
         const symptoms = useUserData.getState().symptoms || [];
-
+        
         // Hard Redirect to ensure tracking pixels have time to fire
         window.location.href = "/dashboard?plan=monthly";
       }, 2500);
@@ -2112,9 +2029,7 @@ const CheckoutForm = ({
         >
           Join 10,243+ women fixing their Diastasis Recti
         </h3>
-        <p className="text-sm text-white/50 font-medium">
-          Total due: $24.99 / month
-        </p>
+        <p className="text-sm text-white/50 font-medium">Total due: $24.99 / month</p>
       </div>
 
       <div className="flex flex-col gap-4">
@@ -2142,15 +2057,14 @@ const CheckoutForm = ({
         {isLoading ? <Loader2 className="animate-spin" /> : "Start My Healing"}
       </button>
 
-      <div className="flex items-center justify-center gap-2 mt-4 text-white/30 text-[11px] font-semibold">
+       <div className="flex items-center justify-center gap-2 mt-4 text-white/30 text-[11px] font-semibold">
         <p className="text-center text-white/70 text-[12px] font-semibold mt-3 leading-snug px-4 drop-shadow-sm">
           {getStripeSubtext()}
         </p>
       </div>
 
       <p className="text-center text-white/30 text-[11px] font-semibold mt-3">
-        <Lock size={12} />
-        100% secure payment.
+        <Lock size={12} />100% secure payment.
       </p>
     </form>
   );
@@ -2188,15 +2102,13 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
         router.push("/dashboard");
         return;
       }
-
+      
       // Use actual message from backend
       setMessage(data.message || data.error || "No active subscription found.");
       setIsLoading(false);
     } catch (err) {
       console.error(err);
-      setMessage(
-        "Unable to verify purchase. Please check your internet connection."
-      );
+      setMessage("Unable to verify purchase. Please check your internet connection.");
       setIsLoading(false);
     }
   };
@@ -2211,16 +2123,10 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
         className="w-full max-w-sm bg-[#1A1A26] border border-white/10 rounded-[32px] p-6 shadow-2xl"
       >
         <div className="flex justify-between items-center mb-5">
-          <h3
-            className="text-xl font-extrabold text-white"
-            style={{ fontFamily: "var(--font-lora)" }}
-          >
+          <h3 className="text-xl font-extrabold text-white" style={{ fontFamily: "var(--font-lora)" }}>
             Restore Purchase
           </h3>
-          <button
-            onClick={onClose}
-            className="p-2 bg-white/5 rounded-full hover:bg-white/10"
-          >
+          <button onClick={onClose} className="p-2 bg-white/5 rounded-full hover:bg-white/10">
             <X size={18} className="text-white/70" />
           </button>
         </div>
@@ -2231,10 +2137,7 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
 
         <form onSubmit={handleRestoreSubmit} className="flex flex-col gap-4">
           <div className="relative">
-            <Mail
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40"
-              size={18}
-            />
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={18} />
             <input
               type="email"
               placeholder="name@example.com"
@@ -2284,26 +2187,18 @@ function Step14Paywall() {
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const [dateString, setDateString] = useState("");
 
-  const displayReview = useMemo(
-    () => REVIEWS[currentReviewIndex],
-    [currentReviewIndex]
-  );
+  const displayReview = useMemo(() => REVIEWS[currentReviewIndex], [currentReviewIndex]);
   const safeName = (name || "").trim();
 
   useEffect(() => {
     setShowContent(true);
     const d = new Date();
     d.setDate(d.getDate() + 84);
-    setDateString(
-      d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
-    );
+    setDateString(d.toLocaleDateString("en-US", { month: "short", day: "numeric" }));
   }, []);
 
   useEffect(() => {
-    const reviewTimer = setInterval(
-      () => setCurrentReviewIndex((p) => (p + 1) % REVIEWS.length),
-      5000
-    );
+    const reviewTimer = setInterval(() => setCurrentReviewIndex((p) => (p + 1) % REVIEWS.length), 5000);
     return () => clearInterval(reviewTimer);
   }, []);
 
@@ -2344,16 +2239,13 @@ function Step14Paywall() {
         }
 
         const data = await res.json();
-        if (!data?.clientSecret)
-          throw new Error("No clientSecret returned from server.");
+        if (!data?.clientSecret) throw new Error("No clientSecret returned from server.");
         setClientSecret(data.clientSecret);
         // CHANGED: Save customerId
         if (data?.customerId) setCustomerId(data.customerId);
       } catch (err: any) {
         console.error("Stripe init error:", err);
-        alert(
-          `Could not initialize payment: ${err?.message || "Unknown error"}`
-        );
+        alert(`Could not initialize payment: ${err?.message || "Unknown error"}`);
         setIsButtonLoading(false);
         return;
       }
@@ -2403,122 +2295,112 @@ function Step14Paywall() {
 
       {/* Scrollable Content */}
       <div
-        className={`z-10 flex-1 min-h-0 flex flex-col overflow-y-auto overscroll-contain no-scrollbar pt-safe-top pb-48 px-6 md:px-10 transition-all duration-700 ${
+        className={`z-10 flex-1 min-h-0 flex flex-col overflow-y-auto overscroll-contain no-scrollbar pt-safe-top pb-48 px-6 transition-all duration-700 ${
           showContent ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
         }`}
       >
-        <div className="w-full md:max-w-xl lg:max-w-2xl md:mx-auto flex flex-col">
-          {/* Urgent Badge */}
-          <div className="flex justify-center mb-6">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[color:var(--pink)]/30 bg-[color:var(--pink)]/10 backdrop-blur-md shadow-lg">
-              <Activity
-                size={14}
-                className="text-[color:var(--pink)] animate-pulse"
-              />
-              <span className="text-[11px] font-extrabold text-white tracking-widest uppercase">
-                Analysis Complete • High Priority
-              </span>
-            </div>
-          </div>
-
-          {/* HIGH CONVERSION HEADLINE CHANGE */}
-          <h1
-            className="text-[36px] font-extrabold text-white text-center mb-4 leading-[1.05] drop-shadow-xl"
-            style={{ fontFamily: "var(--font-lora)" }}
-          >
-            <span className="text-white/90">
-              {safeName ? `${safeName}, ` : ""}Heal your separation.
+        {/* Urgent Badge */}
+        <div className="flex justify-center mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[color:var(--pink)]/30 bg-[color:var(--pink)]/10 backdrop-blur-md shadow-lg">
+            <Activity size={14} className="text-[color:var(--pink)] animate-pulse" />
+            <span className="text-[11px] font-extrabold text-white tracking-widest uppercase">
+              Analysis Complete • High Priority
             </span>
-            <br />
-            <span className="text-[color:var(--pink)]">Avoid surgery.</span>
-          </h1>
+          </div>
+        </div>
 
-          {/* PAIN-AGITATING SUBHEAD */}
-          <p className="text-center text-white/80 text-[16px] font-medium leading-relaxed mb-8 max-w-xs md:max-w-md lg:max-w-lg mx-auto">
-            Your customized 12-week plan to close your{" "}
-            <span className="text-white font-extrabold border-b border-white/30">
-              {fingerGap ?? "2+"} finger gap
-            </span>{" "}
-            and flatten your stomach.
-          </p>
+        {/* HIGH CONVERSION HEADLINE CHANGE */}
+        <h1
+          className="text-[36px] font-extrabold text-white text-center mb-4 leading-[1.05] drop-shadow-xl"
+          style={{ fontFamily: "var(--font-lora)" }}
+        >
+          <span className="text-white/90">{safeName ? `${safeName}, ` : ""}Heal your separation.</span>
+          <br />
+          <span className="text-[color:var(--pink)]">Avoid surgery.</span>
+        </h1>
 
-          {/* Reviews Section */}
-          <div className="w-full bg-black/20 backdrop-blur-md border border-white/10 rounded-[28px] p-5 flex flex-col items-center gap-4 mb-8">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[20px] font-bold text-white">4.9</span>
-              <div className="flex text-yellow-400 gap-0.5">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={16} fill="currentColor" />
-                ))}
-              </div>
-              <span className="text-[11px] font-bold text-white/50 uppercase ml-1 tracking-wide">
-                Doctor Approved
-              </span>
+        {/* PAIN-AGITATING SUBHEAD */}
+        <p className="text-center text-white/80 text-[16px] font-medium leading-relaxed mb-8 max-w-xs mx-auto">
+          Your customized 12-week plan to close your{" "}
+          <span className="text-white font-extrabold border-b border-white/30">
+            {fingerGap ?? "2+"} finger gap
+          </span>{" "}
+          and flatten your stomach.
+        </p>
+
+        {/* Reviews Section */}
+        <div className="w-full bg-black/20 backdrop-blur-md border border-white/10 rounded-[28px] p-5 flex flex-col items-center gap-4 mb-8">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[20px] font-bold text-white">4.9</span>
+            <div className="flex text-yellow-400 gap-0.5">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} size={16} fill="currentColor" />
+              ))}
             </div>
-
-            <div className="relative w-full h-[100px] flex items-center justify-center">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentReviewIndex}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.4 }}
-                  className="absolute w-full flex flex-col items-center"
-                >
-                  <img
-                    src={displayReview.image}
-                    alt={displayReview.name}
-                    className="w-12 h-12 rounded-full border-2 border-white/20 object-cover shadow-md mb-3"
-                  />
-                  <p className="text-[15px] italic text-white text-center font-medium leading-snug px-4">
-                    "{displayReview.text}"
-                  </p>
-                  <p className="text-[11px] font-bold text-white/40 mt-2 uppercase tracking-wide">
-                    {displayReview.name}
-                  </p>
-                </motion.div>
-              </AnimatePresence>
-            </div>
+            <span className="text-[11px] font-bold text-white/50 uppercase ml-1 tracking-wide">
+              Doctor Approved
+            </span>
           </div>
 
-          {/* Guarantee Accordion */}
-          <div
-            onClick={() => setIsFaqOpen(!isFaqOpen)}
-            className="w-full bg-white/5 rounded-2xl p-4 border border-white/5 backdrop-blur-sm cursor-pointer active:scale-[0.99] transition-transform mb-6"
-          >
-            <div className="flex items-center justify-center gap-2 text-white/80">
-              <span className="text-[13px] font-bold">
-                100% Money-Back Guarantee?
-              </span>
-              {isFaqOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            </div>
-            <div
-              className={`overflow-hidden transition-all duration-300 ${
-                isFaqOpen ? "max-h-20 opacity-100 mt-2" : "max-h-0 opacity-0"
-              }`}
-            >
-              <p className="text-[13px] text-white/50 text-center leading-relaxed px-2">
-                Yes. If you don&apos;t see results in your gap or symptoms,
-                request a full refund in the app settings. No questions asked.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex justify-center items-center gap-3 text-[11px] font-semibold text-white/55">
-              <button
-                onClick={() => setShowRestoreModal(true)}
-                className="underline decoration-white/25 hover:text-white transition-colors"
-                style={{ textDecorationThickness: "2px" }}
+          <div className="relative w-full h-[100px] flex items-center justify-center">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentReviewIndex}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.4 }}
+                className="absolute w-full flex flex-col items-center"
               >
-                Restore Purchase
-              </button>
-              <span>•</span>
-              <span className="cursor-default">Physiotherapist Led</span>
-              <span>•</span>
-              <span className="cursor-default">Medical Grade</span>
-            </div>
+                <img
+                  src={displayReview.image}
+                  alt={displayReview.name}
+                  className="w-12 h-12 rounded-full border-2 border-white/20 object-cover shadow-md mb-3"
+                />
+                <p className="text-[15px] italic text-white text-center font-medium leading-snug px-4">
+                  "{displayReview.text}"
+                </p>
+                <p className="text-[11px] font-bold text-white/40 mt-2 uppercase tracking-wide">
+                  {displayReview.name}
+                </p>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Guarantee Accordion */}
+        <div
+          onClick={() => setIsFaqOpen(!isFaqOpen)}
+          className="w-full bg-white/5 rounded-2xl p-4 border border-white/5 backdrop-blur-sm cursor-pointer active:scale-[0.99] transition-transform mb-6"
+        >
+          <div className="flex items-center justify-center gap-2 text-white/80">
+            <span className="text-[13px] font-bold">100% Money-Back Guarantee?</span>
+            {isFaqOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </div>
+          <div
+            className={`overflow-hidden transition-all duration-300 ${
+              isFaqOpen ? "max-h-20 opacity-100 mt-2" : "max-h-0 opacity-0"
+            }`}
+          >
+            <p className="text-[13px] text-white/50 text-center leading-relaxed px-2">
+              Yes. If you don&apos;t see results in your gap or symptoms, request a full refund in the app settings. No questions asked.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex justify-center items-center gap-3 text-[11px] font-semibold text-white/55">
+            <button
+              onClick={() => setShowRestoreModal(true)}
+              className="underline decoration-white/25 hover:text-white transition-colors"
+              style={{ textDecorationThickness: "2px" }}
+            >
+              Restore Purchase
+            </button>
+            <span>•</span>
+            <span className="cursor-default">Physiotherapist Led</span>
+            <span>•</span>
+            <span className="cursor-default">Medical Grade</span>
           </div>
         </div>
       </div>
@@ -2532,33 +2414,31 @@ function Step14Paywall() {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#1A1A26]/75 via-[#1A1A26]/35 to-transparent" />
 
         <div className="relative pt-4 pb-[calc(env(safe-area-inset-bottom)+5px)]">
-          <div className="w-full md:max-w-xl lg:max-w-2xl md:mx-auto">
-            <button
-              onClick={handleStartPlan}
-              disabled={isButtonLoading}
-              className="w-full h-[60px] rounded-full shadow-[0_0_40px_rgba(225,29,72,0.4)] flex items-center justify-center gap-3 animate-breathe active:scale-[0.98] transition-transform relative overflow-hidden group bg-gradient-to-r from-[color:var(--pink)] to-[#C23A5B]"
-            >
-              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-              {isButtonLoading ? (
-                <Loader2 className="animate-spin text-white" />
-              ) : (
-                <>
-                  <span className="text-[18px] font-extrabold text-white">
-                    Start Fixing My Diastasis Recti
-                  </span>
-                  <ArrowRight className="text-white/80" size={20} />
-                </>
-              )}
-            </button>
+          <button
+            onClick={handleStartPlan}
+            disabled={isButtonLoading}
+            className="w-full h-[60px] rounded-full shadow-[0_0_40px_rgba(225,29,72,0.4)] flex items-center justify-center gap-3 animate-breathe active:scale-[0.98] transition-transform relative overflow-hidden group bg-gradient-to-r from-[color:var(--pink)] to-[#C23A5B]"
+          >
+            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+            {isButtonLoading ? (
+              <Loader2 className="animate-spin text-white" />
+            ) : (
+              <>
+                <span className="text-[18px] font-extrabold text-white">
+                  Start Fixing My Diastasis Recti
+                </span>
+                <ArrowRight className="text-white/80" size={20} />
+              </>
+            )}
+          </button>
 
-            <p className="text-center text-white/60 text-[12px] font-semibold mt-3 leading-snug px-4 drop-shadow-sm">
-              Less than the cost of one physio visit.
-              <br />
-              <span className="text-white/40 text-[11px] font-normal">
-                {getCtaSubtext()} Cancel anytime.
-              </span>
-            </p>
-          </div>
+          <p className="text-center text-white/60 text-[12px] font-semibold mt-3 leading-snug px-4 drop-shadow-sm">
+            Less than the cost of one physio visit.
+            <br />
+            <span className="text-white/40 text-[11px] font-normal">
+              {getCtaSubtext()} Cancel anytime.
+            </span>
+          </p>
         </div>
       </div>
 
@@ -2583,9 +2463,7 @@ function Step14Paywall() {
         </div>
       )}
 
-      {showRestoreModal && (
-        <RestoreModal onClose={() => setShowRestoreModal(false)} />
-      )}
+      {showRestoreModal && <RestoreModal onClose={() => setShowRestoreModal(false)} />}
     </div>
   );
 }
@@ -2619,11 +2497,7 @@ export default function OnboardingWrapper() {
   const setAge = useUserStore((s) => s.setAge);
 
   const [checkedPremium, setCheckedPremium] = useState(false);
-  const [toastState, setToastState] = useState<{
-    show: boolean;
-    msg: string;
-    tone: ToastTone;
-  }>({
+  const [toastState, setToastState] = useState<{ show: boolean; msg: string; tone: ToastTone }>({
     show: false,
     msg: "",
     tone: "info",
@@ -2634,25 +2508,21 @@ export default function OnboardingWrapper() {
   const toastApi: ToastAPI = useMemo(
     () => ({
       show: (tone, message, ms = 3200) => {
-        if (toastTimeoutRef.current)
-          window.clearTimeout(toastTimeoutRef.current);
+        if (toastTimeoutRef.current) window.clearTimeout(toastTimeoutRef.current);
         setToastState({ show: true, tone, msg: message });
         toastTimeoutRef.current = window.setTimeout(() => {
           setToastState((p) => ({ ...p, show: false }));
         }, ms);
       },
       hide: () => {
-        if (toastTimeoutRef.current)
-          window.clearTimeout(toastTimeoutRef.current);
+        if (toastTimeoutRef.current) window.clearTimeout(toastTimeoutRef.current);
         setToastState((p) => ({ ...p, show: false }));
       },
     }),
     []
   );
 
-  const [chat, setChat] = useState<Array<{ from: "mia" | "user"; text: string }>>(
-    []
-  );
+  const [chat, setChat] = useState<Array<{ from: "mia" | "user"; text: string }>>([]);
   const [miaTyping, setMiaTyping] = useState(false);
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
 
@@ -2663,25 +2533,25 @@ export default function OnboardingWrapper() {
   const screen = onboardingStep;
 
   const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
-    // double rAF = wait until layout is fully settled (helps with AnimatePresence)
+  // double rAF = wait until layout is fully settled (helps with AnimatePresence)
+  requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        chatBottomRef.current?.scrollIntoView({ behavior, block: "end" });
-      });
+      chatBottomRef.current?.scrollIntoView({ behavior, block: "end" });
     });
-  };
-  useEffect(() => {
-    if (screen !== 4) return;
+  });
+};
+useEffect(() => {
+  if (screen !== 4) return;
 
-    // 1) immediate pin after mount/layout
-    scrollToBottom("auto");
+  // 1) immediate pin after mount/layout
+  scrollToBottom("auto");
 
-    // 2) pin again after the wheel panel finishes its enter animation (y: 14 → 0)
-    // your motion transition is 0.24s, so 260ms is safe
-    const t = window.setTimeout(() => scrollToBottom("smooth"), 260);
+  // 2) pin again after the wheel panel finishes its enter animation (y: 14 → 0)
+  // your motion transition is 0.24s, so 260ms is safe
+  const t = window.setTimeout(() => scrollToBottom("smooth"), 260);
 
-    return () => window.clearTimeout(t);
-  }, [screen]);
+  return () => window.clearTimeout(t);
+}, [screen]);
 
   useEffect(() => {
     try {
@@ -2729,8 +2599,7 @@ export default function OnboardingWrapper() {
         { from: "mia", text: MIA_M1 },
         { from: "mia", text: MIA_M2 },
       ];
-      if ((name || "").trim().length >= 2)
-        seeded.push({ from: "user", text: name.trim() });
+      if ((name || "").trim().length >= 2) seeded.push({ from: "user", text: name.trim() });
       setChat(seeded);
       scrollToBottom();
     }
@@ -2741,9 +2610,7 @@ export default function OnboardingWrapper() {
     const q = miaAgeQuestion(safeName);
 
     // Dependency fix: update the guard phrase to match the new copy
-    const alreadyAsked = chat.some(
-      (m) => m.from === "mia" && m.text.includes(AGE_PROMPT_ANCHOR)
-    );
+    const alreadyAsked = chat.some((m) => m.from === "mia" && m.text.includes(AGE_PROMPT_ANCHOR));
     if (alreadyAsked) {
       askedAgeRef.current = true;
       return;
@@ -2823,455 +2690,440 @@ export default function OnboardingWrapper() {
   const showTopProgress = screen >= 2 && screen <= 11;
 
   return (
-    <main className="fixed inset-0 w-full h-[100dvh] min-h-0 flex flex-col bg-[color:var(--navy)] overflow-hidden md:p-8 md:items-center md:justify-center">
-      {/* DESKTOP FRAME (mobile unchanged) */}
-      <div className="relative w-full h-full min-h-0 overflow-hidden md:max-w-[720px] md:h-[calc(100dvh-64px)] md:max-h-[920px] md:rounded-[44px] md:border md:border-white/12 md:shadow-[0_40px_120px_rgba(0,0,0,0.65)]">
-        {/* Background Layer */}
-        <div className="absolute inset-0 z-0">
-          <div className="clinical-noise absolute inset-0 opacity-100 mix-blend-overlay" />
-          {showButterfliesStrong && <ButterflyBackground />}
-          {showButterfliesSoft && (
-            <div className="absolute inset-0 pointer-events-none opacity-[0.22] blur-[0.6px]">
-              <ButterflyBackground />
+    <main className="fixed inset-0 w-full h-[100dvh] min-h-0 flex flex-col bg-[color:var(--navy)] overflow-hidden">
+      {/* Background Layer */}
+      <div className="absolute inset-0 z-0">
+        <div className="clinical-noise absolute inset-0 opacity-100 mix-blend-overlay" />
+        {showButterfliesStrong && <ButterflyBackground />}
+        {showButterfliesSoft && (
+          <div className="absolute inset-0 pointer-events-none opacity-[0.22] blur-[0.6px]">
+            <ButterflyBackground />
+          </div>
+        )}
+      </div>
+
+      <Toast
+        show={toastState.show}
+        message={toastState.msg}
+        tone={toastState.tone}
+        onClose={() => toastApi.hide()}
+      />
+
+      {/* Main Content Layer - Flex Column */}
+      <div className="relative z-10 flex-1 min-h-0 flex flex-col h-full overflow-hidden">
+        {/* FIXED HEADER: Progress Bar */}
+        {showTopProgress ? (
+          <div className="shrink-0 pt-safe-top">
+            <div className="h-[60px]">
+              <ProgressBar step={Math.min(TOTAL_STEPS, screen)} total={TOTAL_STEPS} />
             </div>
-          )}
-        </div>
+          </div>
+        ) : null}
 
-        <Toast
-          show={toastState.show}
-          message={toastState.msg}
-          tone={toastState.tone}
-          onClose={() => toastApi.hide()}
-        />
+        {/* SCROLLABLE BODY */}
+        <div className="flex-1 min-h-0 relative overflow-hidden flex flex-col">
+          <AnimatePresence mode="wait">
+            {/* Screen 1 */}
+            {screen === 1 && (
+              <motion.section
+                key="welcome"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 min-h-0 flex flex-col h-full px-6 pb-6 pt-safe-top"
+              >
+                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain no-scrollbar flex flex-col items-center pt-8">
+                  <div className="w-full max-w-md flex flex-col items-center">
+                    <div className="mb-10">
+                      <Logo />
+                    </div>
 
-        {/* Main Content Layer - Flex Column */}
-        <div className="relative z-10 flex-1 min-h-0 flex flex-col h-full overflow-hidden">
-          {/* FIXED HEADER: Progress Bar */}
-          {showTopProgress ? (
-            <div className="shrink-0 pt-safe-top">
-              <div className="h-[60px]">
-                <ProgressBar
-                  step={Math.min(TOTAL_STEPS, screen)}
-                  total={TOTAL_STEPS}
-                />
-              </div>
-            </div>
-          ) : null}
+                    <h1
+                      className="text-center text-[34px] leading-[1.08] font-extrabold text-white drop-shadow-sm"
+                      style={{ fontFamily: "var(--font-lora)" }}
+                    >
+                      Heal Your Abdominal Separation.
+                      <br />
+                      Without Surgery.
+                    </h1>
 
-          {/* SCROLLABLE BODY */}
-          <div className="flex-1 min-h-0 relative overflow-hidden flex flex-col">
-            <AnimatePresence mode="wait">
-              {/* Screen 1 */}
-              {screen === 1 && (
-                <motion.section
-                  key="welcome"
-                  initial={{ opacity: 0, x: 22 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -22 }}
-                  transition={{ duration: 0.38, ease: "easeOut" }}
-                  className="flex-1 min-h-0 flex flex-col h-full px-6 md:px-10 pb-6 pt-safe-top"
-                >
-                  <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain no-scrollbar flex flex-col items-center pt-8">
-                    <div className="w-full max-w-md md:max-w-lg lg:max-w-xl flex flex-col items-center">
-                      <div className="mb-10">
-                        <Logo />
+                    <p className="text-center text-white/70 mt-4 text-[15px] leading-relaxed max-w-sm">
+                      The only clinically adaptive plan designed to close Diastasis Recti gaps of{" "}
+                      <span className="text-white font-semibold">2+ fingers</span>.
+                    </p>
+
+                    <div className="w-full mt-10 rounded-3xl border border-white/15 bg-white/8 backdrop-blur-xl shadow-soft p-5">
+                      <div className="flex flex-col gap-4">
+                        <Benefit
+                          icon={<Stethoscope className="text-white" size={22} />}
+                          title="Medical-Grade Assessment"
+                          sub="Clinical logic + immediate personalized flags."
+                        />
+                        <Benefit
+                          icon={<Ban className="text-white" size={22} />}
+                          title="Pressure-safe approach"
+                          sub="Avoids movements that increase doming and strain."
+                        />
+                        <Benefit
+                          icon={<Sparkles className="text-white" size={22} />}
+                          title="Visible Results in 12 Weeks"
+                          sub="Short daily sessions with step-by-step progression."
+                        />
                       </div>
+                    </div>
 
+                    <div className="mt-6 text-center text-white/55 text-xs font-semibold pb-6">
+                      Physiotherapist Led • Surgically-Alternative • Medical-Grade Safety
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-auto shrink-0 pt-4 w-full max-w-md mx-auto">
+                  <button
+                    onClick={() => goTo(2)}
+                    className={[
+                      "w-full h-14 rounded-full font-extrabold text-[17px]",
+                      "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)]",
+                      "active:scale-[0.985] transition-transform",
+                      "animate-breathe",
+                    ].join(" ")}
+                  >
+                    Start My Assessment
+                  </button>
+                </div>
+              </motion.section>
+            )}
+
+            {/* Screen 2 */}
+            {screen === 2 && (
+              <motion.section
+                key="visual"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 min-h-0 flex flex-col h-full px-6 pb-6"
+              >
+                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain no-scrollbar">
+                  <div className="w-full max-w-md mx-auto flex flex-col pt-4">
+                    <div className="mt-2">
                       <h1
-                        className="text-center text-[34px] leading-[1.08] font-extrabold text-white drop-shadow-sm"
+                        className="text-[28px] leading-[1.12] font-extrabold text-white"
                         style={{ fontFamily: "var(--font-lora)" }}
                       >
-                        Heal Your Abdominal Separation.
+                        Abdominal pattern check.
                         <br />
-                        Without Surgery.
+                        Which looks most like you?
                       </h1>
-
-                      <p className="text-center text-white/70 mt-4 text-[15px] leading-relaxed max-w-sm">
-                        The only clinically adaptive plan designed to close
-                        Diastasis Recti gaps of{" "}
-                        <span className="text-white font-semibold">
-                          2+ fingers
-                        </span>
-                        .
+                      <p className="text-white/65 mt-3 text-[14px] leading-relaxed">
+                        Choose the closest match. This helps us start with the right plan.
                       </p>
+                    </div>
 
-                      <div className="w-full mt-10 rounded-3xl border border-white/15 bg-white/8 backdrop-blur-xl shadow-soft p-5">
-                        <div className="flex flex-col gap-4">
-                          <Benefit
-                            icon={<Stethoscope className="text-white" size={22} />}
-                            title="Medical-Grade Assessment"
-                            sub="Clinical logic + immediate personalized flags."
-                          />
-                          <Benefit
-                            icon={<Ban className="text-white" size={22} />}
-                            title="Pressure-safe approach"
-                            sub="Avoids movements that increase doming and strain."
-                          />
-                          <Benefit
-                            icon={<Sparkles className="text-white" size={22} />}
-                            title="Visible Results in 12 Weeks"
-                            sub="Short daily sessions with step-by-step progression."
-                          />
-                        </div>
-                      </div>
+                    <div className="mt-7 flex flex-col gap-4 pb-4">
+                      <VisualCard
+                        id="pooch"
+                        title="Lower abdominal bulge"
+                        subtitle="Bulge sits lower, often worse by evening."
+                        selected={visualShape === "pooch"}
+                        onSelect={() => {
+                          setVisualShape("pooch");
+                          toastApi.hide();
+                        }}
+                      />
+                      <VisualCard
+                        id="gap"
+                        title="Midline separation"
+                        subtitle="A line, trench, or soft gap down the center."
+                        selected={visualShape === "gap"}
+                        onSelect={() => {
+                          setVisualShape("gap");
+                          toastApi.hide();
+                        }}
+                      />
+                      <VisualCard
+                        id="cone"
+                        title="Doming / coning"
+                        subtitle="Abdomen rises like a ridge when you sit up."
+                        selected={visualShape === "cone"}
+                        onSelect={() => {
+                          setVisualShape("cone");
+                          toastApi.show(
+                            "warning",
+                            "Doming suggests low core tension. We’ll focus on pressure control first.",
+                            5200
+                          );
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
 
-                      <div className="mt-6 text-center text-white/55 text-xs font-semibold pb-6">
-                        Physiotherapist Led • Surgically-Alternative • Medical-Grade Safety
-                      </div>
+                <div className="mt-auto shrink-0 pt-4 w-full max-w-md mx-auto">
+                  <button
+                    onClick={() => goTo(3)}
+                    disabled={!visualShape}
+                    className={[
+                      "w-full h-14 rounded-full font-extrabold text-[17px] transition-all",
+                      visualShape
+                        ? "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)] active:scale-[0.985]"
+                        : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed",
+                    ].join(" ")}
+                  >
+                    Continue
+                  </button>
+                </div>
+              </motion.section>
+            )}
+
+            {/* Screens 3–4 (ONE continuous chat screen) */}
+            {(screen === 3 || screen === 4) && (
+              <motion.section
+                key="chat"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 min-h-0 flex flex-col h-full px-5"
+              >
+                <div className="w-full max-w-md mx-auto flex flex-col h-full min-h-0">
+                  <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain no-scrollbar pr-1 flex flex-col justify-start pb-4 pt-4">
+                    <div>
+                      {chat.map((m, idx) => (
+                        <ChatBubble key={idx} from={m.from}>
+                          {m.text}
+                        </ChatBubble>
+                      ))}
+                      {miaTyping && <ChatBubble from="mia" typing />}
+                      <div ref={chatBottomRef} className="h-1" />
                     </div>
                   </div>
 
-                  <div className="mt-auto shrink-0 pt-4 w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto">
-                    <button
-                      onClick={() => goTo(2)}
-                      className={[
-                        "w-full h-14 rounded-full font-extrabold text-[17px]",
-                        "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)]",
-                        "active:scale-[0.985] transition-transform",
-                        "animate-breathe",
-                      ].join(" ")}
-                    >
-                      Start My Assessment
-                    </button>
-                  </div>
-                </motion.section>
-              )}
-
-              {/* Screen 2 */}
-              {screen === 2 && (
-                <motion.section
-                  key="visual"
-                  initial={{ opacity: 0, x: 22 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -22 }}
-                  transition={{ duration: 0.38, ease: "easeOut" }}
-                  className="flex-1 min-h-0 flex flex-col h-full px-6 md:px-10 pb-6"
-                >
-                  <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain no-scrollbar">
-                    <div className="w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto flex flex-col pt-4">
-                      <div className="mt-2">
-                        <h1
-                          className="text-[28px] leading-[1.12] font-extrabold text-white"
-                          style={{ fontFamily: "var(--font-lora)" }}
+                  <div className="shrink-0 pb-safe-bottom mb-4 pt-2">
+                    <AnimatePresence mode="wait">
+                      {screen === 3 && (
+                        <motion.div
+                          key="nameBox"
+                          initial={{ opacity: 0, y: 14 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 14 }}
+                          transition={{ duration: 0.24 }}
+                          className="rounded-[28px] border border-white/12 bg-white/8 backdrop-blur-xl shadow-soft p-4"
                         >
-                          Abdominal pattern check.
-                          <br />
-                          Which looks most like you?
-                        </h1>
-                        <p className="text-white/65 mt-3 text-[14px] leading-relaxed">
-                          Choose the closest match. This helps us start with the right plan.
-                        </p>
-                      </div>
+                          <div className="text-white/60 text-xs font-semibold mb-2">
+                            Your name (for your assessment record)
+                          </div>
 
-                      <div className="mt-7 flex flex-col gap-4 pb-4">
-                        <VisualCard
-                          id="pooch"
-                          title="Lower abdominal bulge"
-                          subtitle="Bulge sits lower, often worse by evening."
-                          selected={visualShape === "pooch"}
-                          onSelect={() => {
-                            setVisualShape("pooch");
-                            toastApi.hide();
-                          }}
-                        />
-                        <VisualCard
-                          id="gap"
-                          title="Midline separation"
-                          subtitle="A line, trench, or soft gap down the center."
-                          selected={visualShape === "gap"}
-                          onSelect={() => {
-                            setVisualShape("gap");
-                            toastApi.hide();
-                          }}
-                        />
-                        <VisualCard
-                          id="cone"
-                          title="Doming / coning"
-                          subtitle="Abdomen rises like a ridge when you sit up."
-                          selected={visualShape === "cone"}
-                          onSelect={() => {
-                            setVisualShape("cone");
-                            toastApi.show(
-                              "warning",
-                              "Doming suggests low core tension. We’ll focus on pressure control first.",
-                              5200
-                            );
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
+                          <input
+                            value={inputName}
+                            onChange={(e) => setInputName(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && submitName()}
+                            placeholder="Type your name..."
+                            className={[
+                              "w-full h-14 rounded-2xl px-4",
+                              "bg-black/20 border border-white/10",
+                              "text-white text-[18px] font-extrabold",
+                              "placeholder:text-white/30",
+                              "focus:outline-none focus:border-[color:var(--pink)]",
+                            ].join(" ")}
+                            autoFocus
+                          />
 
-                  <div className="mt-auto shrink-0 pt-4 w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto">
-                    <button
-                      onClick={() => goTo(3)}
-                      disabled={!visualShape}
-                      className={[
-                        "w-full h-14 rounded-full font-extrabold text-[17px] transition-all",
-                        visualShape
-                          ? "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)] active:scale-[0.985]"
-                          : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed",
-                      ].join(" ")}
-                    >
-                      Continue
-                    </button>
-                  </div>
-                </motion.section>
-              )}
-
-              {/* Screens 3–4 (ONE continuous chat screen) */}
-              {(screen === 3 || screen === 4) && (
-                <motion.section
-                  key="chat"
-                  initial={{ opacity: 0, x: 22 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -22 }}
-                  transition={{ duration: 0.38, ease: "easeOut" }}
-                  className="flex-1 min-h-0 flex flex-col h-full px-5 md:px-10"
-                >
-                  <div className="w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto flex flex-col h-full min-h-0">
-                    <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain no-scrollbar pr-1 flex flex-col justify-start pb-4 pt-4">
-                      <div>
-                        {chat.map((m, idx) => (
-                          <ChatBubble key={idx} from={m.from}>
-                            {m.text}
-                          </ChatBubble>
-                        ))}
-                        {miaTyping && <ChatBubble from="mia" typing />}
-                        <div ref={chatBottomRef} className="h-1" />
-                      </div>
-                    </div>
-
-                    <div className="shrink-0 pb-safe-bottom mb-4 pt-2">
-                      <AnimatePresence mode="wait">
-                        {screen === 3 && (
-                          <motion.div
-                            key="nameBox"
-                            initial={{ opacity: 0, y: 14 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 14 }}
-                            transition={{ duration: 0.24 }}
-                            className="rounded-[28px] border border-white/12 bg-white/8 backdrop-blur-xl shadow-soft p-4"
+                          <button
+                            onClick={submitName}
+                            disabled={inputName.trim().length < 2}
+                            className={[
+                              "mt-3 w-full rounded-full font-extrabold text-[16px] transition-all",
+                              inputName.trim().length >= 2
+                                ? "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)] active:scale-[0.985]"
+                                : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed",
+                            ].join(" ")}
+                            style={{ height: 52 }}
                           >
-                            <div className="text-white/60 text-xs font-semibold mb-2">
-                              Your name (for your assessment record)
+                            Continue
+                          </button>
+                        </motion.div>
+                      )}
+
+                      {screen === 4 && (
+                        <motion.div
+                          key="ageBox"
+                          initial={{ opacity: 0, y: 14 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 14 }}
+                          transition={{ duration: 0.24 }}
+                          className="bg-white rounded-t-[34px] rounded-b-[24px] shadow-[0_-16px_60px_rgba(0,0,0,0.35)] p-5 pb-6"
+                        >
+                          <div className="text-center">
+                            <div className="text-slate-900 font-extrabold text-[18px]">
+                              Select your age
                             </div>
+                            <div className="text-slate-500 text-[13px] font-semibold mt-1">
+                              This helps us tailor tissue recovery pacing.
+                            </div>
+                          </div>
 
-                            <input
-                              value={inputName}
-                              onChange={(e) => setInputName(e.target.value)}
-                              onKeyDown={(e) => e.key === "Enter" && submitName()}
-                              placeholder="Type your name..."
-                              className={[
-                                "w-full h-14 rounded-2xl px-4",
-                                "bg-black/20 border border-white/10",
-                                "text-white text-[18px] font-extrabold",
-                                "placeholder:text-white/30",
-                                "focus:outline-none focus:border-[color:var(--pink)]",
-                              ].join(" ")}
-                              autoFocus
-                            />
+                          <WheelPicker min={18} max={70} value={ageValue} onChange={setAgeValue} />
 
-                            <button
-                              onClick={submitName}
-                              disabled={inputName.trim().length < 2}
-                              className={[
-                                "mt-3 w-full rounded-full font-extrabold text-[16px] transition-all",
-                                inputName.trim().length >= 2
-                                  ? "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)] active:scale-[0.985]"
-                                  : "bg-white/10 text-white/35 border border-white/10 cursor-not-allowed",
-                              ].join(" ")}
-                              style={{ height: 52 }}
-                            >
-                              Continue
-                            </button>
-                          </motion.div>
-                        )}
-
-                        {screen === 4 && (
-                          <motion.div
-                            key="ageBox"
-                            initial={{ opacity: 0, y: 14 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 14 }}
-                            transition={{ duration: 0.24 }}
-                            className="bg-white rounded-t-[34px] rounded-b-[24px] shadow-[0_-16px_60px_rgba(0,0,0,0.35)] p-5 pb-6"
+                          <button
+                            onClick={submitAge}
+                            className="mt-4 w-full h-14 rounded-full bg-[color:var(--pink)] text-white font-extrabold text-[17px] shadow-[0_18px_50px_rgba(230,84,115,0.30)] active:scale-[0.985] transition-transform"
                           >
-                            <div className="text-center">
-                              <div className="text-slate-900 font-extrabold text-[18px]">
-                                Select your age
-                              </div>
-                              <div className="text-slate-500 text-[13px] font-semibold mt-1">
-                                This helps us tailor tissue recovery pacing.
-                              </div>
-                            </div>
+                            Next
+                          </button>
 
-                            <WheelPicker
-                              min={18}
-                              max={70}
-                              value={ageValue}
-                              onChange={setAgeValue}
-                            />
-
-                            <button
-                              onClick={submitAge}
-                              className="mt-4 w-full h-14 rounded-full bg-[color:var(--pink)] text-white font-extrabold text-[17px] shadow-[0_18px_50px_rgba(230,84,115,0.30)] active:scale-[0.985] transition-transform"
-                            >
-                              Next
-                            </button>
-
-                            <div className="mt-3 text-center text-slate-400 text-[11px] font-semibold">
-                              Saved instantly • You can leave and resume anytime
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
+                          <div className="mt-3 text-center text-slate-400 text-[11px] font-semibold">
+                            Saved instantly • You can leave and resume anytime
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
-                </motion.section>
-              )}
+                </div>
+              </motion.section>
+            )}
 
-              {/* Screen 5 */}
-              {screen === 5 && (
-                <motion.section
-                  key="s5"
-                  initial={{ opacity: 0, x: 22 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -22 }}
-                  transition={{ duration: 0.38, ease: "easeOut" }}
-                  className="flex-1 min-h-0 flex flex-col h-full"
-                >
-                  <Step05FingerTest onBack={() => goTo(4)} onNext={() => goTo(6)} toast={toastApi} />
-                </motion.section>
-              )}
+            {/* Screen 5 */}
+            {screen === 5 && (
+              <motion.section
+                key="s5"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 min-h-0 flex flex-col h-full"
+              >
+                <Step05FingerTest onBack={() => goTo(4)} onNext={() => goTo(6)} toast={toastApi} />
+              </motion.section>
+            )}
 
-              {/* Screen 6 */}
-              {screen === 6 && (
-                <motion.section
-                  key="s6"
-                  initial={{ opacity: 0, x: 22 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -22 }}
-                  transition={{ duration: 0.38, ease: "easeOut" }}
-                  className="flex-1 min-h-0 flex flex-col h-full"
-                >
-                  <Step06TissueDepth onBack={() => goTo(5)} onNext={() => goTo(7)} toast={toastApi} />
-                </motion.section>
-              )}
+            {/* Screen 6 */}
+            {screen === 6 && (
+              <motion.section
+                key="s6"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 min-h-0 flex flex-col h-full"
+              >
+                <Step06TissueDepth onBack={() => goTo(5)} onNext={() => goTo(7)} toast={toastApi} />
+              </motion.section>
+            )}
 
-              {/* Screen 7 */}
-              {screen === 7 && (
-                <motion.section
-                  key="s7"
-                  initial={{ opacity: 0, x: 22 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -22 }}
-                  transition={{ duration: 0.38, ease: "easeOut" }}
-                  className="flex-1 min-h-0 flex flex-col h-full"
-                >
-                  <Step07SabotageCheck onBack={() => goTo(6)} onNext={() => goTo(8)} toast={toastApi} />
-                </motion.section>
-              )}
+            {/* Screen 7 */}
+            {screen === 7 && (
+              <motion.section
+                key="s7"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 min-h-0 flex flex-col h-full"
+              >
+                <Step07SabotageCheck onBack={() => goTo(6)} onNext={() => goTo(8)} toast={toastApi} />
+              </motion.section>
+            )}
 
-              {/* Screen 8 */}
-              {screen === 8 && (
-                <motion.section
-                  key="s8"
-                  initial={{ opacity: 0, x: 22 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -22 }}
-                  transition={{ duration: 0.38, ease: "easeOut" }}
-                  className="flex-1 min-h-0 flex flex-col h-full"
-                >
-                  <Step08Symptoms onBack={() => goTo(7)} onNext={() => goTo(9)} toast={toastApi} />
-                </motion.section>
-              )}
+            {/* Screen 8 */}
+            {screen === 8 && (
+              <motion.section
+                key="s8"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 min-h-0 flex flex-col h-full"
+              >
+                <Step08Symptoms onBack={() => goTo(7)} onNext={() => goTo(9)} toast={toastApi} />
+              </motion.section>
+            )}
 
-              {/* Screen 9 */}
-              {screen === 9 && (
-                <motion.section
-                  key="s9"
-                  initial={{ opacity: 0, x: 22 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -22 }}
-                  transition={{ duration: 0.38, ease: "easeOut" }}
-                  className="flex-1 min-h-0 flex flex-col h-full"
-                >
-                  <Step09Timeline onBack={() => goTo(8)} onNext={() => goTo(10)} toast={toastApi} />
-                </motion.section>
-              )}
+            {/* Screen 9 */}
+            {screen === 9 && (
+              <motion.section
+                key="s9"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 min-h-0 flex flex-col h-full"
+              >
+                <Step09Timeline onBack={() => goTo(8)} onNext={() => goTo(10)} toast={toastApi} />
+              </motion.section>
+            )}
 
-              {/* Screen 10 */}
-              {screen === 10 && (
-                <motion.section
-                  key="s10"
-                  initial={{ opacity: 0, x: 22 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -22 }}
-                  transition={{ duration: 0.38, ease: "easeOut" }}
-                  className="flex-1 min-h-0 flex flex-col h-full"
-                >
-                  <Step10Navel onBack={() => goTo(9)} onNext={() => goTo(11)} toast={toastApi} />
-                </motion.section>
-              )}
+            {/* Screen 10 */}
+            {screen === 10 && (
+              <motion.section
+                key="s10"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 min-h-0 flex flex-col h-full"
+              >
+                <Step10Navel onBack={() => goTo(9)} onNext={() => goTo(11)} toast={toastApi} />
+              </motion.section>
+            )}
 
-              {/* Screen 11 */}
-              {screen === 11 && (
-                <motion.section
-                  key="s11"
-                  initial={{ opacity: 0, x: 22 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -22 }}
-                  transition={{ duration: 0.38, ease: "easeOut" }}
-                  className="flex-1 min-h-0 flex flex-col h-full"
-                >
-                  <Step11Commitment onBack={() => goTo(10)} onNext={() => goTo(12)} toast={toastApi} />
-                </motion.section>
-              )}
+            {/* Screen 11 */}
+            {screen === 11 && (
+              <motion.section
+                key="s11"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 min-h-0 flex flex-col h-full"
+              >
+                <Step11Commitment onBack={() => goTo(10)} onNext={() => goTo(12)} toast={toastApi} />
+              </motion.section>
+            )}
 
-              {/* Screen 12 */}
-              {screen === 12 && (
-                <motion.section
-                  key="s12"
-                  initial={{ opacity: 0, x: 22 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -22 }}
-                  transition={{ duration: 0.38, ease: "easeOut" }}
-                  className="flex-1 min-h-0 h-full pt-safe-top"
-                >
-                  <Step12Analysis onDone={() => goTo(13)} />
-                </motion.section>
-              )}
+            {/* Screen 12 */}
+            {screen === 12 && (
+              <motion.section
+                key="s12"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 min-h-0 h-full pt-safe-top"
+              >
+                <Step12Analysis onDone={() => goTo(13)} />
+              </motion.section>
+            )}
 
-              {/* Screen 13 */}
-              {screen === 13 && (
-                <motion.section
-                  key="s13"
-                  initial={{ opacity: 0, x: 22 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -22 }}
-                  transition={{ duration: 0.38, ease: "easeOut" }}
-                  className="flex-1 min-h-0 flex flex-col h-full pt-safe-top"
-                >
-                  <Step13PlanReveal onBack={() => goTo(12)} onNext={() => goTo(14)} />
-                </motion.section>
-              )}
+            {/* Screen 13 */}
+            {screen === 13 && (
+              <motion.section
+                key="s13"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 min-h-0 flex flex-col h-full pt-safe-top"
+              >
+                <Step13PlanReveal onBack={() => goTo(12)} onNext={() => goTo(14)} />
+              </motion.section>
+            )}
 
-              {/* Screen 14 */}
-              {screen === 14 && (
-                <motion.section
-                  key="s14"
-                  initial={{ opacity: 0, x: 22 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -22 }}
-                  transition={{ duration: 0.38, ease: "easeOut" }}
-                  className="flex-1 min-h-0 h-full"
-                >
-                  <Step14Paywall />
-                </motion.section>
-              )}
-            </AnimatePresence>
-          </div>
+            {/* Screen 14 */}
+            {screen === 14 && (
+              <motion.section
+                key="s14"
+                initial={{ opacity: 0, x: 22 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -22 }}
+                transition={{ duration: 0.38, ease: "easeOut" }}
+                className="flex-1 min-h-0 h-full"
+              >
+                <Step14Paywall />
+              </motion.section>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </main>
