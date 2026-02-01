@@ -82,7 +82,7 @@ function Logo() {
   return (
     <div className="flex flex-col items-center justify-center text-center">
       <img
-        src="/logoo.png"
+        src="/logo.png"
         alt="Fix Diastasis Recti"
         className="w-16 h-16 object-contain drop-shadow mb-3"
         onError={(e) => {
