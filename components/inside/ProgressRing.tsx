@@ -2,94 +2,80 @@
 
 import React, { useMemo } from "react";
 
-type ProgressRingProps = {
-  pct: number; // 0..100
-  labelTop: React.ReactNode;
-  labelBottom?: React.ReactNode;
-  center?: React.ReactNode;
-
-  // ✅ NEW: lets Dashboard put "Why" next to "Tap to start"
-  labelTopRight?: React.ReactNode;
-
-  className?: string;
-};
-
 export default function ProgressRing({
   pct,
   labelTop,
   labelBottom,
-  center,
   labelTopRight,
-  className = "",
-}: ProgressRingProps) {
-  const clamped = useMemo(() => Math.max(0, Math.min(100, Number(pct) || 0)), [pct]);
+  center,
+}: {
+  pct: number; // 0..100
+  labelTop: string;
+  labelBottom?: string;
+  labelTopRight?: React.ReactNode;
+  center?: React.ReactNode;
+}) {
+  const clamped = useMemo(() => Math.max(0, Math.min(100, Number.isFinite(pct) ? pct : 0)), [pct]);
 
-  const size = 168;
-  const stroke = 10;
+  const size = 228;
+  const stroke = 14;
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const dash = (clamped / 100) * c;
-  const gap = c - dash;
 
   return (
-    <div className={["w-full", className].join(" ")}>
-      {/* Top row (label + optional right pill) */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="text-white font-extrabold text-[14px]">{labelTop}</div>
+    <div className="w-full">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-white font-extrabold text-[15px] leading-tight break-words">
+            {labelTop}
+          </div>
+          {labelBottom ? (
+            <div className="mt-1 text-white/55 text-[12px] font-semibold leading-snug break-words">
+              {labelBottom}
+            </div>
+          ) : null}
+        </div>
+
         {labelTopRight ? <div className="shrink-0">{labelTopRight}</div> : null}
       </div>
 
-      {/* Ring */}
-      <div className="mt-3 flex items-center justify-center">
-        <div className="relative">
-          <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="block">
-            {/* track */}
+      <div className="mt-4 w-full flex justify-center">
+        <div className="relative" style={{ width: size, height: size }}>
+          <svg width={size} height={size} className="absolute inset-0 pointer-events-none">
             <circle
               cx={size / 2}
               cy={size / 2}
               r={r}
               stroke="rgba(255,255,255,0.10)"
               strokeWidth={stroke}
-              fill="transparent"
+              fill="none"
             />
-
-            {/* progress */}
             <circle
               cx={size / 2}
               cy={size / 2}
               r={r}
               stroke="rgba(230,84,115,0.95)"
               strokeWidth={stroke}
-              fill="transparent"
               strokeLinecap="round"
+              fill="none"
+              strokeDasharray={`${dash} ${c - dash}`}
               transform={`rotate(-90 ${size / 2} ${size / 2})`}
-              strokeDasharray={`${dash} ${gap}`}
-              style={{ transition: "stroke-dasharray 260ms ease-out" }}
+              style={{ transition: "stroke-dasharray 300ms ease" }}
             />
           </svg>
 
-          {/* Center content */}
           <div className="absolute inset-0 flex items-center justify-center">
             {center ? (
               center
             ) : (
-              <div className="text-center">
-                <div className="text-white font-extrabold text-[22px] tabular-nums">
-                  {Math.round(clamped)}%
-                </div>
-                <div className="text-white/45 text-[11px] font-semibold">Progress</div>
+              <div className="text-white font-extrabold text-[18px] tabular-nums">
+                {Math.round(clamped)}%
               </div>
             )}
           </div>
         </div>
       </div>
-
-      {/* Bottom helper text */}
-      {labelBottom ? (
-        <div className="mt-3 text-white/55 text-[12px] font-semibold leading-relaxed">
-          {labelBottom}
-        </div>
-      ) : null}
     </div>
   );
 }
