@@ -554,10 +554,6 @@ function HabitLearnSheet({
                   Close
                 </button>
               </div>
-
-              <div className="mt-3 text-white/40 text-[11px] font-semibold leading-relaxed">
-                Low pressure today = faster healing tomorrow.
-              </div>
             </div>
           </motion.div>
         </motion.div>
