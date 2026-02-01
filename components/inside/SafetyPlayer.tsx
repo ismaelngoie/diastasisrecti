@@ -25,10 +25,12 @@ import { useUserStore } from "@/lib/store/useUserStore";
 function BreathingPacer() {
   return (
     <div className="absolute top-[calc(env(safe-area-inset-top)+10px)] left-4 z-20" aria-hidden="true">
-      <div className="text-white/60 text-[10px] font-extrabold tracking-widest uppercase mb-2">Exhale on Effort</div>
+      <div className="text-white/60 text-[10px] font-extrabold tracking-widest uppercase mb-2">
+        Exhale on Effort
+      </div>
       <div className="relative w-12 h-12">
         <div className="absolute inset-0 rounded-full bg-white/8 border border-white/10" />
-        <div className="absolute inset-0 rounded-full bg-[color:var(--pink)]/25 animate-[pacer_10s_ease-in-out_infinite]" />
+        <div className="absolute inset-0 rounded-full bg-pink-brand/25 animate-[pacer_10s_ease-in-out_infinite]" />
         <style>{`
           @keyframes pacer {
             0% { transform: scale(0.72); opacity: 0.65; }
@@ -92,7 +94,6 @@ function getBufferedEnd01(v: HTMLVideoElement, duration: number) {
   const b = v.buffered;
   if (!b || b.length === 0) return 0;
 
-  // choose the furthest buffered end
   let end = 0;
   for (let i = 0; i < b.length; i++) {
     try {
@@ -102,17 +103,15 @@ function getBufferedEnd01(v: HTMLVideoElement, duration: number) {
   return clamp01(end / duration);
 }
 
-function StatePill({
-  isBuffering,
-  isPlaying,
-}: {
-  isBuffering: boolean;
-  isPlaying: boolean;
-}) {
+function StatePill({ isBuffering, isPlaying }: { isBuffering: boolean; isPlaying: boolean }) {
   const label = isBuffering ? "Buffering" : isPlaying ? "Playing" : "Paused";
   return (
     <div className="inline-flex items-center gap-2 px-3 h-7 rounded-full border border-white/10 bg-white/6">
-      {isBuffering ? <Loader2 size={14} className="text-white/70 animate-spin" /> : <div className="w-2 h-2 rounded-full bg-white/25" />}
+      {isBuffering ? (
+        <Loader2 size={14} className="text-white/70 animate-spin" />
+      ) : (
+        <div className="w-2 h-2 rounded-full bg-white/25" />
+      )}
       <span className="text-white/60 text-[10px] font-extrabold tracking-[0.18em] uppercase">{label}</span>
     </div>
   );
@@ -152,14 +151,12 @@ function ProgressBar({
   const onPointerDown = (e: React.PointerEvent) => {
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     setScrubbing(true);
-    const p = computePctFromClientX(e.clientX);
-    setScrub01(p);
+    setScrub01(computePctFromClientX(e.clientX));
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
     if (!scrubbing) return;
-    const p = computePctFromClientX(e.clientX);
-    setScrub01(p);
+    setScrub01(computePctFromClientX(e.clientX));
   };
 
   const onPointerUp = (e: React.PointerEvent) => {
@@ -204,24 +201,18 @@ function ProgressBar({
         onPointerCancel={() => setScrubbing(false)}
       >
         {/* buffered */}
-        <div
-          className="absolute inset-y-0 left-0 bg-white/12"
-          style={{ width: `${buffered01 * 100}%` }}
-          aria-hidden="true"
-        />
+        <div className="absolute inset-y-0 left-0 bg-white/12" style={{ width: `${buffered01 * 100}%` }} />
 
-        {/* progress */}
+        {/* progress (FIXED: now uses your Tailwind color) */}
         <div
-          className="absolute inset-y-0 left-0 bg-[color:var(--pink)] transition-[width] duration-150"
+          className="absolute inset-y-0 left-0 bg-pink-brand transition-[width] duration-150"
           style={{ width: `${pct * 100}%` }}
-          aria-hidden="true"
         />
 
         {/* thumb */}
         <motion.div
           className="absolute top-1/2 -translate-y-1/2"
           style={{ left: `${pct * 100}%` }}
-          aria-hidden="true"
           animate={{ scale: scrubbing ? 1.08 : 1 }}
           transition={{ duration: 0.12 }}
         >
@@ -238,7 +229,6 @@ function ProgressBar({
               transition={{ duration: 0.14, ease: "easeOut" }}
               className="absolute -top-10"
               style={{ left: `${pct * 100}%` }}
-              aria-hidden="true"
             >
               <div className="px-3 h-8 rounded-full border border-white/12 bg-black/60 backdrop-blur-xl text-white/85 text-[12px] font-extrabold flex items-center -translate-x-1/2">
                 {bubbleTime}
@@ -294,7 +284,6 @@ export default function SafetyPlayer({
   const [index, setIndex] = useState(initialIndex);
   const [repeatMode, setRepeatMode] = useState<RepeatMode>("all");
 
-  // ✅ premium playback state (reliable)
   const [isPlaying, setIsPlaying] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
   const [isSeeking, setIsSeeking] = useState(false);
@@ -308,7 +297,6 @@ export default function SafetyPlayer({
 
   const [playbackRate, setPlaybackRate] = useState<0.75 | 1 | 1.25>(1);
 
-  // refs for stable event handlers
   const repeatModeRef = useRef<RepeatMode>("all");
   const indexRef = useRef<number>(0);
   const poolRef = useRef<VideoItem[]>(pool);
@@ -319,15 +307,12 @@ export default function SafetyPlayer({
   useEffect(() => {
     repeatModeRef.current = repeatMode;
   }, [repeatMode]);
-
   useEffect(() => {
     indexRef.current = index;
   }, [index]);
-
   useEffect(() => {
     poolRef.current = pool;
   }, [pool]);
-
   useEffect(() => {
     isPlayingRef.current = isPlaying;
   }, [isPlaying]);
@@ -339,15 +324,12 @@ export default function SafetyPlayer({
   const url = currentItem?.url || initialUrl;
   const currentTitle = currentItem?.title || title || "Exercise";
 
-  // mount/portal
   useEffect(() => setMounted(true), []);
 
-  // Keep index synced if initialUrl changes
   useEffect(() => {
     setIndex(initialIndex);
   }, [initialIndex]);
 
-  // Lock background scroll while open
   useEffect(() => {
     const body = document.body;
     const prevOverflow = body.style.overflow;
@@ -363,7 +345,6 @@ export default function SafetyPlayer({
     };
   }, []);
 
-  // Focus management (mostly for desktop)
   useEffect(() => {
     lastFocusRef.current = document.activeElement as HTMLElement | null;
     closeBtnRef.current?.focus();
@@ -383,21 +364,13 @@ export default function SafetyPlayer({
     onClose();
   }, [onClose]);
 
-  // ESC handling
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
-      if (showPainModal) {
-        setShowPainModal(false);
-        return;
-      }
-      if (showList) {
-        setShowList(false);
-        return;
-      }
+      if (showPainModal) return setShowPainModal(false);
+      if (showList) return setShowList(false);
       handleClose();
     };
-
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [showPainModal, showList, handleClose]);
@@ -421,7 +394,6 @@ export default function SafetyPlayer({
     }
   };
 
-  // ✅ RAF loop (smooth + reliable progress)
   const rafRef = useRef<number | null>(null);
 
   const stopRAF = useCallback(() => {
@@ -436,28 +408,20 @@ export default function SafetyPlayer({
     const d = Number.isFinite(v.duration) ? v.duration : 0;
     const t = Number.isFinite(v.currentTime) ? v.currentTime : 0;
 
-    // duration & time
     setDuration(d);
     setCurrentTime(t);
-
-    // buffer
     setBuffered01(getBufferedEnd01(v, d));
 
-    // buffering heuristics
     const buffering =
-      !v.paused &&
-      (v.readyState < 3 || (Number.isFinite(v.playbackRate) && v.playbackRate > 0 && v.seeking));
+      !v.paused && (v.readyState < 3 || (Number.isFinite(v.playbackRate) && v.playbackRate > 0 && v.seeking));
     setIsBuffering(buffering);
 
-    // play state (fallback if events miss)
     setIsPlaying(!v.paused && !v.ended);
 
-    // drive ring/graph fill (never decreases)
     const pct = hasFiredStartedRef.current ? 100 : Math.min(100, (t / 5) * 100);
     peakPctRef.current = Math.max(peakPctRef.current, pct);
     onProgressPct?.(peakPctRef.current);
 
-    // internal “counted” milestone (hidden)
     if (!hasFiredStartedRef.current && t >= 5) {
       hasFiredStartedRef.current = true;
       peakPctRef.current = 100;
@@ -475,7 +439,6 @@ export default function SafetyPlayer({
     rafRef.current = requestAnimationFrame(tick);
   }, [stopRAF, syncFromVideo]);
 
-  // Attach core media listeners ONCE (stable, no dependency weirdness)
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
@@ -485,11 +448,7 @@ export default function SafetyPlayer({
       syncFromVideo();
     };
 
-    const onTime = () => {
-      // keep in sync even if RAF is off
-      syncFromVideo();
-    };
-
+    const onTime = () => syncFromVideo();
     const onDurationChange = () => syncFromVideo();
     const onProgress = () => syncFromVideo();
 
@@ -512,9 +471,7 @@ export default function SafetyPlayer({
       syncFromVideo();
     };
 
-    const onWaiting = () => {
-      setIsBuffering(true);
-    };
+    const onWaiting = () => setIsBuffering(true);
 
     const onSeeking = () => setIsSeeking(true);
     const onSeeked = () => {
@@ -530,8 +487,6 @@ export default function SafetyPlayer({
       const rm = repeatModeRef.current;
       const poolNow = poolRef.current;
       const i = indexRef.current;
-
-      if (!v) return;
 
       if (rm === "one") {
         wantPlayRef.current = true;
@@ -567,7 +522,6 @@ export default function SafetyPlayer({
     v.addEventListener("seeked", onSeeked);
     v.addEventListener("ended", onEnded);
 
-    // initial sync
     syncFromVideo();
 
     return () => {
@@ -586,7 +540,6 @@ export default function SafetyPlayer({
     };
   }, [startRAF, stopRAF, syncFromVideo]);
 
-  // Load new video on url change, keep play intent
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
@@ -596,15 +549,12 @@ export default function SafetyPlayer({
     setDuration(0);
     setBuffered01(0);
 
-    // apply playback rate every time
     v.playbackRate = playbackRate;
 
     try {
-      // force reload
       v.load();
     } catch {}
 
-    // If user intended to play (or was playing), resume automatically
     requestAnimationFrame(() => {
       if (!v) return;
       if (!wantPlayRef.current) {
@@ -628,7 +578,6 @@ export default function SafetyPlayer({
     const v = videoRef.current;
     if (!v) return;
 
-    // ✅ optimistic UI (immediate millionaire feel)
     if (v.paused || v.ended) {
       wantPlayRef.current = true;
       setIsPlaying(true);
@@ -649,7 +598,6 @@ export default function SafetyPlayer({
       return;
     }
 
-    // pause
     wantPlayRef.current = false;
     try {
       v.pause();
@@ -662,29 +610,26 @@ export default function SafetyPlayer({
   const seekTo01 = (pct01: number) => {
     const v = videoRef.current;
     if (!v || !duration) return;
-
-    const t = Math.max(0, Math.min(duration, pct01 * duration));
-    v.currentTime = t;
+    v.currentTime = Math.max(0, Math.min(duration, pct01 * duration));
     syncFromVideo();
   };
 
   const skip = (delta: number) => {
     const v = videoRef.current;
     if (!v) return;
-    const t = Math.max(0, (v.currentTime || 0) + delta);
-    v.currentTime = t;
+    v.currentTime = Math.max(0, (v.currentTime || 0) + delta);
     syncFromVideo();
   };
 
   const prev = () => {
     if (pool.length <= 1) return;
-    wantPlayRef.current = isPlayingRef.current; // keep intent
+    wantPlayRef.current = isPlayingRef.current;
     setIndex((i) => Math.max(0, i - 1));
   };
 
   const next = () => {
     if (pool.length <= 1) return;
-    wantPlayRef.current = isPlayingRef.current; // keep intent
+    wantPlayRef.current = isPlayingRef.current;
     setIndex((i) => Math.min(pool.length - 1, i + 1));
   };
 
@@ -746,17 +691,6 @@ export default function SafetyPlayer({
     return { index: nextUpIndex, title: item.title || "Next exercise" };
   }, [nextUpIndex, pool]);
 
-  // NOTE: if user scrubs, pause then resume if it was playing
-  const onSeekTo01 = (pct01: number) => {
-    const v = videoRef.current;
-    if (!v || !duration) return;
-
-    // (optional premium: pause while scrubbing—handled by ProgressBar, but we support resume)
-    if (isSeeking) return;
-    v.currentTime = Math.max(0, Math.min(duration, pct01 * duration));
-    syncFromVideo();
-  };
-
   if (!mounted) return null;
 
   const ui = (
@@ -811,7 +745,6 @@ export default function SafetyPlayer({
           <BreathingPacer />
           <FormGuardToast />
 
-          {/* Optional premium overlay when paused */}
           <AnimatePresence>
             {!isPlaying && !showList && !showPainModal && (
               <motion.div
@@ -839,11 +772,7 @@ export default function SafetyPlayer({
             playsInline
             preload="metadata"
             className="w-full h-full bg-black object-contain"
-            // keep state even if browser misses events:
-            onClick={() => {
-              // optional: tapping video toggles play (very Apple-like)
-              togglePlay();
-            }}
+            onClick={togglePlay}
           />
         </div>
 
@@ -855,7 +784,6 @@ export default function SafetyPlayer({
             "sm:p-4",
           ].join(" ")}
         >
-          {/* Up next */}
           {nextUp && (
             <button
               type="button"
@@ -863,11 +791,7 @@ export default function SafetyPlayer({
                 wantPlayRef.current = isPlayingRef.current;
                 setIndex(nextUp.index);
               }}
-              className={[
-                "w-full rounded-2xl border border-white/12 bg-white/6 backdrop-blur-xl",
-                "px-4 py-3 text-left",
-                "active:scale-[0.99] transition-transform",
-              ].join(" ")}
+              className="w-full rounded-2xl border border-white/12 bg-white/6 backdrop-blur-xl px-4 py-3 text-left active:scale-[0.99] transition-transform"
               aria-label={`Up next: ${nextUp.title}. Tap to skip.`}
             >
               <div className="flex items-center justify-between gap-3">
@@ -884,14 +808,12 @@ export default function SafetyPlayer({
             </button>
           )}
 
-          {/* ✅ premium progress bar (smooth + scrub + buffered) */}
           <ProgressBar
             progress01={progress01}
             buffered01={buffered01}
             currentTime={currentTime}
             duration={duration}
             onSeekTo01={(p01) => {
-              // pause while scrubbing, resume if needed
               const v = videoRef.current;
               if (!v || !duration) return;
 
@@ -920,7 +842,6 @@ export default function SafetyPlayer({
             }}
           />
 
-          {/* transport */}
           <div className="mt-3 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <button
@@ -949,7 +870,7 @@ export default function SafetyPlayer({
                 type="button"
                 onClick={togglePlay}
                 whileTap={{ scale: 0.985 }}
-                className="w-12 h-12 rounded-2xl bg-[color:var(--pink)] text-white flex items-center justify-center shadow-[0_18px_60px_rgba(230,84,115,0.22)]"
+                className="w-12 h-12 rounded-2xl bg-pink-brand text-white flex items-center justify-center shadow-[0_18px_60px_rgba(230,84,115,0.22)]"
                 aria-label={isPlaying ? "Pause" : "Play"}
               >
                 <AnimatePresence mode="wait" initial={false}>
@@ -1001,7 +922,6 @@ export default function SafetyPlayer({
             </div>
 
             <div className="flex items-center gap-2">
-              {/* speed control (premium) */}
               <button
                 type="button"
                 onClick={cycleSpeed}
@@ -1013,7 +933,6 @@ export default function SafetyPlayer({
                 <span className="text-[11px] font-extrabold tracking-[0.18em] uppercase">{playbackRate}x</span>
               </button>
 
-              {/* repeat */}
               <button
                 type="button"
                 onClick={cycleRepeat}
@@ -1027,7 +946,6 @@ export default function SafetyPlayer({
             </div>
           </div>
 
-          {/* pain button */}
           <button
             onClick={onPain}
             type="button"
@@ -1055,10 +973,7 @@ export default function SafetyPlayer({
           >
             <motion.div
               onClick={(e) => e.stopPropagation()}
-              className={[
-                "w-full sm:max-w-md rounded-t-3xl border border-white/12 bg-[#0F0F17] p-4",
-                "shadow-[0_40px_120px_rgba(0,0,0,0.75)]",
-              ].join(" ")}
+              className="w-full sm:max-w-md rounded-t-3xl border border-white/12 bg-[#0F0F17] p-4 shadow-[0_40px_120px_rgba(0,0,0,0.75)]"
               initial={{ y: 18, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 18, opacity: 0 }}
@@ -1084,13 +999,13 @@ export default function SafetyPlayer({
                       key={`${v.url}-${i}`}
                       type="button"
                       onClick={() => {
-                        wantPlayRef.current = isPlayingRef.current; // keep intent
+                        wantPlayRef.current = isPlayingRef.current;
                         setIndex(i);
                         setShowList(false);
                       }}
                       className={[
                         "w-full text-left rounded-2xl border px-4 py-3 mt-2",
-                        active ? "border-[color:var(--pink)]/30 bg-[color:var(--pink)]/10" : "border-white/10 bg-black/20",
+                        active ? "border-pink-brand/30 bg-pink-brand/10" : "border-white/10 bg-black/20",
                       ].join(" ")}
                     >
                       <div className="text-white/90 text-[13px] font-extrabold truncate">
@@ -1137,7 +1052,7 @@ export default function SafetyPlayer({
               <button
                 onClick={doSwap}
                 type="button"
-                className="mt-5 w-full h-12 rounded-full bg-[color:var(--pink)] text-white font-extrabold shadow-[0_18px_60px_rgba(230,84,115,0.25)] active:scale-[0.985] transition-transform"
+                className="mt-5 w-full h-12 rounded-full bg-pink-brand text-white font-extrabold shadow-[0_18px_60px_rgba(230,84,115,0.25)] active:scale-[0.985] transition-transform"
               >
                 Switch Now
               </button>
