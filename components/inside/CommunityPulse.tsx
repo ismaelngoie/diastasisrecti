@@ -59,16 +59,28 @@ export default function CommunityPulse({
   if (activeMemberCount <= 5) return null;
 
   return (
-    <div className={["flex items-center gap-2 mt-1", className].join(" ")}>
+    <div
+      className={[
+        // ✅ allow wrapping + prevent overflow on tiny screens
+        "mt-1 w-full min-w-0",
+        "flex items-start gap-2",
+        className,
+      ].join(" ")}
+    >
       {/* Live dot */}
-      <div className="relative w-[14px] h-[14px] shrink-0">
+      <div className="relative w-[14px] h-[14px] shrink-0 mt-[2px]">
         <div className="absolute inset-0 rounded-full bg-green-500/30 animate-[pulseDot_1.5s_ease-out_infinite]" />
         <div className="absolute left-1/2 top-1/2 w-[8px] h-[8px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-green-500" />
       </div>
 
-      <div className="text-white/55 text-[12px] font-semibold truncate">
-        Live: <span className="text-white/70 tabular-nums">{activeMemberCount}</span> members{" "}
-        {actionPhrase} right now
+      {/* ✅ NO truncate. Wrap nicely on all sizes. */}
+      <div className="min-w-0 flex-1 text-white/55 text-[12px] font-semibold leading-snug">
+        <span className="whitespace-nowrap">
+          Live:{" "}
+          <span className="text-white/70 tabular-nums">{activeMemberCount}</span>{" "}
+          members
+        </span>{" "}
+        <span className="break-words">{actionPhrase} right now</span>
       </div>
 
       <style>{`
