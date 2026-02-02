@@ -2082,7 +2082,7 @@ const CheckoutForm = ({
 
   const getStripeSubtext = () => {
     if (!dateString) return "";
-    return `Feel real progress by ${dateString}. If not, one tap full $24.99 refund.`;
+    return `Feel real progress by ${dateString}. If not, one tap full $14.99 refund.`;
   };
 
   const paymentElementOptions: StripePaymentElementOptions = {
@@ -2113,7 +2113,7 @@ const CheckoutForm = ({
           Join 10,243+ women fixing their Diastasis Recti
         </h3>
         <p className="text-sm text-white/50 font-medium">
-          Total due: $24.99 / month
+          Total due: $14.99 / month
         </p>
       </div>
 
