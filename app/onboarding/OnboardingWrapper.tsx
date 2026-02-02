@@ -559,14 +559,14 @@ function WheelPicker({
   };
 
   return (
-    <div className="relative h-[220px] w-full max-w-[340px] mx-auto overflow-hidden mt-1">
+    <div className="relative h-[160px] w-full max-w-[340px] mx-auto overflow-hidden mt-1">
       <div className="absolute top-1/2 left-0 w-full h-[54px] -translate-y-1/2 border-t-2 border-b-2 border-[color:var(--pink)]/10 bg-[color:var(--pink)]/5 pointer-events-none z-10" />
       <div className="absolute top-0 left-0 w-full h-[80px] bg-gradient-to-b from-white via-white/90 to-transparent z-20 pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-full h-[80px] bg-gradient-to-t from-white via-white/90 to-transparent z-20 pointer-events-none" />
       <div
         ref={scrollerRef}
         onScroll={handleScroll}
-        className="h-full w-full overflow-y-scroll overscroll-contain snap-y snap-mandatory no-scrollbar py-[83px]"
+        className="h-full w-full overflow-y-scroll overscroll-contain snap-y snap-mandatory no-scrollbar py-[53px]"
       >
         {range.map((num) => (
           <div
