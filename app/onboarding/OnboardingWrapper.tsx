@@ -78,6 +78,18 @@ export type ToastAPI = {
 // HELPER COMPONENTS
 // ==========================================
 
+// --- NEW SWIFT REVIEWS DATA ---
+const SWIFT_REVIEWS = [
+  { text: "Closed my 4-finger gap in 9 weeks. No surgery.", author: "Sarah, 34" },
+  { text: "The 'coning' when I sit up is finally gone.", author: "Jessica, 29" },
+  { text: "My stomach looks flat again. I feel like me.", author: "Emily, 31" },
+  { text: "Lower back pain vanished once my core reconnected.", author: "Michelle, 38" },
+  { text: "I can lift my toddler without fear now.", author: "Priya, 33" },
+  { text: "Better than my in-person physio visits.", author: "Olivia, 28" },
+  { text: "Gap went from 3 fingers to closed. Truly magic.", author: "Dana, 42" },
+  { text: "Finally, a plan that is safe for my hernia.", author: "Rachel, 36" },
+];
+
 function Logo() {
   return (
     <div className="flex flex-col items-center justify-center text-center">
@@ -2660,7 +2672,31 @@ export default function OnboardingWrapper() {
   const [ageValue, setAgeValue] = useState<number>(storedAge || 30);
   const askedAgeRef = useRef(false);
 
+  // --- NEW STATE FOR WELCOME SCREEN ---
+  const [welcomeCount, setWelcomeCount] = useState(10243);
+  const [reviewIndex, setReviewIndex] = useState(0);
+
   const screen = onboardingStep;
+
+  // Effect 1: Live Counter (Increments like Swift code)
+  useEffect(() => {
+    if (onboardingStep !== 1) return;
+    const timer = setInterval(() => {
+      setWelcomeCount((prev) => prev + 1);
+    }, 50); // 0.05s interval matching Swift
+    return () => clearInterval(timer);
+  }, [onboardingStep]);
+
+  // Effect 2: Review Ticker Auto-Rotation (Every 4s)
+  useEffect(() => {
+    if (onboardingStep !== 1) return;
+    const timer = setInterval(() => {
+      setReviewIndex((prev) => (prev + 1) % SWIFT_REVIEWS.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [onboardingStep]);
+
+  const currentReview = SWIFT_REVIEWS[reviewIndex];
 
   const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
     // double rAF = wait until layout is fully settled (helps with AnimatePresence)
@@ -2869,7 +2905,7 @@ export default function OnboardingWrapper() {
           {/* SCROLLABLE BODY */}
           <div className="flex-1 min-h-0 relative overflow-hidden flex flex-col">
             <AnimatePresence mode="wait">
-              {/* Screen 1 */}
+              {/* Screen 1: Welcome (Updated to match Swift) */}
               {screen === 1 && (
                 <motion.section
                   key="welcome"
@@ -2877,34 +2913,40 @@ export default function OnboardingWrapper() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -22 }}
                   transition={{ duration: 0.38, ease: "easeOut" }}
-                  className="flex-1 min-h-0 flex flex-col h-full px-6 md:px-10 pb-6 pt-safe-top"
+                  className="flex-1 min-h-0 flex flex-col h-full px-6 md:px-10 pb-8 pt-safe-top"
                 >
                   <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain no-scrollbar flex flex-col items-center pt-8">
                     <div className="w-full max-w-md md:max-w-lg lg:max-w-xl flex flex-col items-center">
-                      <div className="mb-10">
+                      
+                      {/* Logo Section */}
+                      <div className="mb-8">
                         <Logo />
                       </div>
 
+                      {/* Headlines */}
                       <h1
-                        className="text-center text-[34px] leading-[1.08] font-extrabold text-white drop-shadow-sm"
+                        className="text-center text-[34px] leading-[1.2] font-extrabold text-white drop-shadow-sm"
                         style={{ fontFamily: "var(--font-lora)" }}
                       >
                         Heal Your Abdominal Separation.
                         <br />
-                        Without Surgery.
+                        <span className="text-[color:var(--pink)]">
+                          Without Surgery.
+                        </span>
                       </h1>
 
-                      <p className="text-center text-white/70 mt-4 text-[15px] leading-relaxed max-w-sm">
+                      <p className="text-center text-white/75 mt-4 text-[15px] leading-relaxed max-w-sm px-4">
                         The only clinically adaptive plan designed to close
                         Diastasis Recti gaps of{" "}
-                        <span className="text-white font-semibold">
+                        <span className="text-white font-bold">
                           2+ fingers
                         </span>
                         .
                       </p>
 
-                      <div className="w-full mt-10 rounded-3xl border border-white/15 bg-white/8 backdrop-blur-xl shadow-soft p-5">
-                        <div className="flex flex-col gap-4">
+                      {/* Benefits Box */}
+                      <div className="w-full mt-8 rounded-3xl border border-white/15 bg-white/5 backdrop-blur-xl shadow-soft p-6">
+                        <div className="flex flex-col gap-5">
                           <Benefit
                             icon={<Stethoscope className="text-white" size={22} />}
                             title="Medical-Grade Assessment"
@@ -2913,7 +2955,7 @@ export default function OnboardingWrapper() {
                           <Benefit
                             icon={<Ban className="text-white" size={22} />}
                             title="Pressure-safe approach"
-                            sub="Avoids movements that increase doming and strain."
+                            sub="Avoids movements that increase doming."
                           />
                           <Benefit
                             icon={<Sparkles className="text-white" size={22} />}
@@ -2922,25 +2964,50 @@ export default function OnboardingWrapper() {
                           />
                         </div>
                       </div>
-
-                      <div className="mt-6 text-center text-white/55 text-xs font-semibold pb-6">
-                        Physiotherapist Led • Surgically-Alternative • Medical-Grade Safety
-                      </div>
                     </div>
                   </div>
 
-                  <div className="mt-auto shrink-0 pt-4 w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto">
+                  {/* Footer Area: Reviews -> Button -> Counter */}
+                  <div className="mt-auto shrink-0 pt-6 w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto flex flex-col items-center">
+                    
+                    {/* Sliding Review Ticker (Matches Swift) */}
+                    <div className="h-[50px] w-full flex items-center justify-center mb-4 relative overflow-hidden">
+                      <AnimatePresence mode="wait">
+                        <motion.div
+                          key={reviewIndex}
+                          initial={{ opacity: 0, y: 20 }} // Enter from bottom
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}   // Exit to top
+                          transition={{ duration: 0.4, ease: "backOut" }}
+                          className="absolute w-full px-2"
+                        >
+                          <p className="text-[13px] text-center text-white/80 leading-snug italic font-medium">
+                            “{currentReview.text}”
+                            <span className="text-white/50 not-italic font-bold ml-1.5">
+                              – {currentReview.author}
+                            </span>
+                          </p>
+                        </motion.div>
+                      </AnimatePresence>
+                    </div>
+
+                    {/* Main CTA Button */}
                     <button
                       onClick={() => goTo(2)}
                       className={[
                         "w-full h-14 rounded-full font-extrabold text-[17px]",
                         "bg-[color:var(--pink)] text-white shadow-[0_18px_50px_rgba(230,84,115,0.35)]",
                         "active:scale-[0.985] transition-transform",
-                        "animate-breathe",
+                        "animate-breathe relative z-20",
                       ].join(" ")}
                     >
                       Start My Assessment
                     </button>
+
+                    {/* Live Counter (Moved below button) */}
+                    <div className="mt-4 text-[13px] font-medium text-white/60">
+                      Join <span className="text-white font-bold tabular-nums">{welcomeCount.toLocaleString()}</span>+ women fixing their Diastasis Recti
+                    </div>
                   </div>
                 </motion.section>
               )}
