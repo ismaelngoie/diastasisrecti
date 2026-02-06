@@ -20,5 +20,5 @@
     <p>In accordance with Apple’s guidelines, you can delete your account and data directly within the app settings at any time.</p>
 
     <h3>5. Contact</h3>
-    <p>For support regarding your privacy, email <strong>support@diastafix.com</strong>.</p>
+    <p>For support regarding your privacy, email <strong>contact@diastafix.com</strong>.</p>
 </section>
