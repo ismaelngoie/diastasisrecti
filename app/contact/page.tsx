@@ -36,7 +36,7 @@ export default function ContactUs() {
       </div>
 
       <div style={{ marginTop: '40px', fontSize: '14px', color: 'rgba(255, 255, 255, 0.4)' }}>
-        <p>DiastaFix | 6806 S Elementa St, Tampa, FL 33616</p>
+        <p>DiastaFix | © All right reserved.</p>
       </div>
     </section>
   );
