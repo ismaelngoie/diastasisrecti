@@ -2439,10 +2439,10 @@ function Step14Paywall() {
             style={{ fontFamily: "var(--font-lora)" }}
           >
             <span className="text-white/90">
-              {safeName ? `${safeName}, ` : ""}ready to fix your diastasis recti? 100% Money-Back Guarantee.
+              {safeName ? `${safeName}, ` : ""}Ready to fix your Diastasis Recti?
             </span>
             <br />
-            <span className="text-[color:var(--pink)]">Avoid surgery.</span>
+            <span className="text-[color:var(--pink)]">100% Money-Back Guarantee.</span>
           </h1>
 
           {/* PAIN-AGITATING SUBHEAD */}
