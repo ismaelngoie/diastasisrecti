@@ -2501,7 +2501,7 @@ function Step14Paywall() {
           >
             <div className="flex items-center justify-center gap-2 text-white/80">
               <span className="text-[13px] font-bold">
-                100% Money-Back Guarantee?
+                How do I get my money back?
               </span>
               {isFaqOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
             </div>
@@ -2511,8 +2511,7 @@ function Step14Paywall() {
               }`}
             >
               <p className="text-[13px] text-white/50 text-center leading-relaxed px-2">
-                Yes. If you don&apos;t see results in your gap or symptoms,
-                request a full refund in the app settings. No questions asked.
+                Tap “Refund” in Settings → “Billing” → Done.
               </p>
             </div>
           </div>
