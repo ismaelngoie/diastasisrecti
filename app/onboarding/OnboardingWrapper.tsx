@@ -2564,7 +2564,7 @@ function Step14Paywall() {
             </button>
 
             <p className="text-center text-white/60 text-[12px] font-semibold mt-3 leading-snug px-4 drop-shadow-sm">
-              "Fix your diastasis by ${dateString}. If not, one tap full $4.99 refund.
+              Fix your diastasis by ${dateString}. If not, one tap full $4.99 refund.
               <br />
               <span className="text-white/40 text-[11px] font-normal">
                 {getCtaSubtext()} Cancel anytime.
