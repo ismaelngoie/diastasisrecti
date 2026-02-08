@@ -2439,7 +2439,7 @@ function Step14Paywall() {
             style={{ fontFamily: "var(--font-lora)" }}
           >
             <span className="text-white/90">
-              {safeName ? `${safeName}, ` : ""}Heal your separation.
+              {safeName ? `${safeName}, ` : ""}ready to fix your diastasis recti? 100% Money-Back Guarantee.
             </span>
             <br />
             <span className="text-[color:var(--pink)]">Avoid surgery.</span>
