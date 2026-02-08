@@ -2124,6 +2124,9 @@ const CheckoutForm = ({
         >
           Join 10,243+ women fixing their Diastasis Recti
         </h3>
+        <p className="text-sm text-white/50 font-medium">
+          Total due: $4.99 / month
+        </p>
       </div>
 
       <div className="flex flex-col gap-4">
@@ -2150,6 +2153,12 @@ const CheckoutForm = ({
       >
         {isLoading ? <Loader2 className="animate-spin" /> : "Start My Healing"}
       </button>
+
+      <div className="flex items-center justify-center gap-2 mt-4 text-white/30 text-[11px] font-semibold">
+        <p className="text-center text-white/70 text-[12px] font-semibold mt-3 leading-snug px-4 drop-shadow-sm">
+          {getStripeSubtext()}
+        </p>
+      </div>
 
       <p className="text-center text-white/30 text-[11px] font-semibold mt-3">
         <Lock size={12} />
@@ -2430,10 +2439,10 @@ function Step14Paywall() {
             style={{ fontFamily: "var(--font-lora)" }}
           >
             <span className="text-white/90">
-              {safeName ? `${safeName}, ` : ""}Ready to fix your Diastasis Recti?
+              {safeName ? `${safeName}, ` : ""}Heal your separation.
             </span>
             <br />
-            <span className="text-[color:var(--pink)]">100% Money-Back Guarantee.</span>
+            <span className="text-[color:var(--pink)]">Avoid surgery.</span>
           </h1>
 
           {/* PAIN-AGITATING SUBHEAD */}
