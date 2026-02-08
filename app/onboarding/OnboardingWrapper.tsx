@@ -2270,122 +2270,213 @@ const RestoreModal = ({ onClose }: { onClose: () => void }) => {
   );
 };
 
+// ==========================================
+// PAYWALL DATA & HELPERS
+// ==========================================
+
+const PAYWALL_REVIEWS = [
+  {
+    name: "Sarah W.",
+    text: "I closed my 3-finger gap in 9 weeks. No surgery.",
+    image: "/review9.png",
+  },
+  {
+    name: "Michelle T.",
+    text: "The 'coning' stopped after 12 days. Finally safe.",
+    image: "/review1.png",
+  },
+  {
+    name: "Chloe N.",
+    text: "My back pain vanished when my core reconnected.",
+    image: "/review5.png",
+  },
+  {
+    name: "Olivia G.",
+    text: "Better than my $150 physio visits. Truly.",
+    image: "/review4.png",
+  },
+  {
+    name: "Jess P.",
+    text: "I can lift my baby without fear now.",
+    image: "/review2.png",
+  },
+];
+
+const PAYWALL_FEATURES = [
+  { icon: "brain", text: "AI coach that adapts daily" },
+  { icon: "timer", text: "5-minute personalized routines" },
+  { icon: "play", text: "300+ physio-approved videos" },
+  { icon: "chart", text: "Trackable progress & streaks" },
+];
+
+// --- FEATURE SHOWCASE COMPONENT ---
+function FeaturesShowcase() {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIndex((prev) => (prev + 1) % PAYWALL_FEATURES.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const feature = PAYWALL_FEATURES[index];
+
+  return (
+    <div className="w-full">
+      <h3 className="text-center text-white/90 text-[17px] font-extrabold mb-4">
+        Your Personalized Plan Includes:
+      </h3>
+      
+      {/* Glass Container */}
+      <div className="relative w-full h-[140px] rounded-[20px] bg-white/5 border border-white/10 overflow-hidden">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={index}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="absolute inset-0 flex flex-col items-center justify-center p-5"
+          >
+            {/* Dynamic Icon based on string key */}
+            <div className="mb-3">
+              {feature.icon === "brain" && <BrainIcon />}
+              {feature.icon === "timer" && <TimerIcon />}
+              {feature.icon === "play" && <PlayIcon />}
+              {feature.icon === "chart" && <ChartIcon />}
+            </div>
+            
+            <p className="text-white text-[16px] font-semibold text-center leading-snug">
+              {feature.text}
+            </p>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* Progress Bars */}
+      <div className="flex gap-1.5 mt-4 px-12 h-1 justify-center">
+        {PAYWALL_FEATURES.map((_, i) => (
+          <div key={i} className="flex-1 h-full rounded-full bg-white/20 overflow-hidden">
+            {i === index && (
+              <motion.div
+                className="h-full bg-white/80"
+                initial={{ width: "0%" }}
+                animate={{ width: "100%" }}
+                transition={{ duration: 4, ease: "linear" }}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// --- ICONS WITH GRADIENT ---
+// Helper to apply the specific Pink-to-Purple gradient
+const GradientSVG = ({ children }: { children: React.ReactNode }) => (
+  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="url(#brandGradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <defs>
+      <linearGradient id="brandGradient" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stopColor="#FF3B61" />
+        <stop offset="100%" stopColor="#D959E8" />
+      </linearGradient>
+    </defs>
+    {children}
+  </svg>
+);
+
+const BrainIcon = () => <GradientSVG><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></GradientSVG>;
+const TimerIcon = () => <GradientSVG><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></GradientSVG>;
+const PlayIcon = () => <GradientSVG><rect width="20" height="16" x="2" y="4" rx="4"/><path d="m10 8 6 4-6 4V8Z"/></GradientSVG>;
+const ChartIcon = () => <GradientSVG><path d="m3 3 3 3"/><path d="M12 7v10"/><path d="M16 10v7"/><path d="M20 3v14"/><path d="M8 10v7"/><path d="M4 14v3"/></GradientSVG>;
+
+
+// ==========================================
+// STEP 14 COMPONENT
+// ==========================================
+
 function Step14Paywall() {
   const { name } = useUserData();
   const fingerGap = useUserStore((s) => s.fingerGap);
+  const safeName = (name || "").trim();
 
+  // State
   const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
-  const [userCount, setUserCount] = useState(10150);
-  const [showContent, setShowContent] = useState(false);
-  const [videoLoaded, setVideoLoaded] = useState(false);
   const [isFaqOpen, setIsFaqOpen] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
+  const [showContent, setShowContent] = useState(false);
+  
+  // Payment State
   const [clientSecret, setClientSecret] = useState("");
-  // CHANGED: Added customerId state
   const [customerId, setCustomerId] = useState("");
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [showRestoreModal, setShowRestoreModal] = useState(false);
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const [dateString, setDateString] = useState("");
 
-  const displayReview = useMemo(
-    () => REVIEWS[currentReviewIndex],
-    [currentReviewIndex]
-  );
-  const safeName = (name || "").trim();
+  const displayReview = PAYWALL_REVIEWS[currentReviewIndex];
 
+  // Lifecycle
   useEffect(() => {
-    setShowContent(true);
+    // Fade in content on mount
+    setTimeout(() => setShowContent(true), 100);
+    
+    // Set Guarantee Date (12 weeks / 84 days out)
     const d = new Date();
-    d.setDate(d.getDate() + 14);
-    setDateString(
-      d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
-    );
+    d.setDate(d.getDate() + 84);
+    setDateString(d.toLocaleDateString("en-US", { month: "short", day: "numeric" }));
   }, []);
 
+  // Review Rotator
   useEffect(() => {
-    const reviewTimer = setInterval(
-      () => setCurrentReviewIndex((p) => (p + 1) % REVIEWS.length),
-      5000
-    );
-    return () => clearInterval(reviewTimer);
-  }, []);
-
-  useEffect(() => {
-    if (!showContent) return;
-    let start = 10150;
     const timer = setInterval(() => {
-      start += 2;
-      if (start >= 10243) {
-        setUserCount(10243);
-        clearInterval(timer);
-      } else setUserCount(start);
-    }, 50);
+      setCurrentReviewIndex((prev) => (prev + 1) % PAYWALL_REVIEWS.length);
+    }, 5000);
     return () => clearInterval(timer);
-  }, [showContent]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    REVIEW_IMAGES.forEach((src) => {
-      const img = new Image();
-      img.src = src;
-    });
   }, []);
 
+  // Stripe Logic
   const handleStartPlan = async () => {
     setIsButtonLoading(true);
-
     if (!clientSecret) {
       try {
         const res = await fetch("/api/create-payment-intent", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
         });
-
-        if (!res.ok) {
-          const txt = await res.text();
-          throw new Error(`Server error (${res.status}): ${txt}`);
-        }
-
+        if (!res.ok) throw new Error("Server error");
         const data = await res.json();
-        if (!data?.clientSecret)
-          throw new Error("No clientSecret returned from server.");
-        setClientSecret(data.clientSecret);
-        // CHANGED: Save customerId
-        if (data?.customerId) setCustomerId(data.customerId);
-      } catch (err: any) {
-        console.error("Stripe init error:", err);
-        alert(
-          `Could not initialize payment: ${err?.message || "Unknown error"}`
-        );
-        setIsButtonLoading(false);
-        return;
+        if (data?.clientSecret) {
+          setClientSecret(data.clientSecret);
+          if (data?.customerId) setCustomerId(data.customerId);
+          setShowCheckoutModal(true);
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Could not initialize payment.");
       }
+    } else {
+      setShowCheckoutModal(true);
     }
-
     setIsButtonLoading(false);
-    setShowCheckoutModal(true);
   };
 
   const stripeAppearance = {
     theme: "night" as const,
     variables: {
-      colorPrimary: "#E65473",
+      colorPrimary: "#FF3B61",
       colorBackground: "#1A1A26",
       colorText: "#ffffff",
-      colorDanger: "#df1b41",
       fontFamily: "Inter, system-ui, sans-serif",
       borderRadius: "16px",
     },
   };
 
-  const getCtaSubtext = () => {
-    if (!dateString) return "";
-    return `See visual results by ${dateString}.`;
-  };
-
   return (
     <div className="relative w-full h-full min-h-0 flex flex-col bg-[#1A1A26] overflow-hidden">
-      {/* Video Background */}
+      {/* 1. Cinematic Video Background */}
       <div className="absolute inset-0 z-0">
         <video
           autoPlay
@@ -2400,65 +2491,65 @@ function Step14Paywall() {
         >
           <source src="/paywall_video.mp4" type="video/mp4" />
         </video>
-        <div className="absolute inset-0 bg-black/35" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-[#1A1A26]" />
+        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-[#1A1A26] opacity-90" />
       </div>
 
-      {/* Scrollable Content */}
+      {/* 2. Scrollable Content */}
       <div
-        className={`z-10 flex-1 min-h-0 flex flex-col overflow-y-auto overscroll-contain no-scrollbar pt-safe-top pb-48 px-6 md:px-10 transition-all duration-700 ${
+        className={`z-10 flex-1 min-h-0 flex flex-col overflow-y-auto overscroll-contain no-scrollbar pt-safe-top pb-48 px-6 transition-all duration-700 ${
           showContent ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
         }`}
       >
-        <div className="w-full md:max-w-xl lg:max-w-2xl md:mx-auto flex flex-col">
-          {/* Urgent Badge */}
-          <div className="flex justify-center mb-6">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[color:var(--pink)]/30 bg-[color:var(--pink)]/10 backdrop-blur-md shadow-lg">
-              <Activity
-                size={14}
-                className="text-[color:var(--pink)] animate-pulse"
-              />
-              <span className="text-[11px] font-extrabold text-white tracking-widest uppercase">
-                Analysis Complete • High Priority
-              </span>
-            </div>
+        <div className="w-full md:max-w-xl lg:max-w-2xl md:mx-auto flex flex-col gap-6">
+          
+          {/* Top Spacer to lift title */}
+          <div className="h-4 shrink-0" />
+
+          {/* HEADLINES */}
+          <div className="flex flex-col items-center text-center gap-1">
+             <h1
+              className="text-[34px] leading-[1.1] font-extrabold text-white drop-shadow-md"
+              style={{ fontFamily: "var(--font-lora)" }}
+            >
+              {safeName ? `${safeName}, ` : ""}Ready to fix your Diastasis Recti?
+            </h1>
+            <h2
+              className="text-[34px] leading-[1.1] font-extrabold bg-gradient-to-r from-[#FF3B61] to-[#D959E8] bg-clip-text text-transparent drop-shadow-sm"
+              style={{ fontFamily: "var(--font-lora)" }}
+            >
+              100% Money-Back Guarantee.
+            </h2>
           </div>
 
-          {/* HIGH CONVERSION HEADLINE CHANGE */}
-          <h1
-            className="text-[36px] font-extrabold text-white text-center mb-4 leading-[1.05] drop-shadow-xl"
-            style={{ fontFamily: "var(--font-lora)" }}
-          >
-            <span className="text-white/90">
-              {safeName ? `${safeName}, ` : ""}Ready to fix your Diastasis Recti?
-            </span>
-            <br />
-            <span className="text-[color:var(--pink)]">100% Money-Back Guarantee.</span>
-          </h1>
-
-          {/* PAIN-AGITATING SUBHEAD */}
-          <p className="text-center text-white/80 text-[16px] font-medium leading-relaxed mb-8 max-w-xs md:max-w-md lg:max-w-lg mx-auto">
+          {/* SUBHEAD */}
+          <p className="text-center text-white/90 text-[16px] font-semibold leading-relaxed px-4">
             Your customized 12-week plan to close your{" "}
-            <span className="text-white font-extrabold border-b border-white/30">
+            <span className="text-white font-extrabold">
               {fingerGap ?? "2+"} finger gap
             </span>{" "}
             and flatten your stomach.
           </p>
 
-          {/* Reviews Section */}
-          <div className="w-full bg-black/20 backdrop-blur-md border border-white/10 rounded-[28px] p-5 flex flex-col items-center gap-4 mb-8">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[20px] font-bold text-white">4.9</span>
+          {/* FEATURES SHOWCASE (Replaces old list) */}
+          <FeaturesShowcase />
+
+          {/* SOCIAL PROOF CARD (Matched Design) */}
+          <div className="w-full rounded-[20px] bg-white/5 border border-white/10 p-5 flex flex-col items-center">
+             {/* Rating Header */}
+             <div className="flex items-center gap-1.5 mb-4">
+              <span className="text-[18px] font-bold text-white">4.9</span>
               <div className="flex text-yellow-400 gap-0.5">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={16} fill="currentColor" />
+                  <Star key={i} size={14} fill="currentColor" />
                 ))}
               </div>
-              <span className="text-[11px] font-bold text-white/50 uppercase ml-1 tracking-wide">
-                Doctor Approved
+              <span className="text-[11px] font-semibold text-white/70 ml-1">
+                App Store Rating
               </span>
             </div>
 
+            {/* Review Carousel (Fixed Height) */}
             <div className="relative w-full h-[100px] flex items-center justify-center">
               <AnimatePresence mode="wait">
                 <motion.div
@@ -2466,117 +2557,107 @@ function Step14Paywall() {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.4 }}
-                  className="absolute w-full flex flex-col items-center"
+                  transition={{ duration: 0.3 }}
+                  className="absolute inset-0 flex flex-col items-center"
                 >
                   <img
                     src={displayReview.image}
                     alt={displayReview.name}
-                    className="w-12 h-12 rounded-full border-2 border-white/20 object-cover shadow-md mb-3"
+                    className="w-8 h-8 rounded-full border border-white/20 object-cover shadow-md mb-2"
                   />
-                  <p className="text-[15px] italic text-white text-center font-medium leading-snug px-4">
+                  <p className="text-[15px] italic text-white/90 text-center font-medium leading-snug px-2 line-clamp-3">
                     "{displayReview.text}"
                   </p>
-                  <p className="text-[11px] font-bold text-white/40 mt-2 uppercase tracking-wide">
+                  <p className="text-[11px] font-bold text-white/50 mt-1.5 uppercase tracking-wide">
                     {displayReview.name}
                   </p>
                 </motion.div>
               </AnimatePresence>
             </div>
+
+            {/* User Count Footer */}
+            <div className="mt-2 text-[13px] font-medium text-white/80">
+              Join 10,200+ women fixing diastasis.
+            </div>
           </div>
 
-          {/* Guarantee Accordion */}
+          {/* GUARANTEE ACCORDION */}
           <div
             onClick={() => setIsFaqOpen(!isFaqOpen)}
-            className="w-full bg-white/5 rounded-2xl p-4 border border-white/5 backdrop-blur-sm cursor-pointer active:scale-[0.99] transition-transform mb-6"
+            className="w-full bg-white/5 rounded-xl p-4 border border-white/10 cursor-pointer active:scale-[0.99] transition-transform"
           >
-            <div className="flex items-center justify-center gap-2 text-white/80">
-              <span className="text-[13px] font-bold">
+            <div className="flex items-center justify-center gap-2 text-white/90">
+              <span className="text-[15px] font-semibold">
                 How do I get my money back?
               </span>
               {isFaqOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
             </div>
             <div
               className={`overflow-hidden transition-all duration-300 ${
-                isFaqOpen ? "max-h-20 opacity-100 mt-2" : "max-h-0 opacity-0"
+                isFaqOpen ? "max-h-20 opacity-100 mt-3" : "max-h-0 opacity-0"
               }`}
             >
-              <p className="text-[13px] text-white/50 text-center leading-relaxed px-2">
+              <p className="text-[14px] text-white/70 text-center leading-relaxed">
                 Tap “Refund” in Settings → “Billing” → Done.
               </p>
             </div>
           </div>
 
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex justify-center items-center gap-3 text-[11px] font-semibold text-white/55">
-              <button
-                onClick={() => setShowRestoreModal(true)}
-                className="underline decoration-white/25 hover:text-white transition-colors"
-                style={{ textDecorationThickness: "2px" }}
-              >
-                Restore Purchase
-              </button>
-              <span>•</span>
-              <span className="cursor-default">Physiotherapist Led</span>
-              <span>•</span>
-              <span className="cursor-default">Medical Grade</span>
-            </div>
+          {/* LEGAL FOOTER (Spread Out) */}
+          <div className="flex justify-between px-8 pt-2 text-[12px] font-medium text-white/50 mb-32">
+             <button onClick={() => setShowRestoreModal(true)} className="hover:text-white transition-colors">
+               Restore Purchase
+             </button>
+             <a href="https://pelvi.health/terms-of-use/" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
+               Terms of Use
+             </a>
+             <a href="https://pelvi.health/privacy-policy/" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
+               Privacy Policy
+             </a>
           </div>
+
         </div>
       </div>
 
-      {/* Sticky Bottom CTA Area */}
-      <div
-        className={`absolute bottom-0 left-0 w-full z-30 px-5 transition-all duration-700 delay-200 ${
-          showContent ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
-        }`}
-      >
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#1A1A26]/75 via-[#1A1A26]/35 to-transparent" />
+      {/* 3. Sticky Bottom CTA */}
+      <div className="absolute bottom-0 left-0 w-full z-30 px-5 transition-all duration-700 delay-200">
+         {/* Gradient Fade for text readability */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#1A1A26] via-[#1A1A26]/90 to-transparent" />
 
-        <div className="relative pt-4 pb-[calc(env(safe-area-inset-bottom)+5px)]">
-          <div className="w-full md:max-w-xl lg:max-w-2xl md:mx-auto">
+        <div className="relative pt-4 pb-[calc(env(safe-area-inset-bottom)+20px)]">
+          <div className="w-full md:max-w-xl lg:max-w-2xl md:mx-auto flex flex-col gap-3">
+            
+            <p className="text-center text-white/80 text-[12px] font-semibold">
+               Less than the cost of one physio visit.
+            </p>
+
             <button
               onClick={handleStartPlan}
               disabled={isButtonLoading}
-              className="w-full h-[60px] rounded-full shadow-[0_0_40px_rgba(225,29,72,0.4)] flex items-center justify-center gap-3 animate-breathe active:scale-[0.98] transition-transform relative overflow-hidden group bg-gradient-to-r from-[color:var(--pink)] to-[#C23A5B]"
+              className="w-full h-[56px] rounded-full shadow-[0_5px_20px_rgba(225,29,72,0.4)] flex items-center justify-center gap-2 active:scale-[0.98] transition-transform bg-gradient-to-r from-[#FF3B61] to-[#D959E8]"
             >
-              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
               {isButtonLoading ? (
                 <Loader2 className="animate-spin text-white" />
               ) : (
-                <>
-                  <span className="text-[18px] font-extrabold text-white">
-                    Start Fixing My Diastasis Recti
-                  </span>
-                  <ArrowRight className="text-white/80" size={20} />
-                </>
+                <span className="text-[18px] font-bold text-white">
+                  Start Fixing My Diastasis
+                </span>
               )}
             </button>
 
-            <p className="text-center text-white/60 text-[12px] font-semibold mt-3 leading-snug px-4 drop-shadow-sm">
-              Fix your diastasis by {dateString}. If not, one tap full $4.99 refund.
-              <br />
+            <p className="text-center text-white/60 text-[12px] font-medium leading-snug px-4">
+              Fix your diastasis by {dateString}. If not, one tap full $24.99 refund.
             </p>
           </div>
         </div>
       </div>
 
+      {/* MODALS */}
       {showCheckoutModal && clientSecret && (
-        <div
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md overflow-y-auto"
-          onClick={() => setShowCheckoutModal(false)}
-        >
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md overflow-y-auto" onClick={() => setShowCheckoutModal(false)}>
           <div className="min-h-full flex items-center justify-center p-4">
-            <Elements
-              options={{ clientSecret, appearance: stripeAppearance }}
-              stripe={stripePromise}
-            >
-              {/* CHANGED: Pass customerId */}
-              <CheckoutForm
-                onClose={() => setShowCheckoutModal(false)}
-                dateString={dateString}
-                customerId={customerId}
-              />
+            <Elements options={{ clientSecret, appearance: stripeAppearance }} stripe={stripePromise}>
+              <CheckoutForm onClose={() => setShowCheckoutModal(false)} dateString={dateString} customerId={customerId} />
             </Elements>
           </div>
         </div>
