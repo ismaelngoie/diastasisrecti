@@ -2068,7 +2068,7 @@ const CheckoutForm = ({
 
         window.gtag("event", "conversion", {
           send_to: "AW-17883612588/XQ6LCNC3xfAbEKyLyc9C",
-          value: realValue, // Uses actual amount charged (e.g. 24.99)
+          value: realValue, // Uses actual amount charged (e.g. 4.99)
           currency: paymentIntent.currency.toUpperCase(), // Uses actual currency (e.g. 'USD')
           transaction_id: paymentIntent.id, // Prevents duplicate counting
           new_customer: true, // Assuming this flow is for new signups
@@ -2094,7 +2094,7 @@ const CheckoutForm = ({
 
   const getStripeSubtext = () => {
     if (!dateString) return "";
-    return `Feel real progress by ${dateString}. If not, one tap full $14.99 refund.`;
+    return `Feel real progress by ${dateString}. If not, one tap full $4.99 refund.`;
   };
 
   const paymentElementOptions: StripePaymentElementOptions = {
@@ -2125,7 +2125,7 @@ const CheckoutForm = ({
           Join 10,243+ women fixing their Diastasis Recti
         </h3>
         <p className="text-sm text-white/50 font-medium">
-          Total due: $14.99 / month
+          Total due: $4.99 / month
         </p>
       </div>
 
@@ -2564,7 +2564,7 @@ function Step14Paywall() {
             </button>
 
             <p className="text-center text-white/60 text-[12px] font-semibold mt-3 leading-snug px-4 drop-shadow-sm">
-              Less than the cost of one physio visit.
+              "Fix your diastasis by ${dateString}. If not, one tap full $4.99 refund.
               <br />
               <span className="text-white/40 text-[11px] font-normal">
                 {getCtaSubtext()} Cancel anytime.
